@@ -13,6 +13,7 @@ import type { ObraSocialListItem } from "../../ObrasSociales/obrasSociales.types
 import { useObrasSociales } from "../../ObrasSociales/useObrasSociales";
 import type { Especialidad } from "../../Especialidades/especialidades.types";
 import Cargando from "@/app/components/ui/Cargando/Cargando";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 export default function ConsultaValores() {
   // OS autocomplete
@@ -232,7 +233,7 @@ export default function ConsultaValores() {
               ))}
             </div>
 
-            <button
+            <BotonPlano
               type="button"
               className={styles.cta}
               onClick={handleSearch}
@@ -240,7 +241,7 @@ export default function ConsultaValores() {
             >
               {loading ? <Cargando size={17} /> : <Search size={17} />}
               Consultar precio
-            </button>
+            </BotonPlano>
           </div>
 
           {/* ── Result column ── */}

@@ -15,6 +15,7 @@ import PanelPlantillas from "./PanelPlantillas";
 import TextoObservacion from "./TextoObservacion";
 import s from "./ObservacionesTab.module.scss";
 import comun from "./Comun.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 type Filtro = "todas" | "con" | "sin";
 
@@ -98,7 +99,7 @@ export default function ObservacionesTab({ obras, cargando, error, obs, normasPo
           />
           <div className={s.pildoras} role="group" aria-label="Filtrar por observación">
             {filtros.map((f) => (
-              <button
+              <BotonPlano
                 key={f.id}
                 type="button"
                 className={`${s.pildora} ${filtro === f.id ? s.pildoraActiva : ""}`}
@@ -107,7 +108,7 @@ export default function ObservacionesTab({ obras, cargando, error, obs, normasPo
               >
                 {f.rotulo}
                 <span className={s.pildoraCuenta}>{f.cuenta}</span>
-              </button>
+              </BotonPlano>
             ))}
           </div>
         </div>
@@ -158,10 +159,10 @@ export default function ObservacionesTab({ obras, cargando, error, obs, normasPo
                         {texto ? (
                           <TextoObservacion texto={texto} />
                         ) : (
-                          <button type="button" className={s.agregar} onClick={() => setEditando(o.nro)} disabled={editando !== null}>
+                          <BotonPlano type="button" className={s.agregar} onClick={() => setEditando(o.nro)} disabled={editando !== null}>
                             <Plus size={14} aria-hidden="true" />
                             Agregar observación
-                          </button>
+                          </BotonPlano>
                         )}
                         {normas.length > 0 && (
                           <div className={s.normas}>

@@ -4,6 +4,7 @@
 // Se importa como `import paleta from "@/app/styles/paleta.module.scss"`. Ver `variables.scss`.
 :export {
   accentBlue: $accent-blue;
+  dangerRed: $danger-red;
   gray100: $gray-100;
   gray200: $gray-200;
   gray300: $gray-300;
@@ -29,6 +30,7 @@
   tonoAmarillo50E: $tono-amarillo-50-e;
   tonoAmarillo600B: $tono-amarillo-600-b;
   tonoAzul100B: $tono-azul-100-b;
+  tonoAzul150D: $tono-azul-150-d;
   tonoAzul200: $tono-azul-200;
   tonoAzul200C: $tono-azul-200-c;
   tonoAzul300B: $tono-azul-300-b;
@@ -39,24 +41,30 @@
   tonoAzul50B: $tono-azul-50-b;
   tonoAzul50C: $tono-azul-50-c;
   tonoAzul500B: $tono-azul-500-b;
+  tonoAzul50L: $tono-azul-50-l;
   tonoAzul550: $tono-azul-550;
   tonoAzul550C: $tono-azul-550-c;
   tonoAzul600: $tono-azul-600;
   tonoAzul650B: $tono-azul-650-b;
   tonoAzul750C: $tono-azul-750-c;
   tonoGris50: $tono-gris-50;
+  tonoNaranja200: $tono-naranja-200;
   tonoNaranja450: $tono-naranja-450;
+  tonoNaranja50C: $tono-naranja-50-c;
   tonoNaranja550: $tono-naranja-550;
+  tonoNaranja800: $tono-naranja-800;
   tonoRojo400: $tono-rojo-400;
   tonoRojo50: $tono-rojo-50;
   tonoRojo50B: $tono-rojo-50-b;
   tonoRojo500: $tono-rojo-500;
   tonoRojo550C: $tono-rojo-550-c;
+  tonoRojo600D: $tono-rojo-600-d;
   tonoVerde450B: $tono-verde-450-b;
   tonoVerde50B: $tono-verde-50-b;
   tonoVerde50C: $tono-verde-50-c;
   tonoVerde50D: $tono-verde-50-d;
   tonoVerde550: $tono-verde-550;
+  tonoVerde750B: $tono-verde-750-b;
   tonoVioleta600: $tono-violeta-600;
   warningOrange: $warning-orange;
   white: $white;

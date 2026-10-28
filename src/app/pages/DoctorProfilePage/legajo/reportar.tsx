@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import reportStyles from "../ReportarCambioModal.module.scss";
 import type { ReportTarget } from "../ReportarCambioModal";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 /** Botón "reportar" al lado de la etiqueta de un dato; sólo aparece en modo lectura. */
 export const crearReportar =
@@ -8,7 +9,7 @@ export const crearReportar =
   (campo: string, label: string, valorActual?: unknown): ReactNode => {
     if (!activo) return null;
     return (
-      <button
+      <BotonPlano
         type="button"
         className={reportStyles.reportBtn}
         title={`Reportar que "${label}" está mal`}
@@ -22,7 +23,7 @@ export const crearReportar =
         }
       >
         reportar
-      </button>
+      </BotonPlano>
     );
   };
 

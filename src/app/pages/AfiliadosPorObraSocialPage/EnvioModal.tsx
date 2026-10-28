@@ -8,6 +8,7 @@ import { useDialogo } from "./useDialogo";
 import marco from "./ExportFieldsModal.module.scss";
 import s from "./EnvioModal.module.scss";;
 import MarcoModal from "@/app/components/ui/MarcoModal/MarcoModal";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 type Props = {
   open: boolean;
@@ -67,9 +68,9 @@ export default function EnvioModal({ open, onClose, obraSocial, cantidad }: Prop
     <MarcoModal onClose={onClose} ref={panelRef} className={marco.panel} aria-labelledby="envio-titulo">
         <header className={marco.head}>
           <h2 id="envio-titulo" className={marco.title}>Envío de lista de prestadores</h2>
-          <button type="button" className={marco.close} onClick={onClose} aria-label="Cerrar">
+          <BotonPlano type="button" className={marco.close} onClick={onClose} aria-label="Cerrar">
             <X size={18} />
-          </button>
+          </BotonPlano>
         </header>
 
         <div className={marco.body}>
@@ -93,10 +94,10 @@ export default function EnvioModal({ open, onClose, obraSocial, cantidad }: Prop
               Copialo, pegalo en tu correo y adjuntá el PDF o el Excel.
             </span>
           </div>
-          <button type="button" className={marco.done} onClick={copiar}>
+          <BotonPlano type="button" className={marco.done} onClick={copiar}>
             {copiado ? <Check size={15} aria-hidden="true" /> : <Copy size={15} aria-hidden="true" />}
             {copiado ? " Copiado" : " Copiar"}
-          </button>
+          </BotonPlano>
         </footer>
       </MarcoModal>,
     document.body,

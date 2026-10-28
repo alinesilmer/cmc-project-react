@@ -4,6 +4,7 @@ import { esPendienteDeObraSocial, formatFecha, formatMoneda } from "../validacio
 import type { EstadoPrestacion, Prestacion } from "../validaciones.types";
 import s from "./Tablas.module.scss";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 interface Props {
   prestaciones: Prestacion[];
@@ -124,7 +125,7 @@ export default function PrestacionesTable({
                 <td className={s.center}>
                   <div className={s.rowActions}>
                     {onDocumentos && conDocumentos(p, permiteAdjuntarOrden) && (!soloLectura || p.documentos.length > 0) && (
-                      <button
+                      <BotonPlano
                         type="button"
                         className={`${s.docBtn} ${p.documentacion === "falta" ? s.docBtnFalta : p.documentos.length ? s.docBtnOk : ""}`}
                         title="Documentación de la prestación"
@@ -132,17 +133,17 @@ export default function PrestacionesTable({
                       >
                         {p.documentos.length ? <FileText size={15} /> : <Paperclip size={15} />}
                         {textoDocumentos(p)}
-                      </button>
+                      </BotonPlano>
                     )}
                     {!soloLectura && (
-                      <button
+                      <BotonPlano
                         type="button"
                         className={`${s.iconBtn} ${s.iconBtnDanger}`}
                         title="Eliminar prestación"
                         onClick={() => onEliminar(p)}
                       >
                         <Trash2 size={15} />
-                      </button>
+                      </BotonPlano>
                     )}
                   </div>
                 </td>
@@ -202,23 +203,23 @@ export default function PrestacionesTable({
 
             <div className={s.cardActions}>
               {onDocumentos && conDocumentos(p, permiteAdjuntarOrden) && (!soloLectura || p.documentos.length > 0) && (
-                <button
+                <BotonPlano
                   type="button"
                   className={`${s.cardBtn} ${p.documentacion === "falta" ? s.docBtnFalta : ""}`}
                   onClick={() => onDocumentos(p)}
                 >
                   {p.documentos.length ? <FileText size={15} /> : <Paperclip size={15} />}
                   {textoDocumentos(p)}
-                </button>
+                </BotonPlano>
               )}
               {!soloLectura && (
-                <button
+                <BotonPlano
                   type="button"
                   className={`${s.cardBtn} ${s.cardBtnDanger}`}
                   onClick={() => onEliminar(p)}
                 >
                   <Trash2 size={15} /> Eliminar
-                </button>
+                </BotonPlano>
               )}
             </div>
           </li>

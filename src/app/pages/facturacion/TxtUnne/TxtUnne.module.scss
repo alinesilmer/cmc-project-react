@@ -1,14 +1,4 @@
-$blue:       #3b6fd4;
-$blue-light: #e8efff;
-$blue-hover: #2f5bbb;
-$green:      #166534;
-$amber:      #92400e;
-$amber-bg:   #fef3c7;
-$border:     #e2e8f0;
-$surface:    #ffffff;
-$text-1:     #1a1f2e;
-$text-2:     #4a5568;
-$text-3:     #718096;
+@use "@/app/styles/variables.scss" as *;
 $radius-sm:  6px;
 $radius-md:  10px;
 $radius-lg:  14px;
@@ -16,7 +6,7 @@ $shadow-sm:  0 1px 4px rgba(0, 0, 0, .06);
 
 .container {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f0f4ff 0%, #fafbff 60%, #f5f0ff 100%);
+  background: linear-gradient(135deg, $tono-azul-50-d 0%, $tono-azul-50-e 60%, $tono-violeta-50-b 100%);
   padding: 1.8rem;
   font-family: inherit;
 }
@@ -35,18 +25,18 @@ $shadow-sm:  0 1px 4px rgba(0, 0, 0, .06);
   width: 42px;
   height: 42px;
   border-radius: $radius-md;
-  background: $blue-light;
-  color: $blue;
+  background: $tono-azul-50-f;
+  color: $tono-azul-450;
   flex-shrink: 0;
 }
 
-.title { font-size: 1.35rem; font-weight: 700; color: $text-1; margin: 0; }
-.subtitle { font-size: 0.8rem; color: $text-3; margin: 2px 0 0; }
+.title { font-size: 1.35rem; font-weight: 700; color: $tono-azul-750-c; margin: 0; }
+.subtitle { font-size: 0.8rem; color: $tono-azul-400; margin: 2px 0 0; }
 
 .card {
   max-width: 720px;
-  background: $surface;
-  border: 1px solid $border;
+  background: $white;
+  border: 1px solid $gray-200;
   border-radius: $radius-lg;
   box-shadow: $shadow-sm;
   padding: 22px 24px;
@@ -56,19 +46,19 @@ $shadow-sm:  0 1px 4px rgba(0, 0, 0, .06);
 }
 
 .field { display: flex; flex-direction: column; gap: 6px; }
-.label { font-size: 0.78rem; font-weight: 600; color: $text-2; }
+.label { font-size: 0.78rem; font-weight: 600; color: $tono-azul-650-c; }
 
 .input {
   height: 38px;
   padding: 0 12px;
-  border: 1px solid $border;
+  border: 1px solid $gray-200;
   border-radius: $radius-sm;
-  background: $surface;
-  color: $text-1;
+  background: $white;
+  color: $tono-azul-750-c;
   font: inherit;
   font-size: 0.9rem;
 
-  &:focus { outline: 2px solid $blue-light; border-color: $blue; }
+  &:focus { outline: 2px solid $tono-azul-50-f; border-color: $tono-azul-450; }
 }
 
 .row { display: grid; grid-template-columns: 90px 1fr; gap: 12px; }
@@ -79,7 +69,7 @@ $shadow-sm:  0 1px 4px rgba(0, 0, 0, .06);
   align-items: center;
   gap: 8px 10px;
   font-size: 0.85rem;
-  color: $text-2;
+  color: $tono-azul-650-c;
 }
 
 .chip {
@@ -89,28 +79,28 @@ $shadow-sm:  0 1px 4px rgba(0, 0, 0, .06);
   padding: 3px 12px;
   white-space: nowrap;
 }
-.chipAbierta { background: $amber-bg; color: $amber; }
-.chipCerrada { background: #dcfce7; color: $green; }
-.chipGris { background: #f1f5f9; color: $text-2; font-weight: 600; }
+.chipAbierta { background: $tono-amarillo-50-d; color: $tono-naranja-550; }
+.chipCerrada { background: $tono-verde-50-c; color: $tono-verde-550; }
+.chipGris { background: $gray-100; color: $tono-azul-650-c; font-weight: 600; }
 
 .aviso {
   font-size: 0.82rem;
-  color: $amber;
-  background: $amber-bg;
+  color: $tono-naranja-550;
+  background: $tono-amarillo-50-d;
   border-radius: $radius-sm;
   padding: 10px 12px;
 }
 
 .error {
   font-size: 0.85rem;
-  color: #991b1b;
-  background: #fee2e2;
+  color: $tono-rojo-550-c;
+  background: $tono-rojo-50;
   border-radius: $radius-sm;
   padding: 10px 12px;
 }
 
-.ok { font-size: 0.85rem; color: $green; }
-.muted { color: $text-3; font-size: 0.85rem; }
+.ok { font-size: 0.85rem; color: $tono-verde-550; }
+.muted { color: $tono-azul-400; font-size: 0.85rem; }
 
 .acciones { display: flex; align-items: center; gap: 14px; }
 
@@ -120,15 +110,15 @@ $shadow-sm:  0 1px 4px rgba(0, 0, 0, .06);
   gap: 8px;
   height: 38px;
   padding: 0 18px;
-  background: $blue;
-  color: #fff;
-  border: 1px solid $blue;
+  background: $tono-azul-450;
+  color: $white;
+  border: 1px solid $tono-azul-450;
   border-radius: $radius-sm;
   font: inherit;
   font-size: 0.88rem;
   cursor: pointer;
 
-  &:hover:not(:disabled) { background: $blue-hover; border-color: $blue-hover; }
+  &:hover:not(:disabled) { background: $tono-azul-550-d; border-color: $tono-azul-550-d; }
   &:disabled { opacity: .55; cursor: default; }
 }
 

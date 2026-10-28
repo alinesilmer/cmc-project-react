@@ -6,6 +6,7 @@ import { MOTIVO_ELIMINACION_LABEL, MOTIVOS_ELIMINACION_ELEGIBLES } from "../type
 import type { MotivoEliminacion } from "../types";
 import base from "./ConfirmActionModal.module.scss";
 import styles from "./EliminarPrestacionModal.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 interface Props {
   isOpen: boolean;
@@ -74,9 +75,9 @@ const EliminarPrestacionModal: React.FC<Props> = ({
                   {descripcion && <> · {descripcion}</>}
                 </span>
               </div>
-              <button type="button" className={base.closeBtn} onClick={onClose} aria-label="Cerrar" disabled={loading}>
+              <BotonPlano type="button" className={base.closeBtn} onClick={onClose} aria-label="Cerrar" disabled={loading}>
                 <X size={16} />
-              </button>
+              </BotonPlano>
             </div>
 
             <div className={base.body}>
@@ -86,7 +87,7 @@ const EliminarPrestacionModal: React.FC<Props> = ({
                 </legend>
                 <div className={styles.chips}>
                   {MOTIVOS_ELIMINACION_ELEGIBLES.map((m) => (
-                    <button
+                    <BotonPlano
                       key={m}
                       type="button"
                       aria-pressed={motivo === m}
@@ -95,7 +96,7 @@ const EliminarPrestacionModal: React.FC<Props> = ({
                       disabled={loading}
                     >
                       {MOTIVO_ELIMINACION_LABEL[m]}
-                    </button>
+                    </BotonPlano>
                   ))}
                 </div>
               </fieldset>
@@ -131,12 +132,12 @@ const EliminarPrestacionModal: React.FC<Props> = ({
             </div>
 
             <div className={base.footer}>
-              <button type="button" className={base.btnGhost} onClick={onClose} disabled={loading}>
+              <BotonPlano type="button" className={base.btnGhost} onClick={onClose} disabled={loading}>
                 Cancelar
-              </button>
-              <button type="button" className={base.btnDanger} onClick={confirmar} disabled={loading || !valido}>
+              </BotonPlano>
+              <BotonPlano type="button" className={base.btnDanger} onClick={confirmar} disabled={loading || !valido}>
                 {loading ? "Procesando…" : "Eliminar"}
-              </button>
+              </BotonPlano>
             </div>
           </motion.div>
         </motion.div>

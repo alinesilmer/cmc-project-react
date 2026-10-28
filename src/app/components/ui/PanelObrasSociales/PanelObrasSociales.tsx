@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 
 import s from "./PanelObrasSociales.module.scss";
 import SearchField from "@/app/components/ui/SearchField/SearchField";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 type Obra = { nro_obra_social: number; nombre: string };
 
@@ -54,7 +55,7 @@ export default function PanelObrasSociales({ obras, elegida, onElegir, onResalta
         {visibles.map((o) => {
           const activa = o.nro_obra_social === elegida;
           return (
-            <button
+            <BotonPlano
               key={o.nro_obra_social}
               type="button"
               className={`${s.ficha} ${activa ? s.fichaActiva : ""}`}
@@ -67,7 +68,7 @@ export default function PanelObrasSociales({ obras, elegida, onElegir, onResalta
               </span>
               <span className={s.nombre}>{o.nombre}</span>
               <span className={s.numero}>{o.nro_obra_social}</span>
-            </button>
+            </BotonPlano>
           );
         })}
         {visibles.length === 0 && <p className={s.vacio}>Sin resultados</p>}

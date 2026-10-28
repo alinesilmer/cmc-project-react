@@ -1,5 +1,7 @@
 // Lo que comparte la pantalla de Compensaciones: URLs, tipos y rótulos.
 
+import { formatoImporte } from "@/app/shared/lib/formatos";
+
 // La raíz lleva barra final: sin ella FastAPI responde 307 hacia una URL absoluta y, con el proxy
 // de desarrollo, el navegador descarta el Authorization.
 export const COMPENSACIONES_RAIZ = "/api/compensaciones/";
@@ -48,12 +50,10 @@ export type CompensacionesLista = {
   totales: { a_favor: string; en_contra: string; pendientes: number };
 };
 
-const moneda = new Intl.NumberFormat("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
 /** «+$50.000,00» o «−$14.000,00»: el sentido se ve en el signo y en el color. */
 export const importeConSigno = (n: number | string | null | undefined): string => {
   const v = Number(n ?? 0);
-  return `${v < 0 ? "−" : "+"}$${moneda.format(Math.abs(v))}`;
+  return `${v < 0 ? "−" : "+"}$${formatoImporte.format(Math.abs(v))}`;
 };
 
 /** «27/08/2026» desde una fecha ISO (con o sin hora). */

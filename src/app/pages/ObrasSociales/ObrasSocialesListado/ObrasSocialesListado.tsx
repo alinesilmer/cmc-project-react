@@ -17,6 +17,7 @@ import Button from "@/app/components/ui/Button/Button";
 import SearchField from "@/app/components/ui/SearchField/SearchField";
 import Cargando from "@/app/components/ui/Cargando/Cargando";
 import Paginador from "@/app/components/ui/Paginador/Paginador";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 const PAGE_SIZE = 15;
 
@@ -208,7 +209,7 @@ export default function ObrasSocialesListado() {
                         onClick={() => navigate(`/panel/convenios/obras-sociales/${os.id}`)}
                         etiqueta={`Ver ${os.nombre}`}
                       />
-                      <button
+                      <BotonPlano
                         type="button"
                         className={s.iconBtn}
                         onClick={() => navigate(`/panel/convenios/obras-sociales/${os.id}/editar`)}
@@ -216,8 +217,8 @@ export default function ObrasSocialesListado() {
                         aria-label={`Editar ${os.nombre}`}
                       >
                         <Pencil size={18} aria-hidden="true" />
-                      </button>
-                      <button
+                      </BotonPlano>
+                      <BotonPlano
                         type="button"
                         className={s.iconBtnDanger}
                         onClick={() => setConfirmDeleteId(os.id)}
@@ -226,7 +227,7 @@ export default function ObrasSocialesListado() {
                         disabled={deletingId === os.id}
                       >
                         <Trash2 size={18} aria-hidden="true" />
-                      </button>
+                      </BotonPlano>
                     </div>
                   </td>
                 </tr>

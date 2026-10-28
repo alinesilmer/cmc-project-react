@@ -68,6 +68,7 @@ import { useDebounce } from "./useDebounce";
 import styles from "./Reportes.module.scss";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
 import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 const LIMIT_TABLA = 25;
 const LIMIT_DETALLE = 25;
@@ -484,7 +485,7 @@ const ReportesPage: React.FC = () => {
             const Icono = v.icono;
             const activa = vista === v.id;
             return (
-              <button
+              <BotonPlano
                 key={v.id}
                 type="button"
                 className={`${styles.tab} ${activa ? styles.tabOn : ""}`}
@@ -493,7 +494,7 @@ const ReportesPage: React.FC = () => {
               >
                 <Icono size={16} />
                 {v.label}
-              </button>
+              </BotonPlano>
             );
           })}
         </nav>
@@ -620,7 +621,7 @@ const ReportesPage: React.FC = () => {
                             </span>
                           </td>
                           <td className={styles.nombre}>
-                            <button
+                            <BotonPlano
                               type="button"
                               className={styles.rowBtn}
                               onClick={() =>
@@ -634,7 +635,7 @@ const ReportesPage: React.FC = () => {
                               }
                             >
                               {m.nombre ?? `Socio ${m.nro_socio}`}
-                            </button>
+                            </BotonPlano>
                           </td>
                           <td className={styles.num}>{numero.format(m.prestaciones)}</td>
                           <td className={styles.num}>{money.format(m.importe_total)}</td>
@@ -698,7 +699,7 @@ const ReportesPage: React.FC = () => {
                       {(obras.data ?? []).map((o) => (
                         <tr key={o.obra_social_nro}>
                           <td className={styles.nombre}>
-                            <button
+                            <BotonPlano
                               type="button"
                               className={styles.rowBtn}
                               onClick={() =>
@@ -706,7 +707,7 @@ const ReportesPage: React.FC = () => {
                               }
                             >
                               {o.nombre ?? `O.S. ${o.obra_social_nro}`}
-                            </button>
+                            </BotonPlano>
                           </td>
                           <td className={styles.num}>{numero.format(o.medicos)}</td>
                           <td className={styles.num}>{numero.format(o.prestaciones)}</td>
@@ -806,7 +807,7 @@ const ReportesPage: React.FC = () => {
                   {(codigos.data ?? []).map((c) => (
                     <tr key={c.codigo}>
                       <td>
-                        <button
+                        <BotonPlano
                           type="button"
                           className={styles.rowBtn}
                           onClick={() =>
@@ -817,7 +818,7 @@ const ReportesPage: React.FC = () => {
                           }
                         >
                           {c.codigo}
-                        </button>
+                        </BotonPlano>
                       </td>
                       <td className={styles.nombre}>{c.descripcion ?? "—"}</td>
                       <td className={styles.num}>{numero.format(c.cantidad)}</td>
@@ -853,14 +854,14 @@ const ReportesPage: React.FC = () => {
               </div>
               <span className={styles.filtroActivo}>
                 Código {codigoSel}
-                <button
+                <BotonPlano
                   type="button"
                   className={styles.filtroQuitar}
                   onClick={() => cambiarFiltro(() => setCodigoSel(null))}
                   aria-label="Quitar filtro de código"
                 >
                   <X size={14} />
-                </button>
+                </BotonPlano>
               </span>
             </div>
 
@@ -913,14 +914,14 @@ const ReportesPage: React.FC = () => {
               </div>
               <span className={styles.filtroActivo}>
                 Socio {medicoSel.nro}
-                <button
+                <BotonPlano
                   type="button"
                   className={styles.filtroQuitar}
                   onClick={() => cambiarFiltro(() => setMedicoSel(null))}
                   aria-label="Quitar filtro de médico"
                 >
                   <X size={14} />
-                </button>
+                </BotonPlano>
               </span>
             </div>
 

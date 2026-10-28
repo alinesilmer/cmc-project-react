@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Download, ExternalLink, FileText, X } from "lucide-react";
 import { useModal } from "@/website/hooks/useModal";
 import styles from "./ModalValoresEticos.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 // Vive en public/: reemplazar el archivo actualiza el PDF sin recompilar la app.
 const pdf = `${import.meta.env.BASE_URL}valores-eticos.pdf`;
@@ -45,9 +46,9 @@ export default function ModalValoresEticos({ abierto, onCerrar }: Props) {
                 <h2 id="valores-titulo">Valores Éticos Mínimos</h2>
                 <p>Boletín vigente del Colegio Médico de Corrientes</p>
               </div>
-              <button type="button" className={styles.cerrar} onClick={cerrar} aria-label="Cerrar">
+              <BotonPlano type="button" className={styles.cerrar} onClick={cerrar} aria-label="Cerrar">
                 <X aria-hidden="true" />
-              </button>
+              </BotonPlano>
             </header>
 
             <div className={styles.visor}>

@@ -23,21 +23,21 @@ $acento:         $primary-blue;
 $acento-fuerte:  $primary-blue-darker;
 $acento-suave:   $primary-blue-lighter;
 $acento-tinte:   $secondary-blue;  // fondo de chip activo
-$acento-lavado:  #f4f7fd;          // hover de fila
+$acento-lavado:  $tono-azul-50-k;          // hover de fila
 
 // ── Semáforo ──────────────────────────────────────────────────────────────────
 $ok:             $success-green;
-$ok-bg:          #ecfdf5;
-$ok-linea:       #a7d8bd;
+$ok-bg:          $tono-verde-50-f;
+$ok-linea:       $tono-verde-250-c;
 
-$alerta:         #92400e;
+$alerta:         $tono-naranja-550;
 $alerta-ico:     $warning-orange;
-$alerta-bg:      #fffbeb;
-$alerta-linea:   #fcd34d;
+$alerta-bg:      $tono-amarillo-50-c;
+$alerta-linea:   $tono-amarillo-100-b;
 
 $peligro:        $danger-red;
-$peligro-bg:     #fef2f2;
-$peligro-linea:  #f3b7b7;
+$peligro-bg:     $tono-rojo-50-d;
+$peligro-linea:  $tono-rojo-150-b;
 
 // ── Radios ────────────────────────────────────────────────────────────────────
 // Más cuadrados que `$border-radius-*`.

@@ -7,6 +7,7 @@ import FiltrosVistaSection from "./FiltrosVistaSection";
 import ColumnasVistaSection from "./ColumnasVistaSection";
 import PresetsVistaSection from "./PresetsVistaSection";
 import s from "../export/export.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 interface PrestadorOpcion {
   cod_medico: string;
@@ -34,9 +35,9 @@ export default function VistaPanel({ opciones, onChange, prestadores, onClose, c
               Ordená, agrupá, filtrá y elegí columnas — no cambia los datos. El exportable sale tal como lo ves acá.
             </p>
           </div>
-          <button type="button" className={s.closeBtn} onClick={onClose} aria-label="Cerrar panel">
+          <BotonPlano type="button" className={s.closeBtn} onClick={onClose} aria-label="Cerrar panel">
             <X size={18} />
-          </button>
+          </BotonPlano>
         </div>
 
         <div className={s.drawerBody}>
@@ -79,14 +80,14 @@ export default function VistaPanel({ opciones, onChange, prestadores, onClose, c
             }
           />
           <div className={s.section}>
-            <button
+            <BotonPlano
               type="button"
               className={s.presetSaveBtn}
               style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
               onClick={() => onChange(VISTA_OPCIONES_DEFAULT)}
             >
               <RotateCcw size={13} /> Restablecer vista
-            </button>
+            </BotonPlano>
           </div>
         </div>
       </aside>

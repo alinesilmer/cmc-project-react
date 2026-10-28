@@ -14,6 +14,7 @@ import styles from "./RecalculoPrecios.module.scss";
 import { ListaOmitidas, TablaCambios } from "./TablaCambios";
 import BackButton from "@/app/components/ui/BackButton/BackButton";
 import Cargando from "@/app/components/ui/Cargando/Cargando";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 /** Recálculo de precios de una factura abierta (O.S. + período), o de un código de ella. */
 
@@ -258,10 +259,10 @@ const RecalculoPrecios: React.FC = () => {
         )}
 
         <div className={base.formFooter}>
-          <button type="button" className={base.btnGhost} onClick={() => void correr(true)} disabled={!listo}>
+          <BotonPlano type="button" className={base.btnGhost} onClick={() => void correr(true)} disabled={!listo}>
             <Eye size={15} /> {trabajando === "previa" ? "Calculando…" : "Previsualizar"}
-          </button>
-          <button
+          </BotonPlano>
+          <BotonPlano
             type="button"
             className={base.btnDanger}
             onClick={() => setConfirmOpen(true)}
@@ -269,7 +270,7 @@ const RecalculoPrecios: React.FC = () => {
             title={!resultado?.dry_run ? "Previsualizá antes de aplicar" : undefined}
           >
             <RefreshCw size={15} /> Aplicar recálculo
-          </button>
+          </BotonPlano>
         </div>
       </motion.div>
 

@@ -7,6 +7,7 @@ import type { Decision, FilaResultado } from "./importarPrestaciones.api";
 import s from "./ImportarPrestaciones.module.scss";
 import Paginador from "@/app/components/ui/Paginador/Paginador";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 /** Filas por página: una planilla puede traer miles y pintarlas todas cuelga el navegador. */
 const POR_PAGINA = 50;
@@ -98,9 +99,9 @@ export default function TablaPrestaciones({ filas, decisiones, onElegir, onDesca
                               </option>
                             ))}
                           </select>
-                          <button type="button" className={s.descartar} onClick={() => onDescartar(f.indice)}>
+                          <BotonPlano type="button" className={s.descartar} onClick={() => onDescartar(f.indice)}>
                             Descartar la fila
-                          </button>
+                          </BotonPlano>
                         </div>
                       )
                     ) : (

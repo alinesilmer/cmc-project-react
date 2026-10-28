@@ -5,9 +5,9 @@ import { AlertCircle, CheckCircle2, FileSpreadsheet, FileUp } from "lucide-react
 import styles from "./ImportarValoresFijos.module.scss";
 import AppSearchSelect from "@/app/components/ui/AppSearchSelect/AppSearchSelect";
 import Modal from "@/app/components/ui/Modal/Modal";
-import MultiSelectBuscable from "@/app/components/molecules/MultiSelectBuscable/MultiSelectBuscable";
-import ReplicarFamiliaBlock from "@/app/components/molecules/ReplicarFamilia/ReplicarFamiliaBlock";
-import { destinosReplica, type ReplicaState } from "@/app/components/molecules/ReplicarFamilia/replicaState";
+import MultiSelectBuscable from "@/app/components/ui/MultiSelectBuscable/MultiSelectBuscable";
+import ReplicarFamiliaBlock from "@/app/pages/NomencladorNacional/components/ReplicarFamilia/ReplicarFamiliaBlock";
+import { destinosReplica, type ReplicaState } from "@/app/pages/NomencladorNacional/components/ReplicarFamilia/replicaState";
 import { useObrasSociales } from "../../ObrasSociales/useObrasSociales";
 import { getEspecialidades } from "../../Especialidades/especialidades.api";
 import { readExcel } from "@/app/shared/lib/precios/readExcel";
@@ -25,6 +25,7 @@ import { formatoPesos } from "@/app/shared/lib/formatos";
 import Cargando from "@/app/components/ui/Cargando/Cargando";
 import Paginador from "@/app/components/ui/Paginador/Paginador";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 const ENCABEZADO = ["CODIGO", "DESCRIPCION", "HONORARIOS", "GASTOS", "AYUDANTE"];
 const PAGE_SIZE = 50;
@@ -403,7 +404,7 @@ export default function ImportarValoresFijos() {
           </div>
           <div className={styles.campo}>
             <span className={styles.label}>Archivo (.xlsx)</span>
-            <button type="button" className={styles.archivo} onClick={() => inputRef.current?.click()} disabled={leyendo || aplicando}>
+            <BotonPlano type="button" className={styles.archivo} onClick={() => inputRef.current?.click()} disabled={leyendo || aplicando}>
               {leyendo ? <Cargando size={16} /> : <FileUp size={16} />}
               {archivo ? (
                 <>
@@ -413,13 +414,13 @@ export default function ImportarValoresFijos() {
               ) : (
                 <span>Elegir archivo…</span>
               )}
-            </button>
+            </BotonPlano>
             <input ref={inputRef} type="file" accept=".xlsx,.xls" hidden onChange={(e) => elegirArchivo(e.target.files?.[0])} />
           </div>
-          <button type="button" className={styles.btnPrimary} onClick={previsualizar} disabled={!puedePrevisualizar}>
+          <BotonPlano type="button" className={styles.btnPrimary} onClick={previsualizar} disabled={!puedePrevisualizar}>
             {previsualizando && <Cargando size={15} />}
             Previsualizar
-          </button>
+          </BotonPlano>
         </div>
         <p className={styles.formato}>
           Formato exigido, primera hoja, fila 1 (sin importar mayúsculas):
@@ -469,11 +470,11 @@ export default function ImportarValoresFijos() {
       {previa && (
         <>
           <div className={styles.resumen} role="group" aria-label="Filtrar por estado">
-            <button type="button" className={styles.chip} aria-pressed={filtro === null} onClick={() => setFiltro(null)}>
+            <BotonPlano type="button" className={styles.chip} aria-pressed={filtro === null} onClick={() => setFiltro(null)}>
               Todas <span>{previa.total}</span>
-            </button>
+            </BotonPlano>
             {ESTADOS.filter((e) => previa.por_estado[e.id]).map((e) => (
-              <button
+              <BotonPlano
                 key={e.id}
                 type="button"
                 className={`${styles.chip} ${styles[`tono_${e.tono}`]}`}
@@ -481,7 +482,7 @@ export default function ImportarValoresFijos() {
                 onClick={() => setFiltro(e.id)}
               >
                 {e.label} <span>{previa.por_estado[e.id]}</span>
-              </button>
+              </BotonPlano>
             ))}
           </div>
 
@@ -495,7 +496,7 @@ export default function ImportarValoresFijos() {
                   <select id="ivf-masiva" className={styles.select} value={masiva} onChange={(e) => setMasiva(e.target.value as AccionFija)}>
                     {accionesMasivas.map((a) => <option key={a} value={a}>{ACCION_LABEL[a]}</option>)}
                   </select>
-                  <button type="button" className={styles.btnSecondary} onClick={aplicarMasiva}>Aplicar</button>
+                  <BotonPlano type="button" className={styles.btnSecondary} onClick={aplicarMasiva}>Aplicar</BotonPlano>
                 </>
               )}
             </div>
@@ -626,14 +627,14 @@ export default function ImportarValoresFijos() {
               )}
             </span>
             {errorAplicar && <span className={styles.error} role="alert"><AlertCircle size={15} /> {errorAplicar}</span>}
-            <button
+            <BotonPlano
               type="button"
               className={styles.btnPrimary}
               disabled={cuentas.pendientes > 0 || cuentas.cargar === 0 || aplicando}
               onClick={() => setConfirmando(true)}
             >
               Confirmar y cargar
-            </button>
+            </BotonPlano>
           </div>
         </>
       )}
@@ -663,11 +664,11 @@ export default function ImportarValoresFijos() {
           </p>
         )}
         <div className={styles.modalAcciones}>
-          <button type="button" className={styles.btnSecondary} onClick={() => setConfirmando(false)} disabled={aplicando}>Volver</button>
-          <button type="button" className={styles.btnPrimary} onClick={confirmar} disabled={aplicando}>
+          <BotonPlano type="button" className={styles.btnSecondary} onClick={() => setConfirmando(false)} disabled={aplicando}>Volver</BotonPlano>
+          <BotonPlano type="button" className={styles.btnPrimary} onClick={confirmar} disabled={aplicando}>
             {aplicando && <Cargando size={15} />}
             Cargar precios
-          </button>
+          </BotonPlano>
         </div>
       </Modal>
     </div>

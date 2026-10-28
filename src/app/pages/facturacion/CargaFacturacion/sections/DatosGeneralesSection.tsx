@@ -4,6 +4,7 @@ import type { ObraSocialOption, PeriodoActivoResponse } from "../../types";
 import comun from "../Comun.module.scss";
 import styles from "./DatosGeneralesSection.module.scss";;
 import { AlertTriangle } from "lucide-react";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 /** "202606" → "2026-06" (input type=month). */
 const periodoToMonthInput = (periodo: string) =>
@@ -84,14 +85,14 @@ const DatosGeneralesSection: React.FC<Props> = ({
           )}
           {/* Sin automático (obra social sin período cerrado previo, ver periodoError) no hay nada que ofrecer como sugerencia . */}
           {(automatico || periodoError) && !editando && (
-            <button
+            <BotonPlano
               type="button"
               className={comun.periodoLinkBtn}
               onClick={() => setEditando(true)}
               disabled={disabled}
             >
               {automatico ? "Modificar período" : "Elegir período"}
-            </button>
+            </BotonPlano>
           )}
           {editando && (
             <div className={styles.periodoEditorRow}>
@@ -105,7 +106,7 @@ const DatosGeneralesSection: React.FC<Props> = ({
                 disabled={disabled}
               />
               {automatico && (
-                <button
+                <BotonPlano
                   type="button"
                   className={comun.periodoLinkBtn}
                   onClick={() => {
@@ -115,7 +116,7 @@ const DatosGeneralesSection: React.FC<Props> = ({
                   disabled={disabled}
                 >
                   Usar automático
-                </button>
+                </BotonPlano>
               )}
             </div>
           )}

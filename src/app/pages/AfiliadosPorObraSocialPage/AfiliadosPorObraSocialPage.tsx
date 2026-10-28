@@ -5,7 +5,8 @@ import { usePermisos } from "@/app/auth/usePermisos";
 import PorObraSocial from "./PorObraSocial";
 import PorSocio from "./PorSocio";
 import comun from "./Comun.module.scss";
-import styles from "./AfiliadosPorObraSocialPage.module.scss";;
+import styles from "./AfiliadosPorObraSocialPage.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";;
 
 type Vista = "obra-social" | "socio";
 
@@ -66,7 +67,7 @@ export default function AfiliadosPorObraSocialPage({
                 const Icono = s.icono;
                 const activa = s.id === vista;
                 return (
-                  <button
+                  <BotonPlano
                     key={s.id}
                     type="button"
                     role="tab"
@@ -76,7 +77,7 @@ export default function AfiliadosPorObraSocialPage({
                   >
                     <Icono size={16} strokeWidth={1.8} aria-hidden="true" />
                     {s.titulo}
-                  </button>
+                  </BotonPlano>
                 );
               })}
             </div>

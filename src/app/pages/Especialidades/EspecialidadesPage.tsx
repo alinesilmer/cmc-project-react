@@ -34,6 +34,7 @@ import SearchField from "@/app/components/ui/SearchField/SearchField";
 import FieldError from "@/app/components/ui/FieldError/FieldError";
 import Cargando from "@/app/components/ui/Cargando/Cargando";
 import Paginador from "@/app/components/ui/Paginador/Paginador";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 // ─── Field error helper ───────────────────────────────────────────────────────
 
@@ -213,7 +214,7 @@ export default function EspecialidadesPage() {
                   <td className={s.nameCell}>{item.nombre}</td>
                   <td className={s.actionsCol}>
                     <div className={s.actions}>
-                      <button
+                      <BotonPlano
                         type="button"
                         className={s.iconBtn}
                         onClick={() => openEdit(item)}
@@ -221,7 +222,7 @@ export default function EspecialidadesPage() {
                         aria-label={`Editar ${item.nombre}`}
                       >
                         <Pencil size={15} />
-                      </button>
+                      </BotonPlano>
                     </div>
                   </td>
                 </tr>

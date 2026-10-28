@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { RotateCcw } from "lucide-react";
 import type { FilterState } from "./useFilters";
 import s from "./export.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 interface Props {
   filters: FilterState;
@@ -26,9 +27,9 @@ export default function FiltersSection({ filters, set, reset, hasActive }: Props
       <div className={s.sectionHeader}>
         <h3 className={s.sectionTitle}>Filtros</h3>
         {hasActive && (
-          <button type="button" className={s.resetBtn} onClick={reset}>
+          <BotonPlano type="button" className={s.resetBtn} onClick={reset}>
             <RotateCcw size={13} /> Limpiar
-          </button>
+          </BotonPlano>
         )}
       </div>
 

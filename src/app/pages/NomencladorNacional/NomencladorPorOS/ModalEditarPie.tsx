@@ -2,6 +2,7 @@ import styles from "./NomencladorPorOS.module.scss";
 import Cargando from "@/app/components/ui/Cargando/Cargando";
 import { Save } from "lucide-react";
 import type { PorOSCtx } from "./useNomencladorPorOS";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 export default function ModalEditarPie({ ctx }: { ctx: PorOSCtx }) {
   const { setModalKind, savingMeta, editMode, replicaTerminada, replicaActiva, handleSaveNucleo } = ctx;
@@ -9,22 +10,22 @@ export default function ModalEditarPie({ ctx }: { ctx: PorOSCtx }) {
     <>
       <div className={styles.modalFooter}>
         {replicaTerminada ? (
-          <button
+          <BotonPlano
             className={styles.btnPrimary}
             onClick={() => setModalKind(null)}
           >
             Cerrar
-          </button>
+          </BotonPlano>
         ) : (
           <>
-            <button
+            <BotonPlano
               className={styles.btnGhost}
               onClick={() => setModalKind(null)}
             >
               {editMode === "nucleo" ? "Cancelar" : "Cerrar"}
-            </button>
+            </BotonPlano>
             {editMode === "nucleo" && (
-              <button
+              <BotonPlano
                 className={styles.btnPrimary}
                 onClick={handleSaveNucleo}
                 disabled={savingMeta}
@@ -39,7 +40,7 @@ export default function ModalEditarPie({ ctx }: { ctx: PorOSCtx }) {
                     {replicaActiva ? "Guardar y replicar" : "Guardar"}
                   </>
                 )}
-              </button>
+              </BotonPlano>
             )}
           </>
         )}

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Search, X as XIcon } from "lucide-react";
 import type { Especialidad } from "../Especialidades/especialidades.types";
 import styles from "./EspecialidadCombo.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 type Props = {
   especialidades: Especialidad[];
@@ -75,9 +76,9 @@ export default function EspecialidadCombo({
         onFocus={(e) => { setOpen(true); e.currentTarget.select(); }}
       />
       {value !== null && (
-        <button type="button" className={styles.clear} onClick={clear} title="Quitar filtro">
+        <BotonPlano type="button" className={styles.clear} onClick={clear} title="Quitar filtro">
           <XIcon size={13} />
-        </button>
+        </BotonPlano>
       )}
       {open && (
         <ul className={styles.dropdown}>

@@ -3,6 +3,7 @@ import { Search, X as XIcon } from "lucide-react";
 
 import styles from "./consulta.module.scss";
 import Cargando from "@/app/components/ui/Cargando/Cargando";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 /** Controlled, presentational autocomplete. The parent owns the data source (sync-filtered list or async search) and passes `items`, `query`, `loading`. */
 type ComboboxProps<T> = {
@@ -90,9 +91,9 @@ function Combobox<T>({
         <div className={`${styles.chosen} ${getCode ? "" : styles.chosenPad}`}>
           {getCode && <span className={styles.chosenCode}>{getCode(selected)}</span>}
           <span className={styles.chosenText}>{getText(selected)}</span>
-          <button type="button" className={styles.chosenX} onClick={onClear} title="Cambiar" aria-label="Cambiar">
+          <BotonPlano type="button" className={styles.chosenX} onClick={onClear} title="Cambiar" aria-label="Cambiar">
             <XIcon size={17} />
-          </button>
+          </BotonPlano>
         </div>
       ) : (
         <div className={styles.fieldWrap}>

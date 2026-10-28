@@ -7,6 +7,7 @@ import Button from "@/app/components/ui/Button/Button";
 import Franja from "@/app/components/layout/Franja/Franja";
 import type { EstadoReporte } from "./useReporteConPadron";
 import s from "./reporte.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 /** Un número del resumen que va arriba de la tabla. */
 export interface DatoResumen {
@@ -116,9 +117,9 @@ export default function ReporteOS<T>({
         </Button>
 
         {estado.archivo && (
-          <button type="button" className={s.limpiar} onClick={limpiar}>
+          <BotonPlano type="button" className={s.limpiar} onClick={limpiar}>
             <Trash2 size={16} /> Quitar
-          </button>
+          </BotonPlano>
         )}
       </div>
 

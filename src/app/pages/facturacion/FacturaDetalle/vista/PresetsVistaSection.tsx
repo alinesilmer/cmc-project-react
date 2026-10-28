@@ -3,6 +3,7 @@ import { Trash2 } from "lucide-react";
 import { crearVistaPreset, eliminarVistaPreset, listarVistaPresets } from "../../api";
 import type { VistaOpciones, VistaPreset } from "./types";
 import s from "../export/export.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 interface Props {
   opciones: VistaOpciones;
@@ -69,12 +70,12 @@ export default function PresetsVistaSection({ opciones, onAplicar }: Props) {
         <ul className={s.presetList}>
           {presets.map((p) => (
             <li key={p.id} className={s.presetItem}>
-              <button type="button" className={s.presetApply} onClick={() => onAplicar(p.opciones)}>
+              <BotonPlano type="button" className={s.presetApply} onClick={() => onAplicar(p.opciones)}>
                 {p.nombre}
-              </button>
-              <button type="button" className={s.presetDelete} onClick={() => eliminar(p.id)} aria-label="Eliminar preset">
+              </BotonPlano>
+              <BotonPlano type="button" className={s.presetDelete} onClick={() => eliminar(p.id)} aria-label="Eliminar preset">
                 <Trash2 size={14} />
-              </button>
+              </BotonPlano>
             </li>
           ))}
         </ul>
@@ -86,9 +87,9 @@ export default function PresetsVistaSection({ opciones, onAplicar }: Props) {
           value={nombreNuevo}
           onChange={(e) => setNombreNuevo(e.target.value)}
         />
-        <button type="button" className={s.presetSaveBtn} onClick={guardar} disabled={!nombreNuevo.trim() || guardando}>
+        <BotonPlano type="button" className={s.presetSaveBtn} onClick={guardar} disabled={!nombreNuevo.trim() || guardando}>
           Guardar
-        </button>
+        </BotonPlano>
       </div>
     </div>
   );

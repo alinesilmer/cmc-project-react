@@ -28,6 +28,7 @@ import {
   mesCuota,
   repartirCuotas,
 } from "./utiles";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 // «2026-11» (input type=month) ⇄ mes y año.
 const mesDeInput = (v: string): { mes_inicio: number; anio_inicio: number } | null => {
@@ -339,7 +340,7 @@ const Compensaciones: React.FC = () => {
       render: (c) =>
         c.estado === "pendiente" ? (
           <div className={lq.accionesFila}>
-            <button
+            <BotonPlano
               type="button"
               className={lq.botonIcono}
               title="Editar"
@@ -350,8 +351,8 @@ const Compensaciones: React.FC = () => {
               }}
             >
               <Pencil size={16} />
-            </button>
-            <button
+            </BotonPlano>
+            <BotonPlano
               type="button"
               className={lq.botonIconoPeligro}
               title="Anular"
@@ -364,7 +365,7 @@ const Compensaciones: React.FC = () => {
               }}
             >
               <Ban size={16} />
-            </button>
+            </BotonPlano>
           </div>
         ) : null,
     },

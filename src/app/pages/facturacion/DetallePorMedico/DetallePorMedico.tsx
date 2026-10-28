@@ -18,6 +18,7 @@ import { dedupePorId } from "../components/localSearch";
 import styles from "./DetallePorMedico.module.scss";
 import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
 import { comoErrorApi } from "@/app/shared/lib/httpErrors";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 // Tope del backend por request (GET /prestaciones: limit <= 200) y freno de seguridad para no traer indefinidamente si un médico tuviera muchísimas filas.
 const PAGE_LIMIT = 200;
@@ -187,9 +188,9 @@ const DetallePorMedico: React.FC = () => {
         {errorPrecarga ? (
           <div className={styles.emptyState}>
             <p className={styles.emptyTextStrong}><AlertTriangle size={14} style={{ verticalAlign: "-2px" }} aria-hidden="true" /> No se pudieron cargar los médicos.</p>
-            <button type="button" className={styles.searchBtn} onClick={() => setReintentoPrecarga((k) => k + 1)}>
+            <BotonPlano type="button" className={styles.searchBtn} onClick={() => setReintentoPrecarga((k) => k + 1)}>
               Reintentar
-            </button>
+            </BotonPlano>
           </div>
         ) : (
           <div className={styles.emptyState}>
@@ -240,12 +241,12 @@ const DetallePorMedico: React.FC = () => {
             />
           </div>
 
-          <button type="button" className={styles.searchBtn} onClick={buscar} disabled={loading}>
+          <BotonPlano type="button" className={styles.searchBtn} onClick={buscar} disabled={loading}>
             <Search size={16} /> {loading ? "Buscando…" : "Ver detalle"}
-          </button>
-          <button type="button" className={styles.clearBtn} onClick={limpiar} disabled={loading}>
+          </BotonPlano>
+          <BotonPlano type="button" className={styles.clearBtn} onClick={limpiar} disabled={loading}>
             Limpiar
-          </button>
+          </BotonPlano>
         </div>
 
         {/* Resumen + banner del médico */}

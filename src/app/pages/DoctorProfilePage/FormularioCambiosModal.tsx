@@ -12,6 +12,7 @@ import {
   getCamposEditables,
 } from "../SolicitudesCambio/solicitudesCambio.api";
 import styles from "./ReportarCambioModal.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 const MAX_MENSAJE = 2000;
 
@@ -101,9 +102,9 @@ const FormularioCambiosModal: React.FC<Props> = ({ open, onClose, onEnviado }) =
     >
       <div className={styles.cabeza}>
         <h2 className={styles.titulo}>Corregir mis datos</h2>
-        <button type="button" className={styles.cerrar} onClick={onClose} disabled={enviando} aria-label="Cerrar">
+        <BotonPlano type="button" className={styles.cerrar} onClick={onClose} disabled={enviando} aria-label="Cerrar">
           <X size={16} aria-hidden="true" />
-        </button>
+        </BotonPlano>
       </div>
 
         <div className={styles.form}>
@@ -129,14 +130,14 @@ const FormularioCambiosModal: React.FC<Props> = ({ open, onClose, onEnviado }) =
                       <label className={styles.label} htmlFor={`f-${c.campo}`}>
                         {c.etiqueta}
                         {cambiado && (
-                          <button
+                          <BotonPlano
                             type="button"
                             className={styles.restaurar}
                             onClick={() => restaurar(c.campo)}
                             title="Volver al valor actual"
                           >
                             <RotateCcw size={12} /> deshacer
-                          </button>
+                          </BotonPlano>
                         )}
                       </label>
                       <input

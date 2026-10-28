@@ -20,6 +20,7 @@ import { OtrosSection } from "./sections/OtrosSection";
 import { FaltantesSection } from "./sections/FaltantesSection";
 import { FiltersResumen } from "./sections/FiltersResumen";
 import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 interface FilterModalProps {
   filters: FilterSelection;
@@ -76,9 +77,9 @@ const FilterModal: React.FC<FilterModalProps> = ({
   return (
     <div className={styles.modal}>
       <header className={styles.franja}>
-        <button type="button" className={styles.cerrar} onClick={onClose} aria-label="Cerrar">
+        <BotonPlano type="button" className={styles.cerrar} onClick={onClose} aria-label="Cerrar">
           <X size={22} aria-hidden="true" />
-        </button>
+        </BotonPlano>
         <h2 className={styles.titulo}>Filtrar y exportar</h2>
         <div className={styles.solapas} role="tablist">
           <Solapa

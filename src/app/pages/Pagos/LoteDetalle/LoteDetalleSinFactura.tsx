@@ -24,6 +24,7 @@ import { ESTADO_TONO, ITEM_URL, estadoLabel } from "@/app/pages/Pagos/LoteDetall
 import Dialogo from "@/app/components/ui/Dialogo/Dialogo";
 import paleta from "@/app/styles/paleta.module.scss";
 import { comoErrorApi } from "@/app/shared/lib/httpErrors";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 type EditForm = { tipo: "d" | "c"; honorarios: string; gastos: string; observacion: string };
 const transitionLabels: Record<string, string> = {
   cerrar: "Cerrar Lote",
@@ -501,22 +502,22 @@ const LoteDetalleSinFactura: React.FC = () => {
                 <div className={styles.formGroup}>
                   <label className={styles.formLabel}>Tipo</label>
                   <div className={styles.tipoToggle}>
-                    <button
+                    <BotonPlano
                       type="button"
                       className={`${styles.tipoBtn} ${newTipo === "d" ? styles.tipoBtnActive : ""}`}
                       onClick={() => setNewTipo("d")}
                       disabled={confirming}
                     >
                       Débito
-                    </button>
-                    <button
+                    </BotonPlano>
+                    <BotonPlano
                       type="button"
                       className={`${styles.tipoBtn} ${newTipo === "c" ? styles.tipoBtnActiveC : ""}`}
                       onClick={() => setNewTipo("c")}
                       disabled={confirming}
                     >
                       Crédito
-                    </button>
+                    </BotonPlano>
                   </div>
                 </div>
 
@@ -630,22 +631,22 @@ const LoteDetalleSinFactura: React.FC = () => {
               <div className={styles.formRow}>
                 <label className={styles.formLabel}>Tipo</label>
                 <div className={styles.tipoToggle}>
-                  <button
+                  <BotonPlano
                     type="button"
                     className={`${styles.tipoBtn} ${editForm.tipo === "d" ? styles.tipoBtnActive : ""}`}
                     onClick={() => setEditForm((f) => ({ ...f, tipo: "d" }))}
                     disabled={editSaving}
                   >
                     Débito
-                  </button>
-                  <button
+                  </BotonPlano>
+                  <BotonPlano
                     type="button"
                     className={`${styles.tipoBtn} ${editForm.tipo === "c" ? styles.tipoBtnActiveC : ""}`}
                     onClick={() => setEditForm((f) => ({ ...f, tipo: "c" }))}
                     disabled={editSaving}
                   >
                     Crédito
-                  </button>
+                  </BotonPlano>
                 </div>
               </div>
               <div className={styles.formRow}>

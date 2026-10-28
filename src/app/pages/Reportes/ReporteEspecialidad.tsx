@@ -6,6 +6,7 @@ import type { CodigoStat } from "./reportes.types";
 import { money, moneyExacto, numero } from "./reportes.types";
 import { Cargando, ErrorBox, Vacio } from "./ReportesUI";
 import styles from "./Reportes.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 type Props = {
   especialidades: Especialidad[];
@@ -96,9 +97,9 @@ export default function ReporteEspecialidad({
                 {filas.map((c) => (
                   <tr key={c.codigo}>
                     <td>
-                      <button type="button" className={styles.rowBtn} onClick={() => onCodigo(c.codigo)}>
+                      <BotonPlano type="button" className={styles.rowBtn} onClick={() => onCodigo(c.codigo)}>
                         {c.codigo}
-                      </button>
+                      </BotonPlano>
                     </td>
                     <td className={styles.nombre}>{c.descripcion ?? "—"}</td>
                     <td>{numero.format(c.cantidad)}</td>

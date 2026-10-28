@@ -4,6 +4,7 @@ import { formatMoney, parseMoney } from "../money";
 import { etiquetaPrecio } from "./etiquetas";
 import { AlertTriangle } from "lucide-react";
 import paleta from "@/app/styles/paleta.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 interface Props {
   precio: PrecioResponse;
@@ -42,7 +43,7 @@ const PrecioPreviewCard: React.FC<Props> = ({ precio, onVolverATradicional }) =>
       >
         <span><AlertTriangle size={14} style={{ verticalAlign: "-2px" }} aria-hidden="true" /> {precio.motivo}</span>
         {precio.via === "L" && onVolverATradicional && (
-          <button
+          <BotonPlano
             type="button"
             onClick={onVolverATradicional}
             style={{
@@ -57,7 +58,7 @@ const PrecioPreviewCard: React.FC<Props> = ({ precio, onVolverATradicional }) =>
             }}
           >
             Volver a Tradicional
-          </button>
+          </BotonPlano>
         )}
       </div>
     )}

@@ -37,6 +37,7 @@ import comun from "./Comun.module.scss";
 import styles from "./FacturaDetalle.module.scss";;
 import Tabla from "@/app/components/ui/Tabla/Tabla";
 import { comoErrorApi, detalleObjeto } from "@/app/shared/lib/httpErrors";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 // Set vacío compartido: los grupos sin filas ocupadas reciben siempre esta misma referencia y su memo no se invalida.
 const SIN_OCUPADAS: ReadonlySet<number> = new Set();
@@ -677,22 +678,22 @@ const FacturaDetalle: React.FC = () => {
 
       {detalle?.documentacion_digital && (
         <nav className={styles.tabs} aria-label="Secciones de la factura">
-          <button
+          <BotonPlano
             type="button"
             className={`${styles.tab} ${pestana === "detalle" ? styles.tabActiva : ""}`}
             aria-current={pestana === "detalle" ? "page" : undefined}
             onClick={() => setPestana("detalle")}
           >
             Detalle
-          </button>
-          <button
+          </BotonPlano>
+          <BotonPlano
             type="button"
             className={`${styles.tab} ${pestana === "documentacion" ? styles.tabActiva : ""}`}
             aria-current={pestana === "documentacion" ? "page" : undefined}
             onClick={() => setPestana("documentacion")}
           >
             Documentación
-          </button>
+          </BotonPlano>
         </nav>
       )}
 

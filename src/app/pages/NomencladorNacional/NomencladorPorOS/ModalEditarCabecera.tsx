@@ -2,6 +2,7 @@ import styles from "./NomencladorPorOS.module.scss";
 import { origenBadgeLabel } from "./porOS.helpers";
 import { X as XIcon } from "lucide-react";
 import type { PorOSCtx } from "./useNomencladorPorOS";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 export default function ModalEditarCabecera({ ctx, editTarget }: { ctx: PorOSCtx; editTarget: NonNullable<PorOSCtx["editTarget"]> }) {
   const { setModalKind, editMode, espMap } = ctx;
@@ -24,12 +25,12 @@ export default function ModalEditarCabecera({ ctx, editTarget }: { ctx: PorOSCtx
               : ""}
           </p>
         </div>
-        <button
+        <BotonPlano
           className={styles.modalClose}
           onClick={() => setModalKind(null)}
         >
           <XIcon size={18} />
-        </button>
+        </BotonPlano>
       </div>
     </>
   );

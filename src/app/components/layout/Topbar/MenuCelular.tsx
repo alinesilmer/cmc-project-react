@@ -6,6 +6,7 @@ import { ChevronDown, X, type LucideIcon } from "lucide-react";
 import styles from "./Topbar.module.scss";
 import { ColumnasMenu, ItemMenu } from "./ItemMenu";
 import { isActivePath, menuVisible, passesPerms, type MenuLink, type TopEntry } from "./navegacion";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 type Props = {
   nav: TopEntry[];
@@ -72,7 +73,7 @@ export default function MenuCelular({
     const open = Boolean(expandidos[entry.id]);
     return (
       <div key={entry.id} className={styles.mGroup}>
-        <button
+        <BotonPlano
           type="button"
           className={styles.mGroupBtn}
           onClick={() => setExpandidos((p) => ({ ...p, [entry.id]: !p[entry.id] }))}
@@ -83,7 +84,7 @@ export default function MenuCelular({
           </span>
           <span className={styles.itemLabel}>{entry.label}</span>
           <ChevronDown size={16} className={`${styles.chev} ${open ? styles.chevOpen : ""}`} />
-        </button>
+        </BotonPlano>
         {open && (
           <div className={styles.mGroupBody}>
             <ColumnasMenu columnas={entry.columns} can={can} ruta={ruta} alNavegar={alNavegar} />
@@ -96,7 +97,7 @@ export default function MenuCelular({
   // Drawer en un portal a <body>: el `backdrop-filter` de la barra la vuelve el bloque contenedor de sus hijos `position: fixed`.
   return createPortal(
     <>
-      <button
+      <BotonPlano
         type="button"
         className={`${styles.overlay} ${abierto ? styles.overlayOn : ""}`}
         onClick={onCerrar}
@@ -115,9 +116,9 @@ export default function MenuCelular({
           ) : (
             <span className={styles.drawerTitulo}>Menú</span>
           )}
-          <button type="button" className={styles.drawerClose} onClick={onCerrar} aria-label="Cerrar">
+          <BotonPlano type="button" className={styles.drawerClose} onClick={onCerrar} aria-label="Cerrar">
             <X size={18} />
-          </button>
+          </BotonPlano>
         </div>
         <div className={styles.drawerBody}>
           {nav.map(entrada)}
@@ -135,10 +136,10 @@ export default function MenuCelular({
           )}
         </div>
         <div className={styles.drawerFoot}>
-          <button type="button" className={styles.authButton} onClick={onSalir}>
+          <BotonPlano type="button" className={styles.authButton} onClick={onSalir}>
             <IconoAuth size={17} />
             <span>{etiquetaAuth}</span>
-          </button>
+          </BotonPlano>
         </div>
       </aside>
     </>,

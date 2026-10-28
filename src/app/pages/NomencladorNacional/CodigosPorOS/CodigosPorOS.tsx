@@ -8,7 +8,7 @@ import base from "../NomencladorCodigos/NomencladorCodigos.module.scss";
 import styles from "./CodigosPorOS.module.scss";
 import AppSearchSelect from "@/app/components/ui/AppSearchSelect/AppSearchSelect";
 import Modal from "@/app/components/ui/Modal/Modal";
-import MultiSelectBuscable from "@/app/components/molecules/MultiSelectBuscable/MultiSelectBuscable";
+import MultiSelectBuscable from "@/app/components/ui/MultiSelectBuscable/MultiSelectBuscable";
 import EstadoCodigoPill from "../components/EstadoCodigoPill";
 import { usePermisos } from "@/app/auth/usePermisos";
 import { useObrasSociales } from "../../ObrasSociales/useObrasSociales";
@@ -44,6 +44,7 @@ import Button from "@/app/components/ui/Button/Button";
 import SearchField from "@/app/components/ui/SearchField/SearchField";
 import Vacio from "@/app/components/ui/Vacio/Vacio";
 import c from "@/app/components/ui/Paso/Campos.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 const PRECIOS_PATH = "/panel/nomenclador/precios/por-obra-social";
 const PAGE_SIZE = 50;
 type Toast = { type: "success" | "error"; msg: string };
@@ -304,7 +305,7 @@ export default function CodigosPorOS() {
                 ? Object.values(datos.conteos).reduce((a, b) => a + b, 0)
                 : datos.conteos[f.id];
               return (
-                <button
+                <BotonPlano
                   key={f.id}
                   type="button"
                   aria-pressed={filtro === f.id}
@@ -313,7 +314,7 @@ export default function CodigosPorOS() {
                 >
                   <strong>{n}</strong>
                   <span>{f.label}</span>
-                </button>
+                </BotonPlano>
               );
             })}
           </div>
@@ -463,10 +464,10 @@ export default function CodigosPorOS() {
             </p>
             <div className={styles.modalFooter}>
               <span className={styles.flex1} />
-              <button type="button" className={base.btnGhost} onClick={() => setAConfirmar(null)} disabled={ejecutando}>Cancelar</button>
-              <button type="button" className={base.btnPrimary} onClick={() => void confirmarAccion()} disabled={ejecutando}>
+              <BotonPlano type="button" className={base.btnGhost} onClick={() => setAConfirmar(null)} disabled={ejecutando}>Cancelar</BotonPlano>
+              <BotonPlano type="button" className={base.btnPrimary} onClick={() => void confirmarAccion()} disabled={ejecutando}>
                 {ejecutando ? <><Cargando size={14} /> Aplicando…</> : "Confirmar"}
-              </button>
+              </BotonPlano>
             </div>
           </div>
         </Modal>
@@ -482,7 +483,7 @@ export default function CodigosPorOS() {
             </ul>
             <div className={styles.modalFooter}>
               <span className={styles.flex1} />
-              <button type="button" className={base.btnPrimary} onClick={() => setResultado(null)}>Cerrar</button>
+              <BotonPlano type="button" className={base.btnPrimary} onClick={() => setResultado(null)}>Cerrar</BotonPlano>
             </div>
           </div>
         </Modal>
@@ -633,10 +634,10 @@ function AltaModal({
           </div>
         )}
         <div className={styles.modalFooter}>
-          <button type="button" className={base.btnGhost} onClick={onClose}>Cancelar</button>
-          <button type="button" className={base.btnPrimary} onClick={confirmar} disabled={guardando || items.length === 0}>
+          <BotonPlano type="button" className={base.btnGhost} onClick={onClose}>Cancelar</BotonPlano>
+          <BotonPlano type="button" className={base.btnPrimary} onClick={confirmar} disabled={guardando || items.length === 0}>
             {guardando ? <><Cargando size={14} /> Dando de alta…</> : `Dar de alta ${items.length}`}
-          </button>
+          </BotonPlano>
         </div>
       </div>
     </Modal>
@@ -835,31 +836,31 @@ function EditarAltaModal({
               ))}
             </ul>
             <div className={styles.cierreAcciones}>
-              <button type="button" className={base.btnGhost} onClick={() => setCierre(null)} disabled={guardando}>
+              <BotonPlano type="button" className={base.btnGhost} onClick={() => setCierre(null)} disabled={guardando}>
                 Volver
-              </button>
-              <button
+              </BotonPlano>
+              <BotonPlano
                 type="button"
                 className={`${base.btnPrimary} ${styles.btnPeligro}`}
                 onClick={() => { setCierre(null); void guardar(true); }}
                 disabled={guardando}
               >
                 Cerrar {cierre.precios.length === 1 ? "precio" : "precios"} y guardar
-              </button>
+              </BotonPlano>
             </div>
           </div>
         ) : (
         <div className={styles.modalFooter}>
           {par && par.estado !== "suspendido" && (
-            <button type="button" className={`${base.btnGhost} ${styles.suspender}`} onClick={suspender} disabled={guardando}>
+            <BotonPlano type="button" className={`${base.btnGhost} ${styles.suspender}`} onClick={suspender} disabled={guardando}>
               Suspender en esta obra social
-            </button>
+            </BotonPlano>
           )}
           <span className={styles.flex1} />
-          <button type="button" className={base.btnGhost} onClick={onClose}>Cancelar</button>
-          <button type="button" className={base.btnPrimary} onClick={() => void guardar()} disabled={guardando || !par}>
+          <BotonPlano type="button" className={base.btnGhost} onClick={onClose}>Cancelar</BotonPlano>
+          <BotonPlano type="button" className={base.btnPrimary} onClick={() => void guardar()} disabled={guardando || !par}>
             {guardando ? <><Cargando size={14} /> Guardando…</> : "Guardar"}
-          </button>
+          </BotonPlano>
         </div>
         )}
       </div>

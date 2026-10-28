@@ -6,6 +6,7 @@ import { fetchMedicos } from "@/app/pages/facturacion/api";
 
 import type { FilaResultado } from "../importaciones.api";
 import s from "./panel.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 /** Buscador de socio para una matrícula que no cae en ninguno. */
 function BuscarSocio({ valor, onElegir }: { valor: number | null; onElegir: (n: number | null) => void }) {
@@ -61,9 +62,9 @@ export default function ElegirSocio({
       ) : (
         <BuscarSocio valor={valor} onElegir={onElegir} />
       )}
-      <button type="button" className={s.descartar} onClick={onDescartar}>
+      <BotonPlano type="button" className={s.descartar} onClick={onDescartar}>
         Descartar esta fila
-      </button>
+      </BotonPlano>
     </div>
   );
 }

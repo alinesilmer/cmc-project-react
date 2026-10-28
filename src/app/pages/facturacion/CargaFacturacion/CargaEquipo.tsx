@@ -5,6 +5,7 @@ import styles from "./CargaFacturacion.module.scss";
 import { crearPediatraLinea } from "./sections/pediatra.helpers";
 import { formatMoney, parseMoney } from "../money";
 import type { CargaCtx } from "./useCargaFacturacion";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 export default function CargaEquipo({ ctx, medicosPrecargados }: { ctx: CargaCtx; medicosPrecargados: NonNullable<CargaCtx["medicosPrecargados"]> }) {
   const { isEdit, codMedico, honorarios, gastos, coseguro, tipoPrestador, ayudantes, setAyudantes, pediatra, setPediatra, autorizacionPorIntegrante, guardando, errores, precio, precioPediatra, precioPediatraLoading, totalEstimado, formDisabled, maxAyudantes, admiteAyudante, admitePediatra } = ctx;
@@ -43,7 +44,7 @@ export default function CargaEquipo({ ctx, medicosPrecargados }: { ctx: CargaCtx
           />
         ) : (
           <div className={comun.section}>
-            <button
+            <BotonPlano
               type="button"
               className={styles.addPediatraBtn}
               onClick={() => setPediatra(crearPediatraLinea())}
@@ -51,7 +52,7 @@ export default function CargaEquipo({ ctx, medicosPrecargados }: { ctx: CargaCtx
             >
               <span style={{ fontSize: 16 }}>+</span>
               <span>Agregar pediatra</span>
-            </button>
+            </BotonPlano>
           </div>
         )
       )}

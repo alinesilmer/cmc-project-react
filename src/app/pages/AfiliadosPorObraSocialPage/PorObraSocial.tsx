@@ -34,6 +34,7 @@ import Caja, { Cajas } from "@/app/components/ui/Caja/Caja";
 import { useAppSnackbar } from "@/app/hooks/useAppSnackbar";
 import SearchField from "@/app/components/ui/SearchField/SearchField";
 import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 const MAX_IDLE_OS_RESULTS = 80;
 
@@ -186,13 +187,13 @@ export default function PorObraSocial() {
       <Cajas>
         <Caja titulo="Configuración">
         <div className={styles.osPicker} ref={dropdownRef}>
-          <button type="button" className={styles.osButton} onClick={toggleDropdown} aria-expanded={osDropdownOpen} disabled={loadingObras}>
+          <BotonPlano type="button" className={styles.osButton} onClick={toggleDropdown} aria-expanded={osDropdownOpen} disabled={loadingObras}>
             <Building2 size={18} className={styles.osIcono} aria-hidden="true" />
             <span className={styles.osButtonValue}>
               {selectedOS?.NOMBRE ?? (loadingObras ? "Cargando…" : "Seleccioná una obra social")}
             </span>
             <ChevronDown className={`${comun.chevron} ${osDropdownOpen ? styles.chevronOpen : ""}`} />
-          </button>
+          </BotonPlano>
 
           {osDropdownOpen && (
             <div className={styles.dropdown}>
@@ -200,7 +201,7 @@ export default function PorObraSocial() {
                 <Search className={styles.searchIconSmall} />
                 <input className={styles.dropdownInput} value={osQuery} onChange={(e) => setOsQuery(e.target.value)} onFocus={openDropdown} placeholder="Buscar por nombre o código…" aria-label="Buscar obra social" autoFocus />
                 {(osQuery.trim() || selectedOS) && (
-                  <button className={styles.clearBtn} type="button" onClick={clearOS} title="Limpiar selección"><X size={16} /></button>
+                  <BotonPlano className={styles.clearBtn} type="button" onClick={clearOS} title="Limpiar selección"><X size={16} /></BotonPlano>
                 )}
               </div>
               {hiddenOsCount > 0 && (
@@ -218,10 +219,10 @@ export default function PorObraSocial() {
                     const code = buildOsCode(os);
                     const active = selectedOS?.NRO_OBRA_SOCIAL === os.NRO_OBRA_SOCIAL;
                     return (
-                      <button key={os.NRO_OBRA_SOCIAL} type="button" className={`${styles.dropdownItem} ${active ? styles.dropdownItemActive : ""}`} onClick={() => selectOS(os)}>
+                      <BotonPlano key={os.NRO_OBRA_SOCIAL} type="button" className={`${styles.dropdownItem} ${active ? styles.dropdownItemActive : ""}`} onClick={() => selectOS(os)}>
                         <span className={styles.dropdownItemName}>{os.NOMBRE}</span>
                         <span className={styles.dropdownItemCode}>{code}</span>
-                      </button>
+                      </BotonPlano>
                     );
                   })
                 )}
@@ -232,7 +233,7 @@ export default function PorObraSocial() {
 
           {/* Las columnas elegidas valen para la tabla y para lo que se exporta: lo que se ve es lo que sale en el archivo. */}
           <div className={styles.cajaFila}>
-            <button type="button" className={comun.ajusteBtn} onClick={() => setCamposOpen(true)}>
+            <BotonPlano type="button" className={comun.ajusteBtn} onClick={() => setCamposOpen(true)}>
             <SlidersHorizontal size={15} aria-hidden="true" />
             Datos a mostrar
             <b>{campos.seleccionados.length}</b>
@@ -241,11 +242,11 @@ export default function PorObraSocial() {
                 {campos.sensibles} personal{campos.sensibles === 1 ? "" : "es"}
               </span>
             )}
-          </button>
-            <button type="button" className={comun.ajusteBtn} onClick={() => setRecuentoOpen(true)} disabled={!padronListo}>
+          </BotonPlano>
+            <BotonPlano type="button" className={comun.ajusteBtn} onClick={() => setRecuentoOpen(true)} disabled={!padronListo}>
             <ClipboardCheck size={15} aria-hidden="true" />
             Recuento de errores
-          </button>
+          </BotonPlano>
           </div>
         </Caja>
 
@@ -273,10 +274,10 @@ export default function PorObraSocial() {
           />
         </div>
           <div className={styles.cajaFila}>
-            <button type="button" className={comun.ajusteBtn} onClick={() => setEnvioOpen(true)} disabled={!padronListo}>
+            <BotonPlano type="button" className={comun.ajusteBtn} onClick={() => setEnvioOpen(true)} disabled={!padronListo}>
             <Mail size={15} aria-hidden="true" />
             Envío de lista de prestadores
-          </button>
+          </BotonPlano>
           </div>
         </Caja>
       </Cajas>
@@ -284,14 +285,14 @@ export default function PorObraSocial() {
       {exportar.error && (
         <div className={comun.errorMessage} role="alert">
           {exportar.error}
-          <button
+          <BotonPlano
             type="button"
             className={styles.errorClose}
             onClick={exportar.limpiarError}
             aria-label="Cerrar aviso"
           >
             <X size={15} />
-          </button>
+          </BotonPlano>
         </div>
       )}
 

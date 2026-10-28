@@ -10,6 +10,7 @@ import { crearTituloSeccion } from "./tituloSeccion";
 import SeccionImpositivos from "./SeccionImpositivos";
 import SeccionPersonales from "./SeccionPersonales";
 import SeccionProfesionales from "./SeccionProfesionales";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 type Props = {
   data: DoctorProfileX;
@@ -29,7 +30,7 @@ export default function TabDatos({ data, readOnly, editaSuLegajo, edicion, repor
   return (
     <>
       {((!readOnly && can("medico:editar")) || editaSuLegajo) && (
-        <button
+        <BotonPlano
           type="button"
           className={styles.editPencil}
           aria-label={isEditing ? "Cancelar edición" : "Editar"}
@@ -37,7 +38,7 @@ export default function TabDatos({ data, readOnly, editaSuLegajo, edicion, repor
           onClick={edicion.alternarEdicion}
         >
           <Pencil size={16} />
-        </button>
+        </BotonPlano>
       )}
 
       <SeccionPersonales {...seccion} />

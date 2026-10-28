@@ -2,9 +2,13 @@ import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { Building2, ChevronDown, Search } from "lucide-react";
 
 import type { ObraSocial } from "@/app/pages/AfiliadosPorObraSocialPage/types";
-import { buildOsCode, normalize } from "@/app/pages/AfiliadosPorObraSocialPage/helpers";
-// Mismo selector que «Padrones», con la copia local de sus estilos.
-import styles from "./Padrones.module.scss";
+import {
+  buildOsCode,
+  normalize,
+} from "@/app/pages/AfiliadosPorObraSocialPage/helpers";
+// Mismo selector que «Padrones»: los estilos del desplegable se comparten.
+import styles from "./SelectorObraSocial.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 const MAX_SIN_BUSCAR = 80;
 
@@ -17,7 +21,13 @@ type Props = {
 };
 
 /** Desplegable con buscador para elegir la obra social. */
-export default function SelectorObraSocial({ obras, cargando, error, seleccionada, onElegir }: Props) {
+export default function SelectorObraSocial({
+  obras,
+  cargando,
+  error,
+  seleccionada,
+  onElegir,
+}: Props) {
   const [abierto, setAbierto] = useState(false);
   const [consulta, setConsulta] = useState("");
   const consultaDiferida = useDeferredValue(consulta);
@@ -26,7 +36,8 @@ export default function SelectorObraSocial({ obras, cargando, error, seleccionad
   useEffect(() => {
     if (!abierto) return;
     const alTocarAfuera = (e: MouseEvent) => {
-      if (contenedor.current && !contenedor.current.contains(e.target as Node)) setAbierto(false);
+      if (contenedor.current && !contenedor.current.contains(e.target as Node))
+        setAbierto(false);
     };
     const alEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape") setAbierto(false);
@@ -43,11 +54,15 @@ export default function SelectorObraSocial({ obras, cargando, error, seleccionad
     const q = normalize(consultaDiferida);
     if (!q) return obras.slice(0, MAX_SIN_BUSCAR);
     return obras.filter(
-      (os) => normalize(os.NOMBRE ?? "").includes(q) || normalize(buildOsCode(os)).includes(q)
+      (os) =>
+        normalize(os.NOMBRE ?? "").includes(q) ||
+        normalize(buildOsCode(os)).includes(q),
     );
   }, [consultaDiferida, obras]);
 
-  const ocultas = normalize(consultaDiferida) ? 0 : Math.max(0, obras.length - filtradas.length);
+  const ocultas = normalize(consultaDiferida)
+    ? 0
+    : Math.max(0, obras.length - filtradas.length);
 
   const elegir = (os: ObraSocial) => {
     onElegir(os);
@@ -57,7 +72,7 @@ export default function SelectorObraSocial({ obras, cargando, error, seleccionad
 
   return (
     <div className={styles.osPicker} ref={contenedor}>
-      <button
+      <BotonPlano
         type="button"
         className={styles.osButton}
         onClick={() => !cargando && setAbierto((a) => !a)}
@@ -67,10 +82,14 @@ export default function SelectorObraSocial({ obras, cargando, error, seleccionad
       >
         <Building2 size={18} className={styles.osIcono} aria-hidden="true" />
         <span className={styles.osButtonValue}>
-          {seleccionada?.NOMBRE ?? (cargando ? "Cargando…" : "Seleccioná una obra social")}
+          {seleccionada?.NOMBRE ??
+            (cargando ? "Cargando…" : "Seleccioná una obra social")}
         </span>
-        <ChevronDown className={`${styles.chevron} ${abierto ? styles.chevronOpen : ""}`} aria-hidden="true" />
-      </button>
+        <ChevronDown
+          className={`${styles.chevron} ${abierto ? styles.chevronOpen : ""}`}
+          aria-hidden="true"
+        />
+      </BotonPlano>
 
       {abierto && (
         <div className={styles.dropdown}>
@@ -87,27 +106,33 @@ export default function SelectorObraSocial({ obras, cargando, error, seleccionad
           </div>
           {ocultas > 0 && (
             <div className={styles.dropdownMeta}>
-              Mostrando {filtradas.length} de {obras.length}. Escribí para filtrar.
+              Mostrando {filtradas.length} de {obras.length}. Escribí para
+              filtrar.
             </div>
           )}
           <div className={styles.dropdownList}>
             {error ? (
               <div className={styles.errorMessage}>{error}</div>
             ) : filtradas.length === 0 ? (
-              <div className={styles.emptyMessage}>Sin resultados para &ldquo;{consulta}&rdquo;</div>
+              <div className={styles.emptyMessage}>
+                Sin resultados para &ldquo;{consulta}&rdquo;
+              </div>
             ) : (
               filtradas.map((os) => {
-                const activa = seleccionada?.NRO_OBRA_SOCIAL === os.NRO_OBRA_SOCIAL;
+                const activa =
+                  seleccionada?.NRO_OBRA_SOCIAL === os.NRO_OBRA_SOCIAL;
                 return (
-                  <button
+                  <BotonPlano
                     key={os.NRO_OBRA_SOCIAL}
                     type="button"
                     className={`${styles.dropdownItem} ${activa ? styles.dropdownItemActive : ""}`}
                     onClick={() => elegir(os)}
                   >
                     <span className={styles.dropdownItemName}>{os.NOMBRE}</span>
-                    <span className={styles.dropdownItemCode}>{buildOsCode(os)}</span>
-                  </button>
+                    <span className={styles.dropdownItemCode}>
+                      {buildOsCode(os)}
+                    </span>
+                  </BotonPlano>
                 );
               })
             )}

@@ -8,6 +8,7 @@ import type { ObraSocialConfig } from "../validaciones.types";
 import s from "./GuiaPortalModal.module.scss";
 import MarcoModal from "@/app/components/ui/MarcoModal/MarcoModal";
 import Cargando from "@/app/components/ui/Cargando/Cargando";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 interface Props {
   os: ObraSocialConfig;
@@ -32,7 +33,7 @@ function CopiarValor({ label, valor }: { label: string; valor: string }) {
       <span className={s.credLabel}>{label}</span>
       <div className={s.credRow}>
         <span className={s.credValor}>{valor}</span>
-        <button
+        <BotonPlano
           type="button"
           className={`${s.copy} ${copiado ? s.copied : ""}`}
           onClick={copiar}
@@ -40,7 +41,7 @@ function CopiarValor({ label, valor }: { label: string; valor: string }) {
         >
           {copiado ? <Check size={15} /> : <Copy size={15} />}
           {copiado ? "Copiado" : "Copiar"}
-        </button>
+        </BotonPlano>
       </div>
     </div>
   );
@@ -77,9 +78,9 @@ export default function GuiaPortalModal({ os, onClose }: Props) {
             {os.logo ? <img src={os.logo} alt="" /> : iniciales(os.nombre)}
           </span>
           <h2 className={s.titulo}>{guia.titulo}</h2>
-          <button type="button" className={s.close} onClick={onClose} aria-label="Cerrar">
+          <BotonPlano type="button" className={s.close} onClick={onClose} aria-label="Cerrar">
             <X size={18} />
-          </button>
+          </BotonPlano>
         </div>
 
         <div className={s.body}>

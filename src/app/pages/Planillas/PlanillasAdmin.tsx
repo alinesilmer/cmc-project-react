@@ -16,6 +16,7 @@ import Caja from "@/app/components/ui/Caja/Caja";
 import Franja from "@/app/components/layout/Franja/Franja";
 import ListaPlanillas from "./components/ListaPlanillas";
 import { detalleDeError } from "@/app/shared/lib/httpErrors";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 /** Alta, edición y baja de las planillas que ven los médicos. */
 export default function PlanillasAdmin() {
@@ -186,7 +187,7 @@ export default function PlanillasAdmin() {
         onVer={ver}
         acciones={(p) => (
           <>
-            <button
+            <BotonPlano
               type="button"
               className={s.iconBtn}
               onClick={() => abrirEdicion(p)}
@@ -194,8 +195,8 @@ export default function PlanillasAdmin() {
               title="Editar"
             >
               <Pencil size={18} aria-hidden="true" />
-            </button>
-            <button
+            </BotonPlano>
+            <BotonPlano
               type="button"
               className={s.iconBtnPeligro}
               onClick={() => setAConfirmar(p)}
@@ -204,7 +205,7 @@ export default function PlanillasAdmin() {
               title="Borrar"
             >
               <Trash2 size={18} aria-hidden="true" />
-            </button>
+            </BotonPlano>
           </>
         )}
       />

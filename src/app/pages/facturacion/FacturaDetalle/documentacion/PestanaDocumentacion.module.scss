@@ -37,9 +37,9 @@
   color: $gray-900;
   font-variant-numeric: tabular-nums;
 }
-.ok { color: #15803d; }
-.alerta { color: #c2410c; }
-.info { color: #1d4ed8; }
+.ok { color: $tono-verde-700; }
+.alerta { color: $tono-rojo-450; }
+.info { color: $tono-azul-500-b; }
 
 .exportar {
   display: flex;
@@ -72,15 +72,15 @@
 
 .aviso {
   font-size: 0.75rem;
-  color: #7c2d12;
+  color: $tono-naranja-700;
 }
 
 .error {
   margin: 0;
   padding: 0.625rem 0.875rem;
   font-size: $font-size-sm;
-  color: #7c2d12;
-  background: #fff7ed;
-  border: 1px solid #fdba74;
+  color: $tono-naranja-700;
+  background: $tono-naranja-50;
+  border: 1px solid $tono-naranja-150;
   border-radius: 8px;
 }

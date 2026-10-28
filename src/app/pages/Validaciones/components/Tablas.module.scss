@@ -377,5 +377,5 @@
 
   &:hover { background: $gray-100; }
 }
-.docBtnOk { color: #14532d; border-color: #86efac; background: #f0fdf4; }
-.docBtnFalta { color: #7c2d12; border-color: #fdba74; background: #fff7ed; font-weight: 600; }
+.docBtnOk { color: $tono-verde-800; border-color: $tono-verde-150; background: $tono-verde-50-d; }
+.docBtnFalta { color: $tono-naranja-700; border-color: $tono-naranja-150; background: $tono-naranja-50; font-weight: 600; }

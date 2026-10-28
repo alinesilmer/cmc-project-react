@@ -21,6 +21,7 @@ import type { FieldGroup } from "./types";
 import { useDialogo } from "./useDialogo";
 import s from "./ExportFieldsModal.module.scss";
 import MarcoModal from "@/app/components/ui/MarcoModal/MarcoModal";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 type Props = {
   open: boolean;
@@ -56,9 +57,9 @@ const ExportFieldsModal = ({ open, onClose, keys, necesitaFicha, onToggle, onTog
     <MarcoModal onClose={onClose} ref={panelRef} className={s.panel} aria-labelledby="campos-titulo">
         <div className={m.modal}>
           <header className={m.franja}>
-            <button type="button" className={m.cerrar} onClick={onClose} aria-label="Cerrar">
+            <BotonPlano type="button" className={m.cerrar} onClick={onClose} aria-label="Cerrar">
               <X size={22} aria-hidden="true" />
-            </button>
+            </BotonPlano>
             <h2 id="campos-titulo" className={m.titulo}>Datos a mostrar</h2>
             <div className={m.solapas} role="tablist">
               {GRUPOS.map((g) => {
@@ -79,15 +80,15 @@ const ExportFieldsModal = ({ open, onClose, keys, necesitaFicha, onToggle, onTog
 
           <div className={m.cuerpo}>
             <section className={m.caja}>
-              <button type="button" className={m.selectAllBtn} onClick={() => onToggleGroup(grupo)}>
+              <BotonPlano type="button" className={m.selectAllBtn} onClick={() => onToggleGroup(grupo)}>
                 {puestos === campos.length ? "Quitar todos" : "Agregar todos"}
-              </button>
+              </BotonPlano>
 
               <div className={`${m.colOptions} ${s.opciones}`}>
                 {campos.map((c) => {
                   const activo = keys.has(c.key);
                   return (
-                    <button
+                    <BotonPlano
                       key={c.key}
                       type="button"
                       role="checkbox"
@@ -104,7 +105,7 @@ const ExportFieldsModal = ({ open, onClose, keys, necesitaFicha, onToggle, onTog
                           <Database size={13} aria-hidden="true" />
                         </span>
                       )}
-                    </button>
+                    </BotonPlano>
                   );
                 })}
               </div>

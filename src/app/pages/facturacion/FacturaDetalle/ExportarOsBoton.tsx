@@ -11,6 +11,7 @@ import {
 import type { FacturaDetalleResponse } from "../types";
 import styles from "./CabeceraExpediente.module.scss";
 import Cargando from "@/app/components/ui/Cargando/Cargando";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 type Descargar = (facturaId: number, params: { tipo?: string; nro_factura?: string }) => Promise<{ blob: Blob }>;
 
@@ -111,12 +112,12 @@ export default function ExportarOsBoton({ detalle }: { detalle: FacturaDetalleRe
           />
         </>
       )}
-      <button
+      <BotonPlano
         type="button" className={styles.btn} onClick={generar}
         disabled={generando || (pedirNumero && (tipo.trim() === "" || nro.trim() === ""))}
       >
         {generando ? <Cargando size={15} /> : <Icono size={15} />} {exportable.texto}
-      </button>
+      </BotonPlano>
     </>
   );
 }

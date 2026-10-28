@@ -10,6 +10,7 @@ import type { ObraSocialConfig } from "../validaciones.types";
 import DiaLimite from "./DiaLimite";
 import g from "./GuiaPortalModal.module.scss";
 import s from "./RequisitosModal.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 interface Props {
   os: ObraSocialConfig;
@@ -41,9 +42,9 @@ export default function RequisitosModal({ os, onClose }: Props) {
           {os.logo ? <img src={os.logo} alt="" /> : iniciales(os.nombre)}
         </span>
         <h2 className={g.titulo}>{os.nombre}</h2>
-        <button type="button" className={g.close} onClick={onClose} aria-label="Cerrar">
+        <BotonPlano type="button" className={g.close} onClick={onClose} aria-label="Cerrar">
           <X size={18} />
-        </button>
+        </BotonPlano>
       </div>
 
       <div className={g.body}>

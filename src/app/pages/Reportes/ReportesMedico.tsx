@@ -31,6 +31,7 @@ import { exportarCsv, exportarExcel, exportarPdf, nombreArchivo } from "./export
 import type { ColumnaExport, DocumentoReporte } from "./exportar";
 import styles from "./Reportes.module.scss";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 const LIMIT = 20;
 const STALE = 5 * 60 * 1000;
@@ -267,14 +268,14 @@ const ReportesMedico: React.FC<Props> = ({ nroSocio }) => {
                 {(codigos.data ?? []).map((c) => (
                   <tr key={c.codigo}>
                     <td>
-                      <button
+                      <BotonPlano
                         type="button"
                         className={styles.rowBtn}
                         onClick={() => setCodigo(c.codigo)}
                         title="Ver sólo este código"
                       >
                         {c.codigo}
-                      </button>
+                      </BotonPlano>
                     </td>
                     <td className={styles.nombre}>{c.descripcion ?? "—"}</td>
                     <td className={styles.num}>{numero.format(c.cantidad)}</td>

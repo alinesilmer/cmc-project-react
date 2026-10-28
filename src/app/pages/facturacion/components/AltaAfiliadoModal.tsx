@@ -5,6 +5,7 @@ import type { AfiliadoRead } from "../types";
 import { mensajeDeError } from "@/app/shared/lib/httpErrors";
 import styles from "./AltaAfiliadoModal.module.scss";
 import MarcoModal from "@/app/components/ui/MarcoModal/MarcoModal";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 interface Props {
   isOpen: boolean;
@@ -85,9 +86,9 @@ const AltaAfiliadoModal: React.FC<Props> = ({ isOpen, dni, afiliado, onClose, on
                     : "Cargá el nombre, el DNI o nro de afiliado, o los dos."}
                 </p>
               </div>
-              <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="Cerrar" disabled={loading}>
+              <BotonPlano type="button" className={styles.closeBtn} onClick={onClose} aria-label="Cerrar" disabled={loading}>
                 <X size={16} />
-              </button>
+              </BotonPlano>
             </div>
 
             <div className={styles.body}>
@@ -124,12 +125,12 @@ const AltaAfiliadoModal: React.FC<Props> = ({ isOpen, dni, afiliado, onClose, on
             </div>
 
             <div className={styles.footer}>
-              <button type="button" className={styles.btnGhost} onClick={onClose} disabled={loading}>
+              <BotonPlano type="button" className={styles.btnGhost} onClick={onClose} disabled={loading}>
                 Cancelar
-              </button>
-              <button type="button" className={styles.btnPrimary} onClick={handleSubmit} disabled={!puedeGuardar}>
+              </BotonPlano>
+              <BotonPlano type="button" className={styles.btnPrimary} onClick={handleSubmit} disabled={!puedeGuardar}>
                 {loading ? "Guardando…" : editando ? "Guardar" : "Dar de alta"}
-              </button>
+              </BotonPlano>
             </div>
           </MarcoModal>
       )}

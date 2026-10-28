@@ -1,6 +1,12 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { crearLiquidacion, listarFacturasParaPago, listarLiquidacionesDePago, listarObrasSociales, urlLiquidacion } from "@/app/pages/Pagos/pagos.api";
+import {
+  crearLiquidacion,
+  listarFacturasParaPago,
+  listarLiquidacionesDePago,
+  listarObrasSociales,
+  urlLiquidacion,
+} from "@/app/pages/Pagos/pagos.api";
 import { useAppSnackbar } from "@/app/hooks/useAppSnackbar";
 import Button from "@/app/components/ui/Button/Button";
 import SelectableTable from "@/app/components/ui/SelectableTable/SelectableTable";
@@ -25,6 +31,7 @@ import BotonVer from "@/app/components/ui/BotonVer/BotonVer";
 import Dialogo from "@/app/components/ui/Dialogo/Dialogo";
 import paleta from "@/app/styles/paleta.module.scss";
 import { comoErrorApi } from "@/app/shared/lib/httpErrors";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 type Props = {
   pago: Pago;
@@ -125,15 +132,23 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
       const r = created.resumen_carga;
       const afuera = r ? avisoDeCarga(r) : "";
       if (r && afuera) {
-        setAvisoCarga(`Factura ${created.nro_factura}: ${r.cargadas} de ${r.total} prestaciones cargadas. Revisar: ${afuera}.`);
+        setAvisoCarga(
+          `Factura ${created.nro_factura}: ${r.cargadas} de ${r.total} prestaciones cargadas. Revisar: ${afuera}.`,
+        );
         notify(
           `Factura agregada con ${r.total - r.cargadas - r.ya_liquidadas - (r.reservadas ?? 0)} prestaciones sin cargar` +
-            (r.reservadas ? ` y ${r.reservadas} reservadas en adelantos.` : "."),
+            (r.reservadas
+              ? ` y ${r.reservadas} reservadas en adelantos.`
+              : "."),
           "warning",
         );
       } else {
         setAvisoCarga(null);
-        notify(r ? `Factura agregada: ${r.cargadas} de ${r.total} prestaciones cargadas.` : "Factura agregada correctamente.");
+        notify(
+          r
+            ? `Factura agregada: ${r.cargadas} de ${r.total} prestaciones cargadas.`
+            : "Factura agregada correctamente.",
+        );
       }
       onRefresh?.();
     } catch (e) {
@@ -256,9 +271,19 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
       {avisoCarga && (
         <div className={styles.errorBanner} role="status">
           {avisoCarga}{" "}
-          <button type="button" onClick={() => setAvisoCarga(null)} style={{ textDecoration: "underline", background: "none", border: 0, cursor: "pointer", color: "inherit" }}>
+          <BotonPlano
+            type="button"
+            onClick={() => setAvisoCarga(null)}
+            style={{
+              textDecoration: "underline",
+              background: "none",
+              border: 0,
+              cursor: "pointer",
+              color: "inherit",
+            }}
+          >
             Cerrar aviso
-          </button>
+          </BotonPlano>
         </div>
       )}
 
@@ -300,83 +325,88 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
             </>
           }
         >
-              <div className={styles.formRow}>
-                <label className={styles.formLabel}>Obra Social</label>
-                <AppSearchSelect
-                  ordenar
-                  options={obrasSociales.map((os) => ({
-                    id: String(os.nro_obra_social),
-                    label: `${os.nro_obra_social} - ${os.nombre}`,
-                  }))}
-                  value={selectedOS !== "" ? String(selectedOS) : null}
-                  onChange={handleOSSelect}
-                  loading={loadingOS}
-                  disabled={adding}
-                />
+          <div className={styles.formRow}>
+            <label className={styles.formLabel}>Obra Social</label>
+            <AppSearchSelect
+              ordenar
+              options={obrasSociales.map((os) => ({
+                id: String(os.nro_obra_social),
+                label: `${os.nro_obra_social} - ${os.nombre}`,
+              }))}
+              value={selectedOS !== "" ? String(selectedOS) : null}
+              onChange={handleOSSelect}
+              loading={loadingOS}
+              disabled={adding}
+            />
+          </div>
+          <div className={styles.formRow}>
+            <label className={styles.formLabel} htmlFor="pago-factura">
+              Factura a pagar
+            </label>
+            {!selectedOS ? (
+              <span style={{ fontSize: 12, color: paleta.gray400 }}>
+                Seleccioná una obra social primero.
+              </span>
+            ) : loadingFacturas ? (
+              <span style={{ fontSize: 13, color: paleta.gray500 }}>
+                Cargando facturas…
+              </span>
+            ) : facturas.length === 0 ? (
+              <span style={{ fontSize: 12, color: paleta.gray400 }}>
+                Esta obra social no tiene facturas con prestaciones por pagar.
+              </span>
+            ) : (
+              <select
+                id="pago-factura"
+                className={styles.formSelect}
+                value={selectedFactura}
+                onChange={(e) => setSelectedFactura(e.target.value)}
+                disabled={adding}
+              >
+                <option value="">Seleccioná una factura…</option>
+                {facturas.map((f) => (
+                  <option key={f.FACTURA_ID} value={f.FACTURA_ID}>
+                    {etiquetaFactura(f)} — {mesLabel(f.MES)} {f.ANIO}
+                  </option>
+                ))}
+              </select>
+            )}
+            {facturaElegida && (
+              <span style={{ fontSize: 12, color: paleta.gray500 }}>
+                {facturaElegida.CANTIDAD} prestaci
+                {facturaElegida.CANTIDAD !== 1 ? "ones" : "ón"} cerrada
+                {facturaElegida.CANTIDAD !== 1 ? "s" : ""} por $
+                {fmt(facturaElegida.IMPORTE)}
+              </span>
+            )}
+            {facturaElegida && (facturaElegida.RESERVADAS ?? 0) > 0 && (
+              <div
+                role="note"
+                style={{
+                  marginTop: 8,
+                  padding: "10px 12px",
+                  fontSize: 13,
+                  lineHeight: 1.5,
+                  color: paleta.tonoNaranja800,
+                  background: paleta.tonoNaranja50C,
+                  border: `1px solid ${paleta.tonoNaranja200}`,
+                  borderRadius: 10,
+                }}
+              >
+                <b>
+                  {facturaElegida.RESERVADAS} prestaci
+                  {facturaElegida.RESERVADAS !== 1
+                    ? "ones quedan"
+                    : "ón queda"}{" "}
+                  afuera
+                </b>{" "}
+                (${fmt(facturaElegida.IMPORTE_RESERVADO ?? 0)}): reservada
+                {facturaElegida.RESERVADAS !== 1 ? "s" : ""} en adelantos. Se
+                pagan cuando esos adelantos pasen a un pago.
               </div>
-              <div className={styles.formRow}>
-                <label className={styles.formLabel} htmlFor="pago-factura">
-                  Factura a pagar
-                </label>
-                {!selectedOS ? (
-                  <span style={{ fontSize: 12, color: paleta.gray400 }}>
-                    Seleccioná una obra social primero.
-                  </span>
-                ) : loadingFacturas ? (
-                  <span style={{ fontSize: 13, color: paleta.gray500 }}>
-                    Cargando facturas…
-                  </span>
-                ) : facturas.length === 0 ? (
-                  <span style={{ fontSize: 12, color: paleta.gray400 }}>
-                    Esta obra social no tiene facturas con prestaciones por pagar.
-                  </span>
-                ) : (
-                  <select
-                    id="pago-factura"
-                    className={styles.formSelect}
-                    value={selectedFactura}
-                    onChange={(e) => setSelectedFactura(e.target.value)}
-                    disabled={adding}
-                  >
-                    <option value="">Seleccioná una factura…</option>
-                    {facturas.map((f) => (
-                      <option key={f.FACTURA_ID} value={f.FACTURA_ID}>
-                        {etiquetaFactura(f)} — {mesLabel(f.MES)} {f.ANIO}
-                      </option>
-                    ))}
-                  </select>
-                )}
-                {facturaElegida && (
-                  <span style={{ fontSize: 12, color: paleta.gray500 }}>
-                    {facturaElegida.CANTIDAD} prestaci
-                    {facturaElegida.CANTIDAD !== 1 ? "ones" : "ón"} cerrada
-                    {facturaElegida.CANTIDAD !== 1 ? "s" : ""} por $
-                    {fmt(facturaElegida.IMPORTE)}
-                  </span>
-                )}
-                {facturaElegida && (facturaElegida.RESERVADAS ?? 0) > 0 && (
-                  <div
-                    role="note"
-                    style={{
-                      marginTop: 8,
-                      padding: "10px 12px",
-                      fontSize: 13,
-                      lineHeight: 1.5,
-                      color: "#5c3300",
-                      background: "#fff7e6",
-                      border: "1px solid #f5d9a0",
-                      borderRadius: 10,
-                    }}
-                  >
-                    <b>
-                      {facturaElegida.RESERVADAS} prestaci{facturaElegida.RESERVADAS !== 1 ? "ones quedan" : "ón queda"} afuera
-                    </b>{" "}
-                    (${fmt(facturaElegida.IMPORTE_RESERVADO ?? 0)}): reservada
-                    {facturaElegida.RESERVADAS !== 1 ? "s" : ""} en adelantos. Se pagan cuando esos adelantos pasen a un pago.
-                  </div>
-                )}
-              </div>
-            </Dialogo>
+            )}
+          </div>
+        </Dialogo>
       )}
     </div>
   );

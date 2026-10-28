@@ -5,6 +5,7 @@ import Cargando from "@/app/components/ui/Cargando/Cargando";
 import { Link } from "react-router-dom";
 import EstadoCodigoPill from "../components/EstadoCodigoPill";
 import type { PorOSCtx } from "./useNomencladorPorOS";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 export default function ModalCrearCodigo({ ctx }: { ctx: PorOSCtx }) {
   const { selectedNroOS, form, errors, parAlta, parCargando, nomSearch, nomResults, nomLoading, selectedOS, bloqueadoPorAlta, searchNom, selectNom, clearNom } = ctx;
@@ -21,7 +22,7 @@ export default function ModalCrearCodigo({ ctx }: { ctx: PorOSCtx }) {
             {form.nomencladorDesc && (
               <span className={styles.selectedCodeDesc}>{form.nomencladorDesc}</span>
             )}
-            <button
+            <BotonPlano
               style={{
                 marginLeft: "auto",
                 background: "none",
@@ -32,7 +33,7 @@ export default function ModalCrearCodigo({ ctx }: { ctx: PorOSCtx }) {
               onClick={clearNom}
             >
               <XIcon size={14} />
-            </button>
+            </BotonPlano>
           </div>
         ) : (
           <div className={styles.autocompleteWrap}>

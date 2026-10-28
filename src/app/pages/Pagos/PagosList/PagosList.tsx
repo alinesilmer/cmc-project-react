@@ -12,6 +12,7 @@ import l from "../Liquidacion.module.scss";
 import { type Pago, fmt, mesLabel, MESES } from "../types";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
 import { comoErrorApi, detalleDeError, detalleObjeto } from "@/app/shared/lib/httpErrors";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 const now = new Date();
 const YEAR_OPTIONS: number[] = Array.from({ length: 8 }, (_, i) => now.getFullYear() + 2 - i);
@@ -175,13 +176,13 @@ const PagosList: React.FC = () => {
       {alert409 && (
         <div className={l.alerta} role="status">
           {alert409.message}
-          <button
+          <BotonPlano
             type="button"
             className={l.enlace}
             onClick={() => { setAlert409(null); navigate(`/panel/liquidation/${alert409.pagoId}`); }}
           >
             Ver pago #{alert409.pagoId}
-          </button>
+          </BotonPlano>
         </div>
       )}
 
@@ -234,7 +235,7 @@ const PagosList: React.FC = () => {
                   <td onClick={(e) => e.stopPropagation()}>
                     <div className={l.accionesFila}>
                       <BotonVer to={`/panel/liquidation/${p.id}`} etiqueta={`Ver pago de ${mesLabel(p.mes)} ${p.anio}`} />
-                      <button
+                      <BotonPlano
                         type="button"
                         className={l.botonIconoPeligro}
                         onClick={() => setDeleteTarget(p)}
@@ -242,7 +243,7 @@ const PagosList: React.FC = () => {
                         aria-label={`Eliminar pago de ${mesLabel(p.mes)} ${p.anio}`}
                       >
                         <Trash2 size={16} />
-                      </button>
+                      </BotonPlano>
                     </div>
                   </td>
                 </tr>

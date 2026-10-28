@@ -22,6 +22,7 @@ import { formatoPesos } from "@/app/shared/lib/formatos";
 import Cargando from "@/app/components/ui/Cargando/Cargando";
 import Paginador from "@/app/components/ui/Paginador/Paginador";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 const PAGE_SIZE = 50;
 
@@ -123,7 +124,7 @@ function FilaCodigo({ c }: { c: HistorialCodigoOut }) {
 
   return (
     <div className={`${h.codigo} ${abierto ? h.abierto : ""}`}>
-      <button type="button" className={h.codigoBtn} aria-expanded={abierto} onClick={() => setAbierto((v) => !v)}>
+      <BotonPlano type="button" className={h.codigoBtn} aria-expanded={abierto} onClick={() => setAbierto((v) => !v)}>
         <ChevronRight size={15} className={h.caret} />
         <span className={h.cod}>{c.codigo}</span>
         <span className={h.desc} title={c.descripcion}>{c.descripcion || "—"}</span>
@@ -133,7 +134,7 @@ function FilaCodigo({ c }: { c: HistorialCodigoOut }) {
           {nn.length > 0 && <span className={`${h.precio} ${h.precioNN}`}><b>NN</b> {vigNN ? fmt(vigNN) : "sin vigente"}</span>}
           {ne.length > 0 && <span className={`${h.precio} ${h.precioNE}`}><b>NE</b> {vigNE ? fmt(vigNE) : "sin vigente"}{ne.length > 1 ? ` · ${ne.length} var.` : ""}</span>}
         </span>
-      </button>
+      </BotonPlano>
       {abierto && (
         <div className={h.detalle}>
           {nn.length > 0 && <BloqueOrigen origen="NN" variantes={nn} />}

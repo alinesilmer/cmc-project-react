@@ -17,6 +17,7 @@ import { estadoLabel } from "@/app/pages/facturacion/utiles";
 import { fmtFecha } from "@/app/pages/facturacion/utiles";
 import Paginador from "@/app/components/ui/Paginador/Paginador";
 import { comoErrorApi } from "@/app/shared/lib/httpErrors";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 const PAGE_SIZES = [25, 50, 100, 200];
 const DEFAULT_LIMIT = 50;
@@ -107,9 +108,9 @@ const Complementarias: React.FC = () => {
           <p className={styles.subtitle}>Facturas adicionales para períodos ya cerrados y enviados.</p>
         </div>
         <div className={styles.headerRight}>
-          <button type="button" className={styles.btnPrimary} onClick={() => setModalOpen(true)}>
+          <BotonPlano type="button" className={styles.btnPrimary} onClick={() => setModalOpen(true)}>
             <Plus size={15} /> Nueva complementaria
-          </button>
+          </BotonPlano>
         </div>
       </div>
 
@@ -174,9 +175,9 @@ const Complementarias: React.FC = () => {
             </div>
           </div>
 
-          <button type="button" className={styles.clearBtn} onClick={handleLimpiar} disabled={loading}>
+          <BotonPlano type="button" className={styles.clearBtn} onClick={handleLimpiar} disabled={loading}>
             Limpiar filtros
-          </button>
+          </BotonPlano>
         </div>
 
         <motion.div
@@ -246,20 +247,20 @@ const Complementarias: React.FC = () => {
                     <div className={styles.actionsCell}>
                       {row.estado === "A" && (
                         <>
-                          <button
+                          <BotonPlano
                             type="button"
                             className={styles.btnGhostAction}
                             onClick={() => navigate(`/panel/facturacion/complementarias/${row.id_prestaciones}/cargar`)}
                           >
                             <FilePlus2 size={14} /> Cargar
-                          </button>
-                          <button
+                          </BotonPlano>
+                          <BotonPlano
                             type="button"
                             className={styles.btnGhostAction}
                             onClick={() => navigate("/panel/facturacion/cierre")}
                           >
                             <FileCheck2 size={14} /> Cerrar
-                          </button>
+                          </BotonPlano>
                         </>
                       )}
                       <BotonVer

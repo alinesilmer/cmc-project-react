@@ -5,6 +5,7 @@ import CampoFecha from "@/app/components/ui/CampoFecha/CampoFecha";
 import { type GalenoOut } from "../nomenclador.types";
 import Cargando from "@/app/components/ui/Cargando/Cargando";
 import type { GalenosCtx } from "./useGalenos";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 export default function ModalImportarGalenos({ ctx }: { ctx: GalenosCtx }) {
   const { setModalKind, selectedOsNro, importForm, setImportForm, importOsSearch, setImportOsSearch, importOsOpen, setImportOsOpen, importing, importResult, importErrors, setImportErrors, importOrigenGalenos, setImportOrigenGalenos, osList, selectedOsName, loadImportOrigenGalenos, handleImport } = ctx;
@@ -28,7 +29,7 @@ export default function ModalImportarGalenos({ ctx }: { ctx: GalenosCtx }) {
                   (os) => os.nro_obra_social === importForm.osOrigen,
                 )?.nombre ?? ""}
               </span>
-              <button
+              <BotonPlano
                 type="button"
                 className={styles.osAcClear}
                 title="Cambiar"
@@ -39,7 +40,7 @@ export default function ModalImportarGalenos({ ctx }: { ctx: GalenosCtx }) {
                 }}
               >
                 <XIcon size={13} />
-              </button>
+              </BotonPlano>
             </div>
           ) : (
             <div className={styles.osAcWrap}>
@@ -322,7 +323,7 @@ export default function ModalImportarGalenos({ ctx }: { ctx: GalenosCtx }) {
                       Para reemplazarlos por los niveles del origen,
                       reintentá con la conversión activada.
                     </p>
-                    <button
+                    <BotonPlano
                       className={styles.btnPrimary}
                       onClick={() => handleImport(true)}
                       disabled={importing}
@@ -338,7 +339,7 @@ export default function ModalImportarGalenos({ ctx }: { ctx: GalenosCtx }) {
                           nivelado
                         </>
                       )}
-                    </button>
+                    </BotonPlano>
                   </div>
                 </div>
               )}
@@ -364,14 +365,14 @@ export default function ModalImportarGalenos({ ctx }: { ctx: GalenosCtx }) {
         )}
 
         <div className={styles.modalFooter}>
-          <button
+          <BotonPlano
             className={styles.btnGhost}
             onClick={() => setModalKind(null)}
           >
             {importResult ? "Cerrar" : "Cancelar"}
-          </button>
+          </BotonPlano>
           {!importResult && (
-            <button
+            <BotonPlano
               className={styles.btnPrimary}
               onClick={() => handleImport()}
               disabled={importing}
@@ -385,7 +386,7 @@ export default function ModalImportarGalenos({ ctx }: { ctx: GalenosCtx }) {
                   <Download size={14} /> Importar
                 </>
               )}
-            </button>
+            </BotonPlano>
           )}
         </div>
       </Modal>

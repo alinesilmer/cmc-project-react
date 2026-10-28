@@ -3,6 +3,7 @@ import type { LucideIcon } from "lucide-react";
 import type { CSSProperties, ReactElement } from "react";
 import styles from "../DoctorProfilePage.module.scss";
 import type { SeccionDatos } from "./legajo.types";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 export type TituloSeccion = (
   seccion: SeccionDatos,
@@ -21,7 +22,7 @@ export const crearTituloSeccion =
     const abierta = seccionAbierta(seccion);
     return (
       <h5 className={styles.section} style={style}>
-        <button
+        <BotonPlano
           type="button"
           className={styles.mpToggle}
           aria-expanded={abierta}
@@ -34,7 +35,7 @@ export const crearTituloSeccion =
             aria-hidden="true"
             className={`${styles.mpChev} ${abierta ? styles.mpChevAbierta : ""}`}
           />
-        </button>
+        </BotonPlano>
       </h5>
     );
   };

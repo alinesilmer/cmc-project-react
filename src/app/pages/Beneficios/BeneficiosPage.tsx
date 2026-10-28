@@ -41,6 +41,7 @@ import Franja from "@/app/components/layout/Franja/Franja";
 import FieldError from "@/app/components/ui/FieldError/FieldError";
 import Cargando from "@/app/components/ui/Cargando/Cargando";
 import Paginador from "@/app/components/ui/Paginador/Paginador";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 // Múltiplo de tres: la grilla de cupones va de a tres por fila.
 const PAGE_SIZE = 18;
@@ -244,7 +245,7 @@ export default function BeneficiosPage() {
 
         <div className={s.rubros} role="group" aria-label="Categoría">
           {["", ...CATEGORIAS_BENEFICIO].map((c) => (
-            <button
+            <BotonPlano
               key={c || "todos"}
               type="button"
               aria-pressed={categoriaFilter === c}
@@ -252,7 +253,7 @@ export default function BeneficiosPage() {
               onClick={() => setCategoriaFilter(c)}
             >
               {c || "Todos"}
-            </button>
+            </BotonPlano>
           ))}
         </div>
 
@@ -309,7 +310,7 @@ export default function BeneficiosPage() {
                       <span className={`${s.chip} ${item.activo ? s.chipOk : s.chipNo}`}>
                         {item.activo ? "Activo" : "Inactivo"}
                       </span>
-                      <button
+                      <BotonPlano
                         type="button"
                         className={s.iconBtn}
                         onClick={() => openEdit(item)}
@@ -317,8 +318,8 @@ export default function BeneficiosPage() {
                         aria-label={`Editar ${item.titulo}`}
                       >
                         <Pencil size={16} />
-                      </button>
-                      <button
+                      </BotonPlano>
+                      <BotonPlano
                         type="button"
                         className={`${s.iconBtn} ${s.iconBtnDanger}`}
                         onClick={() => {
@@ -329,7 +330,7 @@ export default function BeneficiosPage() {
                         aria-label={`Eliminar ${item.titulo}`}
                       >
                         <Trash2 size={16} />
-                      </button>
+                      </BotonPlano>
                     </div>
                   </div>
                 </article>
@@ -445,7 +446,7 @@ export default function BeneficiosPage() {
             <div className={s.field}>
               <span className={s.label}>Color del talón</span>
               <div className={s.swatchRow} role="group" aria-label="Color del talón">
-                <button
+                <BotonPlano
                   type="button"
                   className={`${s.swatchNone} ${!formData.color ? s.swatchActive : ""}`}
                   onClick={() => setField("color", "")}
@@ -453,12 +454,12 @@ export default function BeneficiosPage() {
                   aria-pressed={!formData.color}
                 >
                   Sin color
-                </button>
+                </BotonPlano>
                 {COLOR_PRESETS.map((c) => {
                   const selected =
                     formData.color.toUpperCase() === c.value.toUpperCase();
                   return (
-                    <button
+                    <BotonPlano
                       key={c.value}
                       type="button"
                       className={`${s.swatch} ${selected ? s.swatchActive : ""}`}

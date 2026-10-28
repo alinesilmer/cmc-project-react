@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { ReactNode } from "react";
 
 import s from "./Carrusel.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 interface Props {
   children: ReactNode;
@@ -67,7 +68,7 @@ export default function Carrusel({ children, etiqueta }: Props) {
 
       {hayDesborde && (
         <div className={s.controles}>
-          <button
+          <BotonPlano
             type="button"
             className={s.boton}
             onClick={() => mover(-1)}
@@ -75,8 +76,8 @@ export default function Carrusel({ children, etiqueta }: Props) {
             aria-label="Anterior"
           >
             <ChevronLeft size={18} />
-          </button>
-          <button
+          </BotonPlano>
+          <BotonPlano
             type="button"
             className={s.boton}
             onClick={() => mover(1)}
@@ -84,7 +85,7 @@ export default function Carrusel({ children, etiqueta }: Props) {
             aria-label="Siguiente"
           >
             <ChevronRight size={18} />
-          </button>
+          </BotonPlano>
         </div>
       )}
     </div>

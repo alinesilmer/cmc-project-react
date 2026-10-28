@@ -23,6 +23,7 @@ import { ESTADO_TONO, estadoLabel } from "@/app/pages/Pagos/LoteDetalle/utiles";
 import Dialogo from "@/app/components/ui/Dialogo/Dialogo";
 import paleta from "@/app/styles/paleta.module.scss";
 import { comoErrorApi, detalleDeError } from "@/app/shared/lib/httpErrors";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 const OBSERVACION_OPTIONS = [
   "Falta firma y sello prestador",
@@ -454,7 +455,7 @@ const LoteDetalle: React.FC = () => {
       <tr key={a.id} className={savingId === a.id ? lq.filaOcupada : undefined}>
         <td>
           {editable ? (
-            <button
+            <BotonPlano
               type="button"
               className={`${styles.tipoBadge} ${styles.tipoCambiable} ${a.tipo === "d" ? styles.tipoD : styles.tipoC}`}
               title="Cambiar entre débito y crédito"
@@ -462,7 +463,7 @@ const LoteDetalle: React.FC = () => {
               onClick={() => guardarAjuste(a, { tipo: a.tipo === "d" ? "c" : "d" })}
             >
               {a.tipo === "d" ? "Débito" : "Crédito"}
-            </button>
+            </BotonPlano>
           ) : (
             <span className={`${styles.tipoBadge} ${a.tipo === "d" ? styles.tipoD : styles.tipoC}`}>
               {a.tipo === "d" ? "Débito" : "Crédito"}
@@ -508,7 +509,7 @@ const LoteDetalle: React.FC = () => {
         </td>
         {editable && (
           <td>
-            <button
+            <BotonPlano
               type="button"
               className={lq.botonIconoPeligro}
               title="Eliminar ajuste"
@@ -516,7 +517,7 @@ const LoteDetalle: React.FC = () => {
               onClick={() => setDeleteTarget(a)}
             >
               <X size={16} />
-            </button>
+            </BotonPlano>
           </td>
         )}
       </tr>
@@ -611,7 +612,7 @@ const LoteDetalle: React.FC = () => {
             <div className={styles.campo}>
               <span className={styles.formLabel}>Tipo</span>
               <div className={styles.seg} role="group" aria-label="Tipo de ajuste">
-                <button
+                <BotonPlano
                   type="button"
                   className={`${styles.segBtn} ${newTipo === "d" ? styles.segDebito : ""}`}
                   aria-pressed={newTipo === "d"}
@@ -619,8 +620,8 @@ const LoteDetalle: React.FC = () => {
                   disabled={confirming}
                 >
                   Débito
-                </button>
-                <button
+                </BotonPlano>
+                <BotonPlano
                   type="button"
                   className={`${styles.segBtn} ${newTipo === "c" ? styles.segCredito : ""}`}
                   aria-pressed={newTipo === "c"}
@@ -628,7 +629,7 @@ const LoteDetalle: React.FC = () => {
                   disabled={confirming}
                 >
                   Crédito
-                </button>
+                </BotonPlano>
               </div>
             </div>
             <div className={`${styles.campo} ${styles.campoImporte}`}>
@@ -673,7 +674,7 @@ const LoteDetalle: React.FC = () => {
                     disabled={confirming}
                     autoFocus
                   />
-                  <button
+                  <BotonPlano
                     type="button"
                     className={lq.enlace}
                     onClick={() => {
@@ -683,7 +684,7 @@ const LoteDetalle: React.FC = () => {
                     disabled={confirming}
                   >
                     Volver
-                  </button>
+                  </BotonPlano>
                 </div>
               ) : (
                 <select
@@ -728,9 +729,9 @@ const LoteDetalle: React.FC = () => {
                 {selectedAtencion.fecha_practica ? ` · ${selectedAtencion.fecha_practica}` : ""} · Afiliado{" "}
                 {selectedAtencion.nom_ape_p ?? "—"} · Facturado ${fmt(selectedAtencion.honorarios)} + ${fmt(selectedAtencion.gastos)}
               </span>
-              <button type="button" className={lq.enlace} onClick={limpiarSeleccion}>
+              <BotonPlano type="button" className={lq.enlace} onClick={limpiarSeleccion}>
                 Cambiar
-              </button>
+              </BotonPlano>
             </div>
           )}
 

@@ -47,6 +47,7 @@ import s from "./Institucion.module.scss";
 import Franja from "@/app/components/layout/Franja/Franja";
 import MarcoModal from "@/app/components/ui/MarcoModal/MarcoModal";
 import Cargando from "@/app/components/ui/Cargando/Cargando";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 /** Los campos del formulario general, en el orden en que se muestran. */
 const CAMPOS: {
@@ -303,7 +304,7 @@ export default function InstitucionPage() {
       <div className={s.container}>
         {puedeEditar && (
           <div className={s.acciones}>
-            <button
+            <BotonPlano
               type="button"
               className={s.primaryBtn}
               onClick={guardar}
@@ -311,7 +312,7 @@ export default function InstitucionPage() {
             >
               {guardando ? <Cargando size={15} /> : <Save size={15} />}
               {guardando ? "Guardando…" : "Guardar"}
-            </button>
+            </BotonPlano>
           </div>
         )}
 
@@ -342,13 +343,13 @@ export default function InstitucionPage() {
           <h2 className={s.cardTitle}>
             <Phone size={16} /> Teléfonos
             {puedeEditar && (
-              <button
+              <BotonPlano
                 type="button"
                 className={s.addBtn}
                 onClick={() => setTelNuevo({ ...TEL_VACIO })}
               >
                 <Plus size={14} /> Agregar
-              </button>
+              </BotonPlano>
             )}
           </h2>
 
@@ -373,7 +374,7 @@ export default function InstitucionPage() {
                     }
                   />
                   <div className={s.rowActions}>
-                    <button
+                    <BotonPlano
                       type="button"
                       className={s.iconOk}
                       onClick={() =>
@@ -388,14 +389,14 @@ export default function InstitucionPage() {
                       }
                     >
                       <Check size={15} />
-                    </button>
-                    <button
+                    </BotonPlano>
+                    <BotonPlano
                       type="button"
                       className={s.iconBtn}
                       onClick={() => setTelEditando(null)}
                     >
                       <X size={15} />
-                    </button>
+                    </BotonPlano>
                   </div>
                 </li>
               ) : (
@@ -404,20 +405,20 @@ export default function InstitucionPage() {
                   <span className={s.rowMain}>{t.numero}</span>
                   {puedeEditar && (
                     <div className={s.rowActions}>
-                      <button
+                      <BotonPlano
                         type="button"
                         className={s.iconBtn}
                         onClick={() => setTelEditando(t)}
                       >
                         <Pencil size={14} />
-                      </button>
-                      <button
+                      </BotonPlano>
+                      <BotonPlano
                         type="button"
                         className={s.iconDanger}
                         onClick={() => borrarTel(t)}
                       >
                         <Trash2 size={14} />
-                      </button>
+                      </BotonPlano>
                     </div>
                   )}
                 </li>
@@ -440,17 +441,17 @@ export default function InstitucionPage() {
                   onChange={(e) => setTelNuevo({ ...telNuevo, numero: e.target.value })}
                 />
                 <div className={s.rowActions}>
-                  <button
+                  <BotonPlano
                     type="button"
                     className={s.iconOk}
                     onClick={() => guardarTel(telNuevo)}
                     disabled={!telNuevo.numero.trim()}
                   >
                     <Check size={15} />
-                  </button>
-                  <button type="button" className={s.iconBtn} onClick={() => setTelNuevo(null)}>
+                  </BotonPlano>
+                  <BotonPlano type="button" className={s.iconBtn} onClick={() => setTelNuevo(null)}>
                     <X size={15} />
-                  </button>
+                  </BotonPlano>
                 </div>
               </li>
             )}
@@ -466,13 +467,13 @@ export default function InstitucionPage() {
           <h2 className={s.cardTitle}>
             <Mail size={16} /> Casillas de correo
             {puedeEditar && (
-              <button
+              <BotonPlano
                 type="button"
                 className={s.addBtn}
                 onClick={() => setMailNuevo({ ...MAIL_VACIO })}
               >
                 <Plus size={14} /> Agregar
-              </button>
+              </BotonPlano>
             )}
           </h2>
 
@@ -504,7 +505,7 @@ export default function InstitucionPage() {
                     }
                   />
                   <div className={s.rowActions}>
-                    <button
+                    <BotonPlano
                       type="button"
                       className={s.iconOk}
                       onClick={() =>
@@ -521,14 +522,14 @@ export default function InstitucionPage() {
                       }
                     >
                       <Check size={15} />
-                    </button>
-                    <button
+                    </BotonPlano>
+                    <BotonPlano
                       type="button"
                       className={s.iconBtn}
                       onClick={() => setMailEditando(null)}
                     >
                       <X size={15} />
-                    </button>
+                    </BotonPlano>
                   </div>
                 </li>
               ) : (
@@ -544,7 +545,7 @@ export default function InstitucionPage() {
                         <code className={s.clave}>
                           {reveladas[m.id] ?? "••••••••"}
                         </code>
-                        <button
+                        <BotonPlano
                           type="button"
                           className={s.iconBtn}
                           title={reveladas[m.id] ? "Ocultar" : "Mostrar"}
@@ -558,7 +559,7 @@ export default function InstitucionPage() {
                           ) : (
                             <Eye size={14} />
                           )}
-                        </button>
+                        </BotonPlano>
                       </>
                     ) : m.tiene_password ? (
                       <span className={s.claveOculta}>Con contraseña</span>
@@ -569,7 +570,7 @@ export default function InstitucionPage() {
 
                   <div className={s.rowActions}>
                     {puedeVerClaves && datos?.secretos_disponibles && (
-                      <button
+                      <BotonPlano
                         type="button"
                         className={s.iconBtn}
                         title="Cambiar contraseña"
@@ -579,24 +580,24 @@ export default function InstitucionPage() {
                         }}
                       >
                         <KeyRound size={14} />
-                      </button>
+                      </BotonPlano>
                     )}
                     {puedeEditar && (
                       <>
-                        <button
+                        <BotonPlano
                           type="button"
                           className={s.iconBtn}
                           onClick={() => setMailEditando(m)}
                         >
                           <Pencil size={14} />
-                        </button>
-                        <button
+                        </BotonPlano>
+                        <BotonPlano
                           type="button"
                           className={s.iconDanger}
                           onClick={() => borrarMail(m)}
                         >
                           <Trash2 size={14} />
-                        </button>
+                        </BotonPlano>
                       </>
                     )}
                   </div>
@@ -620,17 +621,17 @@ export default function InstitucionPage() {
                   onChange={(e) => setMailNuevo({ ...mailNuevo, direccion: e.target.value })}
                 />
                 <div className={s.rowActions}>
-                  <button
+                  <BotonPlano
                     type="button"
                     className={s.iconOk}
                     onClick={() => guardarMail(mailNuevo)}
                     disabled={!mailNuevo.direccion.trim()}
                   >
                     <Check size={15} />
-                  </button>
-                  <button type="button" className={s.iconBtn} onClick={() => setMailNuevo(null)}>
+                  </BotonPlano>
+                  <BotonPlano type="button" className={s.iconBtn} onClick={() => setMailNuevo(null)}>
                     <X size={15} />
-                  </button>
+                  </BotonPlano>
                 </div>
               </li>
             )}
@@ -660,12 +661,12 @@ export default function InstitucionPage() {
                 Se guarda cifrada. Dejalo vacío para borrarla.
               </p>
               <div className={s.modalActions}>
-                <button type="button" className={s.ghostBtn} onClick={() => setClaveDe(null)}>
+                <BotonPlano type="button" className={s.ghostBtn} onClick={() => setClaveDe(null)}>
                   Cancelar
-                </button>
-                <button type="button" className={s.primaryBtn} onClick={guardarClave}>
+                </BotonPlano>
+                <BotonPlano type="button" className={s.primaryBtn} onClick={guardarClave}>
                   <Save size={15} /> Guardar
-                </button>
+                </BotonPlano>
               </div>
             </MarcoModal>
         )}

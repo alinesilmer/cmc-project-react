@@ -16,6 +16,7 @@ import Tabla from "@/app/components/ui/Tabla/Tabla";
 import BotonVer from "@/app/components/ui/BotonVer/BotonVer";
 import Paginador from "@/app/components/ui/Paginador/Paginador";
 import { comoErrorApi } from "@/app/shared/lib/httpErrors";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 // Mismos estados que `FACTURA_ESTADOS_CERRADOS` en el backend (service.py): 'C' es el estado actual.
 const ESTADOS_CERRADOS = new Set(["C", "L", "LC"]);
@@ -202,9 +203,9 @@ const VerPeriodos: React.FC = () => {
             </div>
           </div>
 
-          <button type="button" className={styles.clearBtn} onClick={handleLimpiar} disabled={loading}>
+          <BotonPlano type="button" className={styles.clearBtn} onClick={handleLimpiar} disabled={loading}>
             Limpiar filtros
-          </button>
+          </BotonPlano>
         </div>
 
         <motion.div
@@ -265,18 +266,18 @@ const VerPeriodos: React.FC = () => {
                     <div className={styles.actionsCell}>
                       <BotonVer onClick={() => handleVer(row)} />
                       {row.estado && ESTADOS_CERRADOS.has(row.estado) && row.documento_url && (
-                        <button type="button" className={styles.btnFactura} onClick={() => handleVerFactura(row)}>
+                        <BotonPlano type="button" className={styles.btnFactura} onClick={() => handleVerFactura(row)}>
                           <FileText size={14} /> Ver factura
-                        </button>
+                        </BotonPlano>
                       )}
-                      <button
+                      <BotonPlano
                         type="button"
                         className={`${styles.btnPublicar} ${row.publicado ? styles.btnPublicarOn : ""}`}
                         onClick={() => setAPublicar(row)}
                       >
                         {row.publicado ? <Eye size={14} /> : <EyeOff size={14} />}
                         {row.publicado ? "Publicado" : "No publicado"}
-                      </button>
+                      </BotonPlano>
                     </div>
                   </td>
                 </tr>

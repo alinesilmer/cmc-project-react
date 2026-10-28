@@ -2,10 +2,6 @@
 
 // NN y NE con colores propios y bien distintos: es lo que el usuario pidió que no
 // se confunda. Se usan igual en el resumen de la fila y en los bloques del detalle.
-$nn: #1f5f99;
-$nn-fondo: #e8f1fb;
-$ne: #8a5414;
-$ne-fondo: #fbf1e3;
 
 .filtros {
   display: flex;
@@ -54,8 +50,8 @@ $ne-fondo: #fbf1e3;
   }
 
   &:focus-within {
-    border-color: #9d91c2;
-    box-shadow: 0 0 0 2px #e7e3f4;
+    border-color: $tono-violeta-300-b;
+    box-shadow: 0 0 0 2px $tono-azul-100-d;
   }
 
   @media (max-width: 520px) { min-width: 0; }
@@ -99,7 +95,7 @@ $ne-fondo: #fbf1e3;
   color: $gray-800;
 
   &:hover { background-color: $gray-50; }
-  &:focus-visible { outline: 2px solid #9d91c2; outline-offset: -2px; }
+  &:focus-visible { outline: 2px solid $tono-violeta-300-b; outline-offset: -2px; }
 
   @media (max-width: 760px) {
     grid-template-columns: 16px 64px minmax(0, 1fr);
@@ -135,12 +131,12 @@ $ne-fondo: #fbf1e3;
   border-radius: 999px;
   padding: 2px 8px;
   white-space: nowrap;
-  background: #e7e3f4;
-  color: #574e76;
+  background: $tono-azul-100-d;
+  color: $tono-violeta-550-c;
 }
-.tipo_Consulta { background: #e6f4ea; color: #2b6b3c; }
-.tipo_Practica { background: #eef0f4; color: #4a5568; }
-.tipo_Honorariosindividuales { background: #f3e8fb; color: #6b3a8a; }
+.tipo_Consulta { background: $tono-verde-50-e; color: $tono-verde-700-b; }
+.tipo_Practica { background: $tono-azul-50-j; color: $tono-azul-650-c; }
+.tipo_Honorariosindividuales { background: $tono-violeta-50-c; color: $tono-violeta-600-c; }
 
 .versiones {
   font-size: $font-size-xs;
@@ -165,8 +161,8 @@ $ne-fondo: #fbf1e3;
 
   b { font-weight: $font-weight-bold; margin-right: 2px; }
 }
-.precioNN { color: $nn; background: $nn-fondo; border-color: rgba($nn, 0.25); }
-.precioNE { color: $ne; background: $ne-fondo; border-color: rgba($ne, 0.25); }
+.precioNN { color: $tono-azul-650-d; background: $tono-azul-50-g; border-color: rgba($tono-azul-650-d, 0.25); }
+.precioNE { color: $tono-naranja-700-b; background: $tono-naranja-50-b; border-color: rgba($tono-naranja-700-b, 0.25); }
 
 .detalle {
   display: flex;
@@ -182,8 +178,8 @@ $ne-fondo: #fbf1e3;
   border-radius: $radio-md;
   overflow: hidden;
 }
-.bloqueNN { border-color: rgba($nn, 0.3); .bloqueHead { background: $nn-fondo; color: $nn; } .origenTag { background: $nn; } }
-.bloqueNE { border-color: rgba($ne, 0.3); .bloqueHead { background: $ne-fondo; color: $ne; } .origenTag { background: $ne; } }
+.bloqueNN { border-color: rgba($tono-azul-650-d, 0.3); .bloqueHead { background: $tono-azul-50-g; color: $tono-azul-650-d; } .origenTag { background: $tono-azul-650-d; } }
+.bloqueNE { border-color: rgba($tono-naranja-700-b, 0.3); .bloqueHead { background: $tono-naranja-50-b; color: $tono-naranja-700-b; } .origenTag { background: $tono-naranja-700-b; } }
 
 .bloqueHead {
   display: flex;
@@ -251,6 +247,6 @@ $ne-fondo: #fbf1e3;
 .total { color: $gray-800; font-weight: $font-weight-semibold; }
 .vigente td { background: $gray-50; font-weight: $font-weight-semibold; }
 
-.varUp { color: #16a34a; font-weight: $font-weight-semibold; }
-.varDown { color: #dc2626; font-weight: $font-weight-semibold; }
+.varUp { color: $tono-verde-350-b; font-weight: $font-weight-semibold; }
+.varDown { color: $tono-rojo-400; font-weight: $font-weight-semibold; }
 .varNa { color: $gray-400; font-style: italic; }

@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 
 import s from "./Franja.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 type Props = {
   titulo: ReactNode;
@@ -46,7 +47,7 @@ type SolapaProps = {
 /** Una solapa de la fila de abajo de la franja: lo único que acompaña al título. */
 export function Solapa({ activa, onClick, children, cuenta }: SolapaProps) {
   return (
-    <button
+    <BotonPlano
       type="button"
       role="tab"
       aria-selected={activa}
@@ -55,6 +56,6 @@ export function Solapa({ activa, onClick, children, cuenta }: SolapaProps) {
     >
       {children}
       {cuenta != null && cuenta > 0 && <span className={s.cuenta}>{cuenta}</span>}
-    </button>
+    </BotonPlano>
   );
 }

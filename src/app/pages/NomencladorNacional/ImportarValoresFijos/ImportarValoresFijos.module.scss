@@ -2,14 +2,6 @@
 
 // Tonos de estado: informativo (tiene precio), ok (se carga limpio), atención (pide
 // decidir) y problema (no se carga salvo que se elija).
-$info: #1f5f99;
-$info-fondo: #e8f1fb;
-$ok: #2b6b3c;
-$ok-fondo: #e6f4ea;
-$warn: #8a5414;
-$warn-fondo: #fbf1e3;
-$bad: #a3302a;
-$bad-fondo: #fbe9e7;
 
 .container {
   padding: $spacing-8;
@@ -61,7 +53,7 @@ $bad-fondo: #fbe9e7;
   flex-direction: column;
   gap: $spacing-4;
 }
-.panelOk { border-color: rgba($ok, 0.3); }
+.panelOk { border-color: rgba($tono-verde-700-b, 0.3); }
 
 .carga {
   display: grid;
@@ -132,8 +124,8 @@ $bad-fondo: #fbe9e7;
 }
 .col {
   font-family: ui-monospace, Consolas, monospace;
-  background: $ok-fondo;
-  color: $ok;
+  background: $tono-verde-50-e;
+  color: $tono-verde-700-b;
   border-radius: $radio-xs;
   padding: 1px 6px;
 }
@@ -164,7 +156,7 @@ $bad-fondo: #fbe9e7;
   align-items: center;
   gap: $spacing-2;
   margin: 0;
-  color: $bad;
+  color: $tono-rojo-600-c;
   font-size: $font-size-sm;
 }
 
@@ -175,7 +167,7 @@ $bad-fondo: #fbe9e7;
   gap: $spacing-2;
   margin: 0;
   font-size: $font-size-lg;
-  color: $ok;
+  color: $tono-verde-700-b;
 }
 .okList {
   margin: 0;
@@ -196,7 +188,7 @@ $bad-fondo: #fbe9e7;
   ul { margin: $spacing-1 0 0; padding-left: $spacing-5; color: $gray-600; }
 }
 .replicaOk { background: $gray-50; }
-.replicaError { background: $bad-fondo; color: $bad; }
+.replicaError { background: $tono-rojo-50-c; color: $tono-rojo-600-c; }
 
 // ── Resumen por estado ──────────────────────────────────────────────────────
 .resumen {
@@ -222,10 +214,10 @@ $bad-fondo: #fbe9e7;
   &[aria-pressed="true"] { border-color: currentColor; }
   &:focus-visible { outline: 2px solid $acento-suave; outline-offset: 1px; }
 }
-.tono_info { background: $info-fondo; color: $info; }
-.tono_ok { background: $ok-fondo; color: $ok; }
-.tono_warn { background: $warn-fondo; color: $warn; }
-.tono_bad { background: $bad-fondo; color: $bad; }
+.tono_info { background: $tono-azul-50-g; color: $tono-azul-650-d; }
+.tono_ok { background: $tono-verde-50-e; color: $tono-verde-700-b; }
+.tono_warn { background: $tono-naranja-50-b; color: $tono-naranja-700-b; }
+.tono_bad { background: $tono-rojo-50-c; color: $tono-rojo-600-c; }
 
 // ── Tabla ───────────────────────────────────────────────────────────────────
 .tablaPanel {
@@ -273,7 +265,7 @@ $bad-fondo: #fbe9e7;
     vertical-align: top;
   }
 }
-.pend td { background: rgba($warn-fondo, 0.6); }
+.pend td { background: rgba($tono-naranja-50-b, 0.6); }
 .omit td { color: $gray-400; }
 .omit .monto { text-decoration: line-through; }
 
@@ -283,8 +275,8 @@ $bad-fondo: #fbe9e7;
 .cod { font-family: ui-monospace, Consolas, monospace; font-weight: $font-weight-semibold; white-space: nowrap; }
 .desc { max-width: 280px; }
 .sub { display: block; margin-top: 2px; font-size: $font-size-xs; color: $gray-500; }
-.aviso { display: block; margin-top: 2px; font-size: $font-size-xs; color: $warn; }
-.presu { font-size: $font-size-xs; font-weight: $font-weight-bold; letter-spacing: 0.04em; color: $warn; }
+.aviso { display: block; margin-top: 2px; font-size: $font-size-xs; color: $tono-naranja-700-b; }
+.presu { font-size: $font-size-xs; font-weight: $font-weight-bold; letter-spacing: 0.04em; color: $tono-naranja-700-b; }
 
 .pill {
   display: inline-block;
@@ -309,8 +301,8 @@ $bad-fondo: #fbe9e7;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.up { color: $ok; font-weight: $font-weight-semibold; }
-.down { color: $bad; font-weight: $font-weight-semibold; }
+.up { color: $tono-verde-700-b; font-weight: $font-weight-semibold; }
+.down { color: $tono-rojo-600-c; font-weight: $font-weight-semibold; }
 
 .acc { min-width: 230px; }
 .extra {
@@ -338,7 +330,7 @@ $bad-fondo: #fbe9e7;
   font-size: $font-size-xs;
   color: $gray-600;
 }
-.replicaNo { color: $warn; }
+.replicaNo { color: $tono-naranja-700-b; }
 // ── Pie fijo ────────────────────────────────────────────────────────────────
 .pie {
   position: sticky;
@@ -381,8 +373,8 @@ $bad-fondo: #fbe9e7;
   margin: 0 0 $spacing-3;
   padding: $spacing-2 $spacing-3;
   border-radius: $radio-sm;
-  background: $bad-fondo;
-  color: $bad;
+  background: $tono-rojo-50-c;
+  color: $tono-rojo-600-c;
   font-size: $font-size-sm;
 }
 .modalAcciones {

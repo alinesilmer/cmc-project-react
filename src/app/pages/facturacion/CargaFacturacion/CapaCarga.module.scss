@@ -1,3 +1,4 @@
+@use "@/app/styles/variables.scss" as *;
 // Formulario de edición encima del listado: ocupa toda la ventana debajo del topbar
 // (64 px + borde) y tiene su propio scroll, así el del listado no se toca.
 .capa {
@@ -10,14 +11,14 @@
   z-index: 45;
   overflow-y: auto;
   overscroll-behavior: contain;
-  background: linear-gradient(135deg, #f0f4ff 0%, #fafbff 60%, #f5f0ff 100%);
+  background: linear-gradient(135deg, $tono-azul-50-d 0%, $tono-azul-50-e 60%, $tono-violeta-50-b 100%);
   box-shadow: 0 -8px 24px rgba(15, 23, 42, .08);
   will-change: transform, opacity;
 }
 
 .cargando {
   padding: 1.8rem;
-  color: #718096;
+  color: $tono-azul-400;
   font-size: 0.9rem;
 }
 

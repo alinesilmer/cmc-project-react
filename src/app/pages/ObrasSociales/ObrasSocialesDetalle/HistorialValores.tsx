@@ -41,6 +41,7 @@ import { formatoPesos } from "@/app/shared/lib/formatos";
 import Cargando from "@/app/components/ui/Cargando/Cargando";
 import Paginador from "@/app/components/ui/Paginador/Paginador";
 import { detalleDeError } from "@/app/shared/lib/httpErrors";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 
 // Filas por página en la tabla "valores por fecha".
@@ -346,27 +347,27 @@ export default function HistorialValores({ obraNro, obraNombre }: Props) {
 
       {/* Sub-view toggle */}
       <div className={s.historialToggleRow} role="group" aria-label="Vista">
-        <button
+        <BotonPlano
           className={`${s.historialToggleBtn} ${historialView === "porcentual" ? s.historialToggleBtnActive : ""}`}
           onClick={() => setHistorialView("porcentual")}
         >
           <TrendingUp size={18} aria-hidden="true" />
           Actualizaciones
-        </button>
-        <button
+        </BotonPlano>
+        <BotonPlano
           className={`${s.historialToggleBtn} ${historialView === "por_fecha" ? s.historialToggleBtnActive : ""}`}
           onClick={() => setHistorialView("por_fecha")}
         >
           <History size={18} aria-hidden="true" />
           Valores
-        </button>
-        <button
+        </BotonPlano>
+        <BotonPlano
           className={`${s.historialToggleBtn} ${historialView === "por_codigo" ? s.historialToggleBtnActive : ""}`}
           onClick={() => setHistorialView("por_codigo")}
         >
           <ListTree size={15} />
           Por código
-        </button>
+        </BotonPlano>
       </div>
 
       {historialView === "por_codigo" && <HistorialPorCodigo obraNro={obraNro} />}
@@ -512,7 +513,7 @@ export default function HistorialValores({ obraNro, obraNombre }: Props) {
                   {docsDeLaFecha.map((doc) => (
                     <div key={doc.id} className={s.docItem}>
                       <div className={s.docNameCol}>
-                        <button
+                        <BotonPlano
                           type="button"
                           className={s.docName}
                           title={doc.descripcion ?? doc.nombre_original}
@@ -521,14 +522,14 @@ export default function HistorialValores({ obraNro, obraNombre }: Props) {
                           }
                         >
                           {doc.nombre_original}
-                        </button>
+                        </BotonPlano>
                         {doc.subido_por_nombre && (
                           <span className={s.docSubidoPor}>{doc.subido_por_nombre}</span>
                         )}
                       </div>
                       <span className={s.docMeta}>{pesoLegible(doc.size)}</span>
                       {puedeEditarDocs && (
-                        <button
+                        <BotonPlano
                           type="button"
                           className={s.docDeleteBtn}
                           disabled={borrandoDoc === doc.id}
@@ -536,7 +537,7 @@ export default function HistorialValores({ obraNro, obraNombre }: Props) {
                           onClick={() => void borrarDoc(doc)}
                         >
                           <Trash2 size={16} aria-hidden="true" />
-                        </button>
+                        </BotonPlano>
                       )}
                     </div>
                   ))}

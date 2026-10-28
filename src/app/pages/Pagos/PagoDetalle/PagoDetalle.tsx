@@ -17,6 +17,7 @@ import TabRecibos from "./tabs/TabRecibos";
 import TabExportables from "./tabs/TabExportables";
 import { BadgeCheck, DollarSign, Lock, LockOpen, Pencil } from "lucide-react";
 import { comoErrorApi, detalleDeError, detalleObjeto } from "@/app/shared/lib/httpErrors";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 type Tab =
   | "facturas"
@@ -223,7 +224,7 @@ const PagoDetalle: React.FC = () => {
             <span className={lq.tiraTexto}>
               {pago.descripcion ?? <span className={lq.tenue}>Sin descripción</span>}
               {pago.estado === "A" && (
-                <button
+                <BotonPlano
                   type="button"
                   className={lq.botonIcono}
                   onClick={openEditDesc}
@@ -231,7 +232,7 @@ const PagoDetalle: React.FC = () => {
                   aria-label="Editar descripción"
                 >
                   <Pencil size={15} aria-hidden="true" />
-                </button>
+                </BotonPlano>
               )}
             </span>
           )}

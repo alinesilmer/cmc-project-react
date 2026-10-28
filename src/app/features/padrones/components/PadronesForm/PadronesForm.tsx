@@ -16,6 +16,7 @@ import { useNotify } from "@/app/hooks/useNotify";
 import { X } from "lucide-react";
 import Cargando from "@/app/components/ui/Cargando/Cargando";
 import paleta from "@/app/styles/paleta.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 type Props = {
   medicoId: number | string;
@@ -363,19 +364,19 @@ const PadronesForm: React.FC<Props> = ({ medicoId }) => {
             aria-label="Buscar obra social"
           />
           {query.trim().length > 0 && (
-            <button
+            <BotonPlano
               type="button"
               className={styles.clearSearch}
               onClick={() => setQuery("")}
               aria-label="Limpiar búsqueda"
             >
               <X size={16} aria-hidden="true" />
-            </button>
+            </BotonPlano>
           )}
         </div>
 
         <div className={styles.bulkActions}>
-          <button
+          <BotonPlano
             type="button"
             className={styles.bulkBtn}
             disabled={loading || filteredCatalog.length === 0 || allFilteredSelected}
@@ -387,8 +388,8 @@ const PadronesForm: React.FC<Props> = ({ medicoId }) => {
               <path d="M4.5 8l2.5 2.5 4.5-5" stroke={paleta.white} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             {query.trim() ? "Sel. filtradas" : "Seleccionar todas"}
-          </button>
-          <button
+          </BotonPlano>
+          <BotonPlano
             type="button"
             className={`${styles.bulkBtn} ${styles.bulkBtnOutline}`}
             disabled={loading || filteredCatalog.length === 0 || !anyFilteredSelected}
@@ -400,7 +401,7 @@ const PadronesForm: React.FC<Props> = ({ medicoId }) => {
               <path d="M5 8h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
             {query.trim() ? "Quitar filtradas" : "Quitar todas"}
-          </button>
+          </BotonPlano>
         </div>
       </div>
 
@@ -468,12 +469,12 @@ const PadronesForm: React.FC<Props> = ({ medicoId }) => {
 
       {/* DESCARGAS */}
       <div className={styles.downloadActions}>
-        <button type="button" className={styles.downloadButton} onClick={handleDownloadCsv}>
+        <BotonPlano type="button" className={styles.downloadButton} onClick={handleDownloadCsv}>
           ↓ CSV
-        </button>
-        <button type="button" className={styles.downloadButton} onClick={handleDownloadPdf}>
+        </BotonPlano>
+        <BotonPlano type="button" className={styles.downloadButton} onClick={handleDownloadPdf}>
           ↓ PDF
-        </button>
+        </BotonPlano>
       </div>
 
       {alertOpen && (

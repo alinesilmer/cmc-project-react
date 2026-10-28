@@ -33,6 +33,7 @@ import { detalleDeError } from "@/app/shared/lib/httpErrors";
 import Franja, { Solapa } from "@/app/components/layout/Franja/Franja";
 import Cargando from "@/app/components/ui/Cargando/Cargando";
 import Paginador from "@/app/components/ui/Paginador/Paginador";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 const PAGE_SIZE = 20;
 const SOLICITUDES_KEY = ["solicitudes-cambio", "gestion"] as const;
@@ -255,7 +256,7 @@ export default function SolicitudesCambioPage() {
 
                 {item.estado === "pendiente" ? (
                   <div className={s.cardActions}>
-                    <button
+                    <BotonPlano
                       type="button"
                       className={`${s.actionBtn} ${s.approveBtn}`}
                       onClick={() => handleApprove(item)}
@@ -263,8 +264,8 @@ export default function SolicitudesCambioPage() {
                     >
                       <Check size={15} />
                       {busyId === item.id ? "Procesando…" : "Aceptar"}
-                    </button>
-                    <button
+                    </BotonPlano>
+                    <BotonPlano
                       type="button"
                       className={`${s.actionBtn} ${s.rejectBtn}`}
                       onClick={() => openReject(item)}
@@ -272,7 +273,7 @@ export default function SolicitudesCambioPage() {
                     >
                       <X size={15} />
                       Rechazar
-                    </button>
+                    </BotonPlano>
                   </div>
                 ) : (
                   <div className={s.resolution}>

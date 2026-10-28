@@ -8,6 +8,7 @@ import comun from "../Comun.module.scss";
 import styles from "./PediatraSection.module.scss";;
 import { X } from "lucide-react";
 import { montoPediatra } from "./pediatra.helpers";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 // Máximo 1 pediatra por prestación (decisión usuario 2026-09-17) — a diferencia de AyudanteLinea[] esto es una única línea, nunca un arreglo.
 export interface PediatraLinea {
@@ -64,9 +65,9 @@ const PediatraSection: React.FC<Props> = ({
           <span className={comun.sectionTitle} style={{ textTransform: "none", fontSize: "0.86rem" }}>
             Pediatra
           </span>
-          <button type="button" className={comun.removeBtn} onClick={onQuitar} disabled={disabled}>
+          <BotonPlano type="button" className={comun.removeBtn} onClick={onQuitar} disabled={disabled}>
             <X size={16} style={{ verticalAlign: "-2px" }} aria-hidden="true" /> Quitar
-          </button>
+          </BotonPlano>
         </div>
 
         <div className={comun.fieldsRow}>

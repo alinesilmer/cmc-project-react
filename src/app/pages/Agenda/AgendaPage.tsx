@@ -47,6 +47,7 @@ import Cargando from "@/app/components/ui/Cargando/Cargando";
 import Paginador from "@/app/components/ui/Paginador/Paginador";
 import Button from "@/app/components/ui/Button/Button";
 import BotonAccion from "@/app/components/ui/BotonAccion/BotonAccion";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 const AGENDA_KEY = ["agenda"] as const;
 const SIN_RESPONSABLES: Responsable[] = [];
@@ -287,7 +288,7 @@ export default function AgendaPage() {
 
             <div className={s.leyenda} role="group" aria-label="Calendarios">
               {TIPOS.map((t) => (
-                <button
+                <BotonPlano
                   key={t.valor}
                   type="button"
                   className={`${s.leyendaItem} ${filtro === t.valor ? s.leyendaOn : ""}`}
@@ -297,20 +298,20 @@ export default function AgendaPage() {
                 >
                   <i className={s.cuadro} />
                   {t.label}
-                </button>
+                </BotonPlano>
               ))}
             </div>
 
             <div className={s.mandos}>
-              <button type="button" className={s.navBtn} aria-label="Mes anterior" onClick={() => irA(-1)}>
+              <BotonPlano type="button" className={s.navBtn} aria-label="Mes anterior" onClick={() => irA(-1)}>
                 <ChevronLeft size={18} />
-              </button>
-              <button type="button" className={s.hoyBtn} onClick={irAHoy}>
+              </BotonPlano>
+              <BotonPlano type="button" className={s.hoyBtn} onClick={irAHoy}>
                 Hoy
-              </button>
-              <button type="button" className={s.navBtn} aria-label="Mes siguiente" onClick={() => irA(1)}>
+              </BotonPlano>
+              <BotonPlano type="button" className={s.navBtn} aria-label="Mes siguiente" onClick={() => irA(1)}>
                 <ChevronRight size={18} />
-              </button>
+              </BotonPlano>
             </div>
           </div>
 
@@ -380,7 +381,7 @@ export default function AgendaPage() {
 
           <div className={s.solapas} role="tablist">
             {TIPOS.map((t) => (
-              <button
+              <BotonPlano
                 key={t.valor}
                 type="button"
                 role="tab"
@@ -396,7 +397,7 @@ export default function AgendaPage() {
                 <i className={s.dot} />
                 {t.label}
                 <small>{conteoMes[t.valor]}</small>
-              </button>
+              </BotonPlano>
             ))}
           </div>
 
@@ -494,10 +495,10 @@ export default function AgendaPage() {
               </label>
 
               <div className={s.formActions}>
-                <button type="button" className={s.ghostBtn} onClick={() => setEditando(null)}>
+                <BotonPlano type="button" className={s.ghostBtn} onClick={() => setEditando(null)}>
                   <X size={15} /> Cancelar
-                </button>
-                <button
+                </BotonPlano>
+                <BotonPlano
                   type="button"
                   className={s.primaryBtn}
                   onClick={guardar}
@@ -505,7 +506,7 @@ export default function AgendaPage() {
                 >
                   {guardando ? <Cargando size={15} /> : <Save size={15} />}
                   Guardar
-                </button>
+                </BotonPlano>
               </div>
             </div>
           )}

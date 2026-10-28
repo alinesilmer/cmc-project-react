@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Check, Copy } from "lucide-react";
 import s from "./CopyButton.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 type Props = {
   /** Lo que va al portapapeles. */
@@ -30,7 +31,7 @@ export default function CopyButton({ value, label, className }: Props) {
   const texto = copiado ? "Copiado" : `Copiar ${label.toLowerCase()}`;
 
   return (
-    <button
+    <BotonPlano
       type="button"
       className={`${s.btn} ${copiado ? s.done : ""} ${className ?? ""}`}
       onClick={copiar}
@@ -38,6 +39,6 @@ export default function CopyButton({ value, label, className }: Props) {
       aria-label={texto}
     >
       {copiado ? <Check size={13} /> : <Copy size={13} />}
-    </button>
+    </BotonPlano>
   );
 }

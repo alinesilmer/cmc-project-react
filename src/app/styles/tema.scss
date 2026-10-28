@@ -1,8 +1,6 @@
 // Tipografías del panel, a prueba: Montserrat para títulos y Google Sans para el resto.
 @use "./variables.scss" as *;
 
-@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&family=Google+Sans:wght@400;500;600;700&display=swap");
-
 // Interruptor del tema oscuro del panel.
 
 :root[data-tema="oscuro"] {

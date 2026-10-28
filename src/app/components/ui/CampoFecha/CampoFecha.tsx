@@ -7,6 +7,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import { fechaAISO, parseFechaLocal } from "@/app/shared/lib/fechas";
 import "./calendario.scss";
 import s from "./CampoFecha.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 registerLocale("es", es);
 
@@ -127,7 +128,7 @@ export default function CampoFecha({
                 </option>
               ))}
             </select>
-            <button
+            <BotonPlano
               type="button"
               className="calendario-flecha"
               onClick={decreaseMonth}
@@ -135,8 +136,8 @@ export default function CampoFecha({
               aria-label="Mes anterior"
             >
               <ChevronLeft size={18} aria-hidden="true" />
-            </button>
-            <button
+            </BotonPlano>
+            <BotonPlano
               type="button"
               className="calendario-flecha"
               onClick={increaseMonth}
@@ -144,7 +145,7 @@ export default function CampoFecha({
               aria-label="Mes siguiente"
             >
               <ChevronRight size={18} aria-hidden="true" />
-            </button>
+            </BotonPlano>
           </div>
         )}
         // Con `open` controlado el campo no abre el calendario al enfocarlo ni al hacer clic.
@@ -163,7 +164,7 @@ export default function CampoFecha({
         className={s.entrada}
       />
       {calendarioSoloEnIcono ? (
-        <button
+        <BotonPlano
           type="button"
           className={`${s.icono} ${s.iconoBoton}`}
           onClick={() => setAbierto((a) => !a)}
@@ -173,7 +174,7 @@ export default function CampoFecha({
           tabIndex={-1}
         >
           <CalendarDays size={17} aria-hidden="true" />
-        </button>
+        </BotonPlano>
       ) : (
         <CalendarDays size={17} className={s.icono} aria-hidden="true" />
       )}

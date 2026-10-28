@@ -11,6 +11,7 @@ import styles from "./RegistroFacturacion.module.scss";
 import CampoFecha from "@/app/components/ui/CampoFecha/CampoFecha";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
 import { comoErrorApi } from "@/app/shared/lib/httpErrors";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 const periodoActual = (): string => {
   const d = new Date();
@@ -123,9 +124,9 @@ const RegistroFacturacion: React.FC = () => {
           <label className={styles.filterLabel}>Hasta</label>
           <CampoFecha value={hasta} onChange={(valor) => setHasta(valor)} />
         </div>
-        <button type="button" className={styles.clearBtn} onClick={handleLimpiarGlobal}>
+        <BotonPlano type="button" className={styles.clearBtn} onClick={handleLimpiarGlobal}>
           Limpiar filtros
-        </button>
+        </BotonPlano>
       </div>
 
       {/* ── Carga por usuario ─────────────────────────────────────────────── */}

@@ -1,5 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, ClipboardList, UserMinus, UserPlus, Users } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ClipboardList,
+  UserMinus,
+  UserPlus,
+  Users,
+} from "lucide-react";
 
 import Caja, { Cajas } from "@/app/components/ui/Caja/Caja";
 import ConfirmModal from "@/app/components/ui/ConfirmModal/ConfirmModal";
@@ -9,14 +16,21 @@ import Tabla from "@/app/components/ui/Tabla/Tabla";
 import { useAppSnackbar } from "@/app/hooks/useAppSnackbar";
 import { fetchObrasSociales } from "@/app/pages/AfiliadosPorObraSocialPage/api";
 import type { ObraSocial } from "@/app/pages/AfiliadosPorObraSocialPage/types";
-// Franja, solapas, tabla y paginación como los de «Padrones» (copia local de sus estilos).
-import padrones from "./Padrones.module.scss";
+// Franja, solapas, tabla y paginación son los de «Padrones»: la pantalla se ve igual.
+import padrones from "./PadronesBase.module.scss";
 import {
-  TAMANO_PAGINA, adherirSocios, fetchCandidatos, mensajeDeError, quitarSocios,
-  type Candidato, type PaginaCandidatos, type Vista,
+  TAMANO_PAGINA,
+  adherirSocios,
+  fetchCandidatos,
+  mensajeDeError,
+  quitarSocios,
+  type Candidato,
+  type PaginaCandidatos,
+  type Vista,
 } from "./api";
 import SelectorObraSocial from "./SelectorObraSocial";
 import s from "./ActualizarPadrones.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 type Modo = "adherir" | "quitar";
 
@@ -34,9 +48,11 @@ const VISTAS: { id: Vista; titulo: string }[] = [
 const NOMBRES_EN_BARRA = 3;
 
 /** Lo que se puede tildar en cada modo: al adherir, los que todavía no están; al quitar, los que sí. */
-const esElegible = (c: Candidato, modo: Modo) => (modo === "adherir" ? !c.ADHERIDO : c.ADHERIDO);
+const esElegible = (c: Candidato, modo: Modo) =>
+  modo === "adherir" ? !c.ADHERIDO : c.ADHERIDO;
 
-const nombreDe = (c: { NOMBRE: string | null; NRO_SOCIO: number }) => c.NOMBRE || `Socio ${c.NRO_SOCIO}`;
+const nombreDe = (c: { NOMBRE: string | null; NRO_SOCIO: number }) =>
+  c.NOMBRE || `Socio ${c.NRO_SOCIO}`;
 
 /** Actualizar padrones: se elige una obra social y se tildan los socios que se adhieren (o se quitan) de su padrón. */
 export default function ActualizarPadronesPage() {
@@ -73,7 +89,8 @@ export default function ActualizarPadronesPage() {
         const rows = await fetchObrasSociales(ctrl.signal);
         if (!ctrl.signal.aborted) setObras(rows);
       } catch {
-        if (!ctrl.signal.aborted) setErrorObras("No se pudieron cargar las obras sociales.");
+        if (!ctrl.signal.aborted)
+          setErrorObras("No se pudieron cargar las obras sociales.");
       } finally {
         if (!ctrl.signal.aborted) setCargandoObras(false);
       }
@@ -103,7 +120,11 @@ export default function ActualizarPadronesPage() {
       try {
         setCargando(true);
         setError(null);
-        const d = await fetchCandidatos(nroOS, { search: busquedaAplicada, vista, page: pagina }, ctrl.signal);
+        const d = await fetchCandidatos(
+          nroOS,
+          { search: busquedaAplicada, vista, page: pagina },
+          ctrl.signal,
+        );
         if (!ctrl.signal.aborted) setDatos(d);
       } catch (e) {
         if (ctrl.signal.aborted) return;
@@ -147,8 +168,13 @@ export default function ActualizarPadronesPage() {
     });
 
   const items = datos?.items ?? [];
-  const elegiblesPagina = useMemo(() => items.filter((c) => esElegible(c, modo)), [items, modo]);
-  const todosTildados = elegiblesPagina.length > 0 && elegiblesPagina.every((c) => seleccion.has(c.ID));
+  const elegiblesPagina = useMemo(
+    () => items.filter((c) => esElegible(c, modo)),
+    [items, modo],
+  );
+  const todosTildados =
+    elegiblesPagina.length > 0 &&
+    elegiblesPagina.every((c) => seleccion.has(c.ID));
 
   const alternarPagina = () =>
     setSeleccion((previa) => {
@@ -160,7 +186,10 @@ export default function ActualizarPadronesPage() {
       return sig;
     });
 
-  const totalPaginas = Math.max(1, Math.ceil((datos?.total ?? 0) / TAMANO_PAGINA));
+  const totalPaginas = Math.max(
+    1,
+    Math.ceil((datos?.total ?? 0) / TAMANO_PAGINA),
+  );
   const elegidos = Array.from(seleccion.values());
   const cantidad = elegidos.length;
   const accion = modo === "adherir" ? "Adherir" : "Quitar";
@@ -177,18 +206,24 @@ export default function ActualizarPadronesPage() {
         ? "Tildá socios en la tabla para adherirlos."
         : "Tildá socios en la tabla para sacarlos del padrón."
       : elegidos.slice(0, NOMBRES_EN_BARRA).map(nombreDe).join(" · ") +
-        (cantidad > NOMBRES_EN_BARRA ? ` · y ${cantidad - NOMBRES_EN_BARRA} más` : "");
+        (cantidad > NOMBRES_EN_BARRA
+          ? ` · y ${cantidad - NOMBRES_EN_BARRA} más`
+          : "");
 
   const confirmar = async () => {
     if (!obra) return;
     setGuardando(true);
     try {
       const ids = elegidos.map((c) => c.ID);
-      const r = modo === "adherir" ? await adherirSocios(obra.NRO_OBRA_SOCIAL, ids) : await quitarSocios(obra.NRO_OBRA_SOCIAL, ids);
+      const r =
+        modo === "adherir"
+          ? await adherirSocios(obra.NRO_OBRA_SOCIAL, ids)
+          : await quitarSocios(obra.NRO_OBRA_SOCIAL, ids);
       const verbo = modo === "adherir" ? "adheridos a" : "quitados de";
       let msg = `${r.procesados} ${r.procesados === 1 ? "socio" : "socios"} ${verbo} ${obra.NOMBRE}.`;
       if (r.sin_cambios > 0) msg += ` ${r.sin_cambios} ya estaban así.`;
-      if (r.omitidos.length > 0) msg += ` ${r.omitidos.length} no se tocaron: ya no son socios activos.`;
+      if (r.omitidos.length > 0)
+        msg += ` ${r.omitidos.length} no se tocaron: ya no son socios activos.`;
       avisar(msg, r.omitidos.length > 0 ? "warning" : "success");
       setSeleccion(new Map());
       setRecarga((n) => n + 1);
@@ -203,12 +238,18 @@ export default function ActualizarPadronesPage() {
   const estadoDe = (c: Candidato) => {
     const tildado = seleccion.has(c.ID);
     if (modo === "quitar") {
-      return tildado
-        ? <span className={`${s.estado} ${s.estadoQuita}`}>Se va a quitar</span>
-        : <span className={`${s.estado} ${s.estadoAd}`}>En el padrón</span>;
+      return tildado ? (
+        <span className={`${s.estado} ${s.estadoQuita}`}>Se va a quitar</span>
+      ) : (
+        <span className={`${s.estado} ${s.estadoAd}`}>En el padrón</span>
+      );
     }
-    if (c.ADHERIDO) return <span className={`${s.estado} ${s.estadoAd}`}>Adherido</span>;
-    if (tildado) return <span className={`${s.estado} ${s.estadoNuevo}`}>Se va a adherir</span>;
+    if (c.ADHERIDO)
+      return <span className={`${s.estado} ${s.estadoAd}`}>Adherido</span>;
+    if (tildado)
+      return (
+        <span className={`${s.estado} ${s.estadoNuevo}`}>Se va a adherir</span>
+      );
     return <span className={s.libre}>No adherido</span>;
   };
 
@@ -217,16 +258,25 @@ export default function ActualizarPadronesPage() {
       <div className={padrones.container}>
         <header className={padrones.cabecera}>
           <h1 className={padrones.title}>
-            <ClipboardList size={38} strokeWidth={1.9} style={{ verticalAlign: "-4px", marginRight: 12 }} aria-hidden="true" />
+            <ClipboardList
+              size={38}
+              strokeWidth={1.9}
+              style={{ verticalAlign: "-4px", marginRight: 12 }}
+              aria-hidden="true"
+            />
             Actualizar padrones
           </h1>
 
-          <div className={padrones.solapas} role="tablist" aria-label="Qué querés hacer con el padrón">
+          <div
+            className={padrones.solapas}
+            role="tablist"
+            aria-label="Qué querés hacer con el padrón"
+          >
             {SOLAPAS.map((sol) => {
               const Icono = sol.icono;
               const activa = sol.id === modo;
               return (
-                <button
+                <BotonPlano
                   key={sol.id}
                   type="button"
                   role="tab"
@@ -236,7 +286,7 @@ export default function ActualizarPadronesPage() {
                 >
                   <Icono size={16} strokeWidth={1.8} aria-hidden="true" />
                   {sol.titulo}
-                </button>
+                </BotonPlano>
               );
             })}
           </div>
@@ -285,9 +335,13 @@ export default function ActualizarPadronesPage() {
                 ariaLabel="Buscar socio"
               />
               {modo === "adherir" && (
-                <div className={s.segmentos} role="group" aria-label="Qué socios mostrar">
+                <div
+                  className={s.segmentos}
+                  role="group"
+                  aria-label="Qué socios mostrar"
+                >
                   {VISTAS.map((v) => (
-                    <button
+                    <BotonPlano
                       key={v.id}
                       type="button"
                       className={`${s.segmento} ${v.id === vista ? s.segmentoActivo : ""}`}
@@ -295,7 +349,7 @@ export default function ActualizarPadronesPage() {
                       onClick={() => cambiarVista(v.id)}
                     >
                       {v.titulo}
-                    </button>
+                    </BotonPlano>
                   ))}
                 </div>
               )}
@@ -304,24 +358,43 @@ export default function ActualizarPadronesPage() {
 
           {!obra ? (
             <div className={padrones.emptyState}>
-              <Users size={40} className={padrones.emptyIcon} aria-hidden="true" />
-              <h3 className={padrones.emptyTitle}>Seleccioná una obra social</h3>
+              <Users
+                size={40}
+                className={padrones.emptyIcon}
+                aria-hidden="true"
+              />
+              <h3 className={padrones.emptyTitle}>
+                Seleccioná una obra social
+              </h3>
             </div>
           ) : error ? (
-            <div className={padrones.errorMessage} role="alert">{error}</div>
+            <div className={padrones.errorMessage} role="alert">
+              {error}
+            </div>
           ) : !datos ? (
             <div className={padrones.loadingState}>
-              <div className={padrones.progressBar}><div className={padrones.progressFill} /></div>
+              <div className={padrones.progressBar}>
+                <div className={padrones.progressFill} />
+              </div>
               <p className={padrones.loadingText}>Cargando socios…</p>
             </div>
           ) : (
             <>
               <p className={padrones.resultsCount}>
-                <strong>{datos.total}</strong> {datos.total === 1 ? "socio" : "socios"}
-                {totalPaginas > 1 && <> · página <strong>{pagina}</strong> de <strong>{totalPaginas}</strong></>}
+                <strong>{datos.total}</strong>{" "}
+                {datos.total === 1 ? "socio" : "socios"}
+                {totalPaginas > 1 && (
+                  <>
+                    {" "}
+                    · página <strong>{pagina}</strong> de{" "}
+                    <strong>{totalPaginas}</strong>
+                  </>
+                )}
               </p>
 
-              <DobleScroll className={`${padrones.tableWrapper} ${cargando ? s.recargando : ""}`}>
+              <DobleScroll
+                className={`${padrones.tableWrapper} ${cargando ? s.recargando : ""}`}
+              >
                 <Tabla className={padrones.table}>
                   <thead>
                     <tr>
@@ -346,19 +419,29 @@ export default function ActualizarPadronesPage() {
                     {items.length === 0 ? (
                       <tr>
                         <td colSpan={6} className={padrones.noResults}>
-                          {busquedaAplicada
-                            ? <>Ningún socio coincide con &ldquo;{busquedaAplicada}&rdquo;.</>
-                            : modo === "quitar"
-                              ? "Esta obra social todavía no tiene socios en su padrón."
-                              : "No hay socios para mostrar."}
+                          {busquedaAplicada ? (
+                            <>
+                              Ningún socio coincide con &ldquo;
+                              {busquedaAplicada}&rdquo;.
+                            </>
+                          ) : modo === "quitar" ? (
+                            "Esta obra social todavía no tiene socios en su padrón."
+                          ) : (
+                            "No hay socios para mostrar."
+                          )}
                         </td>
                       </tr>
                     ) : (
                       items.map((c) => {
                         const bloqueado = !esElegible(c, modo);
-                        const tildado = bloqueado ? c.ADHERIDO : seleccion.has(c.ID);
+                        const tildado = bloqueado
+                          ? c.ADHERIDO
+                          : seleccion.has(c.ID);
                         return (
-                          <tr key={c.ID} className={`${tildado && !bloqueado ? s.filaTildada : ""} ${bloqueado ? s.filaBloqueada : ""}`}>
+                          <tr
+                            key={c.ID}
+                            className={`${tildado && !bloqueado ? s.filaTildada : ""} ${bloqueado ? s.filaBloqueada : ""}`}
+                          >
                             <td className={s.colCheck}>
                               <input
                                 type="checkbox"
@@ -371,8 +454,16 @@ export default function ActualizarPadronesPage() {
                             </td>
                             <td className={padrones.centrada}>{c.NRO_SOCIO}</td>
                             <td className={padrones.tdName}>{nombreDe(c)}</td>
-                            <td className={padrones.centrada}>{c.MATRICULA_PROV ?? <span className={padrones.vacio}>—</span>}</td>
-                            <td>{c.ESPECIALIDADES.join(", ") || <span className={padrones.vacio}>—</span>}</td>
+                            <td className={padrones.centrada}>
+                              {c.MATRICULA_PROV ?? (
+                                <span className={padrones.vacio}>—</span>
+                              )}
+                            </td>
+                            <td>
+                              {c.ESPECIALIDADES.join(", ") || (
+                                <span className={padrones.vacio}>—</span>
+                              )}
+                            </td>
                             <td>{estadoDe(c)}</td>
                           </tr>
                         );
@@ -384,7 +475,7 @@ export default function ActualizarPadronesPage() {
 
               {totalPaginas > 1 && (
                 <div className={padrones.pagination}>
-                  <button
+                  <BotonPlano
                     type="button"
                     className={padrones.paginationBtn}
                     onClick={() => setPagina((p) => Math.max(1, p - 1))}
@@ -392,34 +483,52 @@ export default function ActualizarPadronesPage() {
                     aria-label="Página anterior"
                   >
                     <ChevronLeft size={16} />
-                  </button>
-                  <span className={s.paginaDe}>Página {pagina} de {totalPaginas}</span>
-                  <button
+                  </BotonPlano>
+                  <span className={s.paginaDe}>
+                    Página {pagina} de {totalPaginas}
+                  </span>
+                  <BotonPlano
                     type="button"
                     className={padrones.paginationBtn}
-                    onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))}
+                    onClick={() =>
+                      setPagina((p) => Math.min(totalPaginas, p + 1))
+                    }
                     disabled={pagina === totalPaginas}
                     aria-label="Página siguiente"
                   >
                     <ChevronRight size={16} />
-                  </button>
+                  </BotonPlano>
                 </div>
               )}
             </>
           )}
 
           {obra && (
-            <div className={`${s.barra} ${modo === "quitar" ? s.barraQuitar : ""}`} role="region" aria-label="Selección">
+            <div
+              className={`${s.barra} ${modo === "quitar" ? s.barraQuitar : ""}`}
+              role="region"
+              aria-label="Selección"
+            >
               <div className={s.barraTexto}>
                 <strong>{resumen}</strong>
                 <span>{nombres}</span>
               </div>
-              <button type="button" className={s.barraLimpiar} onClick={() => setSeleccion(new Map())} disabled={cantidad === 0}>
+              <BotonPlano
+                type="button"
+                className={s.barraLimpiar}
+                onClick={() => setSeleccion(new Map())}
+                disabled={cantidad === 0}
+              >
                 Limpiar selección
-              </button>
-              <button type="button" className={s.barraAccion} onClick={() => setConfirmando(true)} disabled={cantidad === 0 || guardando}>
+              </BotonPlano>
+              <BotonPlano
+                type="button"
+                className={s.barraAccion}
+                onClick={() => setConfirmando(true)}
+                disabled={cantidad === 0 || guardando}
+              >
                 {accion} {modo === "adherir" ? "a" : "de"} {obra.NOMBRE}
-              </button>
+              </BotonPlano>
             </div>
           )}
         </section>
@@ -427,7 +536,11 @@ export default function ActualizarPadronesPage() {
 
       <ConfirmModal
         isOpen={confirmando}
-        title={modo === "adherir" ? "¿Adherir estos socios?" : "¿Quitar estos socios del padrón?"}
+        title={
+          modo === "adherir"
+            ? "¿Adherir estos socios?"
+            : "¿Quitar estos socios del padrón?"
+        }
         message={
           `${cantidad === 1 ? "1 socio" : `${cantidad} socios`} ${modo === "adherir" ? "quedarán adheridos a" : "dejarán de figurar en"} ` +
           `${obra?.NOMBRE ?? "la obra social"}, en todos sus planes.`

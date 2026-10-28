@@ -4,6 +4,7 @@ import { formatMoneda, nombreMes } from "../validaciones.types";
 import type { Periodo } from "../validaciones.types";
 import s from "./Tablas.module.scss";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 interface Props {
   periodos: Periodo[];
@@ -52,13 +53,13 @@ export default function PeriodosTable({ periodos, cargando, onVerDetalle }: Prop
                   {formatMoneda(p.total)}
                 </td>
                 <td className={s.center}>
-                  <button
+                  <BotonPlano
                     type="button"
                     className={s.pdfBtn}
                     onClick={() => onVerDetalle(p)}
                   >
                     Ver detalle <ChevronRight size={15} />
-                  </button>
+                  </BotonPlano>
                 </td>
               </tr>
             ))}
@@ -77,13 +78,13 @@ export default function PeriodosTable({ periodos, cargando, onVerDetalle }: Prop
             </div>
             <p className={s.cardSub}>{p.cantidad} prestaciones autorizadas</p>
             <div className={s.cardActions}>
-              <button
+              <BotonPlano
                 type="button"
                 className={s.cardBtn}
                 onClick={() => onVerDetalle(p)}
               >
                 Ver detalle <ChevronRight size={15} />
-              </button>
+              </BotonPlano>
             </div>
           </li>
         ))}

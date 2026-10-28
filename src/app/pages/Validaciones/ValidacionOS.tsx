@@ -46,6 +46,7 @@ import type {
   ResultadoValidacion,
 } from "./validaciones.types";
 import s from "./ValidacionOS.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 type TabId = "carga" | "listado";
 
@@ -417,9 +418,9 @@ export default function ValidacionOS() {
                     Prestaciones de {nombreMes(verDetalle.mes)} {verDetalle.anio}
                   </h2>
                 </div>
-                <button type="button" className={s.linkBtn} onClick={() => setTab("carga")}>
+                <BotonPlano type="button" className={s.linkBtn} onClick={() => setTab("carga")}>
                   <PlusCircle size={15} /> Cargar otra
-                </button>
+                </BotonPlano>
               </div>
               <PrestacionesTable
                 prestaciones={prestacionesDetalle}
@@ -434,9 +435,9 @@ export default function ValidacionOS() {
             <>
               <div className={s.panelHead}>
                 <h2 className={s.cardTitle}>Períodos</h2>
-                <button type="button" className={s.linkBtn} onClick={() => setTab("carga")}>
+                <BotonPlano type="button" className={s.linkBtn} onClick={() => setTab("carga")}>
                   <PlusCircle size={15} /> Cargar otra
-                </button>
+                </BotonPlano>
               </div>
               <p className={s.cardSub}>
                 Un período por fila, el más reciente primero. "Ver detalle" abre las

@@ -14,6 +14,7 @@ import styles from "./CierrePeriodo.module.scss";
 import BackButton from "@/app/components/ui/BackButton/BackButton";
 import paleta from "@/app/styles/paleta.module.scss";
 import { comoErrorApi } from "@/app/shared/lib/httpErrors";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 const TIPOS_FACTURA = ["A", "B", "C"];
 
@@ -241,17 +242,17 @@ const CierrePeriodo: React.FC = () => {
         )}
 
         <div className={styles.formFooter}>
-          <button type="button" className={styles.btnGhost} onClick={() => navigate("/panel/facturacion/periodos")} disabled={cerrando}>
+          <BotonPlano type="button" className={styles.btnGhost} onClick={() => navigate("/panel/facturacion/periodos")} disabled={cerrando}>
             Cancelar
-          </button>
-          <button
+          </BotonPlano>
+          <BotonPlano
             type="button"
             className={styles.btnDanger}
             onClick={() => setConfirmOpen(true)}
             disabled={!canCerrar}
           >
             {cerrando ? "Cerrando…" : "Cerrar período"}
-          </button>
+          </BotonPlano>
         </div>
       </motion.div>
 

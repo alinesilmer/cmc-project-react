@@ -12,6 +12,7 @@ import ExportarOsBoton from "./ExportarOsBoton";
 import { usePeriodosVecinos } from "./usePeriodosVecinos";
 import BackButton from "@/app/components/ui/BackButton/BackButton";
 import styles from "./CabeceraExpediente.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 // Alto de la barra compacta fija. La tabla (`.tablaEncabezado`) lo suma a su `top` para
 // quedar pegada debajo de ella: el padre lo recibe en `onCompactaChange`.
@@ -116,12 +117,12 @@ export default function CabeceraExpediente({
 
   const botones = (
     <>
-      <button type="button" className={styles.btn} onClick={onVista} disabled={!detalle}>
+      <BotonPlano type="button" className={styles.btn} onClick={onVista} disabled={!detalle}>
         <SlidersHorizontal size={15} /> Vista
-      </button>
-      <button type="button" className={`${styles.btn} ${styles.btnPrimario}`} onClick={onExportar} disabled={!detalle}>
+      </BotonPlano>
+      <BotonPlano type="button" className={`${styles.btn} ${styles.btnPrimario}`} onClick={onExportar} disabled={!detalle}>
         <Download size={15} /> Exportar
-      </button>
+      </BotonPlano>
       <ExportarOsBoton detalle={detalle} />
     </>
   );
@@ -143,7 +144,7 @@ export default function CabeceraExpediente({
       <div className={styles.migas}>
         <nav className={styles.ruta} aria-label="Ubicación">
           <span>Facturación</span><span>›</span>
-          <button type="button" className={styles.rutaLink} onClick={onVolver}>Períodos</button><span>›</span>
+          <BotonPlano type="button" className={styles.rutaLink} onClick={onVolver}>Períodos</BotonPlano><span>›</span>
           <strong>Expediente {detalle.id_factura}</strong>
         </nav>
         <div className={styles.acciones}>
@@ -159,9 +160,9 @@ export default function CabeceraExpediente({
             <span className={styles.etiquetaChica}>Expediente</span>
             <div className={styles.numeroFila}>
               <span className={styles.numero}>N.º {detalle.id_factura}</span>
-              <button type="button" className={styles.copiar} onClick={copiar} aria-label="Copiar número de expediente">
+              <BotonPlano type="button" className={styles.copiar} onClick={copiar} aria-label="Copiar número de expediente">
                 {copiado ? <Check size={14} /> : <Copy size={14} />}
-              </button>
+              </BotonPlano>
             </div>
           </div>
           <span className={styles.separador} aria-hidden="true" />
@@ -175,23 +176,23 @@ export default function CabeceraExpediente({
           <div className={styles.bloque}>
             <span className={styles.etiquetaChica}>Período</span>
             <div className={styles.periodoFila}>
-              <button
+              <BotonPlano
                 type="button" className={styles.flecha} disabled={!anterior}
                 onClick={() => anterior && onIrAFactura(anterior.idFactura)}
                 aria-label={anterior ? `Período anterior: ${anterior.label}` : "No hay un período anterior"}
                 title={anterior ? anterior.label : undefined}
               >
                 <ChevronLeft size={18} />
-              </button>
+              </BotonPlano>
               <span className={styles.valorGrande}>{detalle.periodo_label || detalle.periodo}</span>
-              <button
+              <BotonPlano
                 type="button" className={styles.flecha} disabled={!siguiente}
                 onClick={() => siguiente && onIrAFactura(siguiente.idFactura)}
                 aria-label={siguiente ? `Período siguiente: ${siguiente.label}` : "No hay un período siguiente"}
                 title={siguiente ? siguiente.label : undefined}
               >
                 <ChevronRight size={18} />
-              </button>
+              </BotonPlano>
             </div>
           </div>
           <div className={styles.estados}>
@@ -289,12 +290,12 @@ export default function CabeceraExpediente({
           <span className={styles.compactaCant}>{entero(detalle.total_prestaciones)} prestaciones</span>
           <span className={`${styles.chip} ${styles.chipTotal} ${styles.compactaTotal}`}>Total {formatMoney(totalMostrado)}</span>
           {botones}
-          <button
+          <BotonPlano
             type="button" className={`${styles.btn} ${styles.btnIcono}`} aria-label="Ir al encabezado completo"
             onClick={() => cabeceraRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
           >
             <ChevronDown size={15} />
-          </button>
+          </BotonPlano>
         </div>
       )}
     </>

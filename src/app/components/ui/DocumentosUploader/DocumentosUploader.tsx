@@ -2,6 +2,7 @@ import { useId, useRef, useState } from "react";
 import { ArrowDown, ArrowUp, Eye, FileUp, RefreshCw, Trash2 } from "lucide-react";
 
 import styles from "./DocumentosUploader.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 /** Un archivo de la documentación: ya subido (con `url`) o todavía local (con `archivo`). */
 export interface DocumentoItem {
@@ -121,31 +122,31 @@ export default function DocumentosUploader({
                 <div className={styles.acciones}>
                   {onMover && items.length > 1 && (
                     <>
-                      <button type="button" className={styles.icono} aria-label={`Subir ${d.nombre}`} disabled={ocupado || i === 0} onClick={() => void onMover(d, -1)}>
+                      <BotonPlano type="button" className={styles.icono} aria-label={`Subir ${d.nombre}`} disabled={ocupado || i === 0} onClick={() => void onMover(d, -1)}>
                         <ArrowUp size={15} />
-                      </button>
-                      <button type="button" className={styles.icono} aria-label={`Bajar ${d.nombre}`} disabled={ocupado || i === items.length - 1} onClick={() => void onMover(d, 1)}>
+                      </BotonPlano>
+                      <BotonPlano type="button" className={styles.icono} aria-label={`Bajar ${d.nombre}`} disabled={ocupado || i === items.length - 1} onClick={() => void onMover(d, 1)}>
                         <ArrowDown size={15} />
-                      </button>
+                      </BotonPlano>
                     </>
                   )}
-                  <button type="button" className={styles.boton} onClick={() => void onVer(d)}>
+                  <BotonPlano type="button" className={styles.boton} onClick={() => void onVer(d)}>
                     <Eye size={14} aria-hidden="true" /> Ver
-                  </button>
+                  </BotonPlano>
                   {onReemplazar && (
-                    <button
+                    <BotonPlano
                       type="button"
                       className={styles.boton}
                       disabled={ocupado}
                       onClick={() => { setAReemplazar(d); refReemplazar.current?.click(); }}
                     >
                       <RefreshCw size={14} aria-hidden="true" /> Reemplazar
-                    </button>
+                    </BotonPlano>
                   )}
                   {onEliminar && (
-                    <button type="button" className={`${styles.boton} ${styles.peligro}`} disabled={ocupado} onClick={() => void onEliminar(d)}>
+                    <BotonPlano type="button" className={`${styles.boton} ${styles.peligro}`} disabled={ocupado} onClick={() => void onEliminar(d)}>
                       <Trash2 size={14} aria-hidden="true" /> Eliminar
-                    </button>
+                    </BotonPlano>
                   )}
                 </div>
               </li>

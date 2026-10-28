@@ -5,8 +5,9 @@ import { ComoSeFacturaEdit } from "./ComoSeFacturaEdit";
 import { type ModalidadValor } from "./porOS.types";
 import { ComponentEditor } from "./ComponentEditor";
 import Cargando from "@/app/components/ui/Cargando/Cargando";
-import ReplicarFamiliaBlock, { ErrorReplica, ResultadoReplica } from "@/app/components/molecules/ReplicarFamilia/ReplicarFamiliaBlock";
+import ReplicarFamiliaBlock, { ErrorReplica, ResultadoReplica } from "@/app/pages/NomencladorNacional/components/ReplicarFamilia/ReplicarFamiliaBlock";
 import type { PorOSCtx } from "./useNomencladorPorOS";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 export default function ModalEditarVariante({ ctx, editTarget }: { ctx: PorOSCtx; editTarget: NonNullable<PorOSCtx["editTarget"]> }) {
   const { selectedNroOS, galenos, editEcu, setEditEcu, editErrors, setEditErrors, savingMeta, editMode, replica, setReplica, replicaResultado, replicaError, replicaTerminada, savingEcu, familia, changeEditModalidad, updateEditComp, replicaActiva, handleActualizar } = ctx;
@@ -130,7 +131,7 @@ export default function ModalEditarVariante({ ctx, editTarget }: { ctx: PorOSCtx
                   marginTop: 8,
                 }}
               >
-                <button
+                <BotonPlano
                   className={styles.btnWarning}
                   onClick={handleActualizar}
                   disabled={savingEcu}
@@ -145,7 +146,7 @@ export default function ModalEditarVariante({ ctx, editTarget }: { ctx: PorOSCtx
                   ) : (
                     "Actualizar"
                   )}
-                </button>
+                </BotonPlano>
               </div>
             )}
           </>

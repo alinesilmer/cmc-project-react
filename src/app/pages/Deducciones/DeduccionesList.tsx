@@ -40,6 +40,8 @@ import { getErrorMessage } from "@/app/shared/lib/utiles";
 import Cargando from "@/app/components/ui/Cargando/Cargando";
 import Paginador from "@/app/components/ui/Paginador/Paginador";
 import { comoErrorApi } from "@/app/shared/lib/httpErrors";
+import paleta from "@/app/styles/paleta.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 const CONCEPTO_SALDO_DEUDOR = "Saldo deudor de débitos";
 
@@ -422,7 +424,7 @@ const DeduccionesList: React.FC = () => {
       <MenuItem
         key={rotulo}
         disabled={extra?.disabled}
-        sx={extra?.peligro ? { color: "#cc2a2a" } : undefined}
+        sx={extra?.peligro ? { color: paleta.dangerRed } : undefined}
         onClick={() => { cerrar(); onClick(); }}
       >
         {rotulo}
@@ -514,7 +516,7 @@ const DeduccionesList: React.FC = () => {
           <SelectorMes value={hasta} onChange={cambiarFiltro(setHasta)} />
         </div>
         {hayFiltros && (
-          <button type="button" className={s.limpiar} onClick={limpiarFiltros}>Limpiar</button>
+          <BotonPlano type="button" className={s.limpiar} onClick={limpiarFiltros}>Limpiar</BotonPlano>
         )}
       </div>
 
@@ -525,7 +527,7 @@ const DeduccionesList: React.FC = () => {
           <div className={s.listaCabeza}>
             <div className={s.pestanas} role="tablist" aria-label="Estado">
               {PESTANAS.map((p) => (
-                <button
+                <BotonPlano
                   key={p.key}
                   type="button"
                   role="tab"
@@ -534,7 +536,7 @@ const DeduccionesList: React.FC = () => {
                   onClick={() => cambiarFiltro(setPestana)(p.key)}
                 >
                   {p.rotulo} <small>{cuentaDe(p).toLocaleString("es-AR")}</small>
-                </button>
+                </BotonPlano>
               ))}
             </div>
             {pestana === "pendientes" && (
@@ -623,7 +625,7 @@ const DeduccionesList: React.FC = () => {
                           {trabajando ? (
                             <Loader2 size={16} className={lq.gira} aria-label="Procesando" />
                           ) : (
-                            <button
+                            <BotonPlano
                               type="button"
                               className={lq.botonIcono}
                               aria-label="Más acciones"
@@ -631,7 +633,7 @@ const DeduccionesList: React.FC = () => {
                               onClick={(e) => setMenu({ ancla: e.currentTarget, fila: r })}
                             >
                               <MoreVertical size={16} />
-                            </button>
+                            </BotonPlano>
                           )}
                         </td>
                       </tr>
@@ -649,9 +651,9 @@ const DeduccionesList: React.FC = () => {
               {loading && items.length > 0 && " · Actualizando…"}
             </span>
             <nav className={s.pieNav} aria-label="Paginación">
-              <button type="button" onClick={() => irAPagina(page - 1)} disabled={page <= 1 || loading}>← Anterior</button>
+              <BotonPlano type="button" onClick={() => irAPagina(page - 1)} disabled={page <= 1 || loading}>← Anterior</BotonPlano>
               <span>Página {page} de {lastPage.toLocaleString("es-AR")}</span>
-              <button type="button" onClick={() => irAPagina(page + 1)} disabled={page >= lastPage || loading}>Siguiente →</button>
+              <BotonPlano type="button" onClick={() => irAPagina(page + 1)} disabled={page >= lastPage || loading}>Siguiente →</BotonPlano>
             </nav>
           </div>
         </section>

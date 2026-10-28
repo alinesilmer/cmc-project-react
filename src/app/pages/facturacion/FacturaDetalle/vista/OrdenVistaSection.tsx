@@ -2,6 +2,7 @@ import { ArrowUp, ArrowDown, Info } from "lucide-react";
 import type { AgrupacionVista, OrdenDireccion, OrdenVista } from "./types";
 import { OPCIONES_ORDEN_VISTA } from "./types";
 import s from "../export/export.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 interface Props {
   orden: OrdenVista;
@@ -30,34 +31,34 @@ export default function OrdenVistaSection({
 
       <div className={s.chipToggleRow}>
         {OPCIONES_ORDEN_VISTA.map((o) => (
-          <button
+          <BotonPlano
             key={o.value}
             type="button"
             className={`${s.chipToggle} ${orden === o.value ? s.chipToggleOn : ""}`}
             onClick={() => onChangeOrden(o.value)}
           >
             {o.label}
-          </button>
+          </BotonPlano>
         ))}
       </div>
 
       <div className={s.dirRow}>
         <span className={s.dirLabel}>Dirección:</span>
         <div className={s.dirGroup}>
-          <button
+          <BotonPlano
             type="button"
             className={`${s.dirBtn} ${direccion === "asc" ? s.dirBtnOn : ""}`}
             onClick={() => onChangeDireccion("asc")}
           >
             <ArrowUp size={12} /> {porCarga ? "Más viejo primero" : "Ascendente"}
-          </button>
-          <button
+          </BotonPlano>
+          <BotonPlano
             type="button"
             className={`${s.dirBtn} ${s.dirBtnRight} ${direccion === "desc" ? s.dirBtnOn : ""}`}
             onClick={() => onChangeDireccion("desc")}
           >
             <ArrowDown size={12} /> {porCarga ? "Más nuevo primero" : "Descendente"}
-          </button>
+          </BotonPlano>
         </div>
       </div>
 

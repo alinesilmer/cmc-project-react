@@ -10,6 +10,7 @@ import type { FilaAcciones, PrestacionConSocio } from "./FilaPrestacion";
 import comun from "./Comun.module.scss";
 import styles from "./GrupoTabla.module.scss";;
 import Tabla from "@/app/components/ui/Tabla/Tabla";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 export interface VistaGrupo {
   key: string;
@@ -256,24 +257,24 @@ function GrupoTabla({
           ))}
           <span className={styles.resumenMoney}><strong>{textoAuditadas(g.sumables)}</strong></span>
           {conAcciones && <div className={styles.resumenActions}>
-            <button type="button" className={styles.resumenActionBtn} disabled={grupoBusy}
+            <BotonPlano type="button" className={styles.resumenActionBtn} disabled={grupoBusy}
               onClick={() => accionesGrupo.onMarcarTodos(g)}>
               Marcar todos
-            </button>
-            <button type="button" className={styles.resumenActionBtn} disabled={grupoBusy}
+            </BotonPlano>
+            <BotonPlano type="button" className={styles.resumenActionBtn} disabled={grupoBusy}
               onClick={() => accionesGrupo.onDesmarcarTodos(g)}>
               Desmarcar todos
-            </button>
+            </BotonPlano>
             {!esComplemento && esPorSocio && (
               <>
-                <button type="button" className={styles.resumenActionBtn} disabled={grupoBusy}
+                <BotonPlano type="button" className={styles.resumenActionBtn} disabled={grupoBusy}
                   onClick={() => accionesGrupo.onMoverGrupo(g, "siguiente")}>
                   <ArrowRightCircle size={12} /> Siguiente período todos
-                </button>
-                <button type="button" className={styles.resumenActionBtn} disabled={grupoBusy}
+                </BotonPlano>
+                <BotonPlano type="button" className={styles.resumenActionBtn} disabled={grupoBusy}
                   onClick={() => accionesGrupo.onMoverGrupo(g, "anterior")}>
                   <ArrowLeftCircle size={12} /> Anterior período todos
-                </button>
+                </BotonPlano>
               </>
             )}
           </div>}

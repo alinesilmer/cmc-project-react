@@ -24,6 +24,7 @@ import Tabla from "@/app/components/ui/Tabla/Tabla";
 import BotonVer from "@/app/components/ui/BotonVer/BotonVer";
 import Paginador from "@/app/components/ui/Paginador/Paginador";
 import { comoErrorApi } from "@/app/shared/lib/httpErrors";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 function normalizeBool(v: unknown): boolean {
   if (typeof v === "boolean") return v;
@@ -797,18 +798,18 @@ const UsersList: React.FC = () => {
           {activeChips.map((chip) => (
             <span key={chip.key} className={styles.chip}>
               {chip.label}
-              <button
+              <BotonPlano
                 className={styles.chipRemove}
                 onClick={() => removeFilterChip(chip.key)}
                 aria-label={`Quitar filtro ${chip.label}`}
               >
                 ×
-              </button>
+              </BotonPlano>
             </span>
           ))}
-          <button className={styles.chipClearAll} onClick={resetFilters}>
+          <BotonPlano className={styles.chipClearAll} onClick={resetFilters}>
             Limpiar todo
-          </button>
+          </BotonPlano>
         </div>
       )}
 

@@ -11,6 +11,7 @@ import ColumnasSection from "./ColumnasSection";
 import ExportButtons from "./ExportButtons";
 import s from "./export.module.scss";
 import { comoErrorApi } from "@/app/shared/lib/httpErrors";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 interface Props {
   detalle: FacturaDetalleResponse;
@@ -69,26 +70,26 @@ export default function ExportPanel({ detalle, vista, onClose }: Props) {
             <h2 className={s.drawerTitle}>Exportar factura</h2>
             <p className={s.drawerSub}>Elegí el detalle o la carátula y descargá.</p>
           </div>
-          <button type="button" className={s.closeBtn} onClick={onClose} aria-label="Cerrar panel">
+          <BotonPlano type="button" className={s.closeBtn} onClick={onClose} aria-label="Cerrar panel">
             <X size={18} />
-          </button>
+          </BotonPlano>
         </div>
 
         <div className={s.tabRow}>
-          <button
+          <BotonPlano
             type="button"
             className={`${s.tabBtn} ${tab === "detalle" ? s.tabBtnOn : ""}`}
             onClick={() => setTab("detalle")}
           >
             Detalle
-          </button>
-          <button
+          </BotonPlano>
+          <BotonPlano
             type="button"
             className={`${s.tabBtn} ${tab === "caratula" ? s.tabBtnOn : ""}`}
             onClick={() => setTab("caratula")}
           >
             Carátula
-          </button>
+          </BotonPlano>
         </div>
 
         <div className={s.drawerBody}>

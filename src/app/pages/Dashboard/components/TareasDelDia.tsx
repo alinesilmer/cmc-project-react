@@ -3,6 +3,7 @@ import { Check, Pencil, Plus, X } from "lucide-react";
 
 import { PRIORIDADES, useTareasDelDia, type Prioridad, type Tarea } from "../useTareasDelDia";
 import s from "./TareasDelDia.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 type Props = {
   claveUsuario: string;
@@ -15,7 +16,7 @@ const CLASE: Record<Prioridad, string> = { alta: s.alta, media: s.media, baja: s
 /** Etiqueta de prioridad. Es un botón: cada clic pasa a la siguiente. */
 function BotonPrioridad({ prioridad, onClick }: { prioridad: Prioridad; onClick: () => void }) {
   return (
-    <button
+    <BotonPlano
       type="button"
       className={`${s.prioridad} ${CLASE[prioridad]}`}
       onClick={onClick}
@@ -23,7 +24,7 @@ function BotonPrioridad({ prioridad, onClick }: { prioridad: Prioridad; onClick:
       aria-label={`Prioridad ${ETIQUETA[prioridad].toLowerCase()}. Cambiar`}
     >
       {ETIQUETA[prioridad]}
-    </button>
+    </BotonPlano>
   );
 }
 
@@ -74,22 +75,22 @@ function ItemTarea({ tarea, onAlternar, onEditar, onPriorizar, onQuitar }: ItemP
       )}
 
       <BotonPrioridad prioridad={tarea.prioridad} onClick={onPriorizar} />
-      <button
+      <BotonPlano
         type="button"
         className={s.accion}
         onClick={() => setBorrador(tarea.texto)}
         aria-label={`Editar «${tarea.texto}»`}
       >
         <Pencil size={13} aria-hidden="true" />
-      </button>
-      <button
+      </BotonPlano>
+      <BotonPlano
         type="button"
         className={`${s.accion} ${s.quitar}`}
         onClick={onQuitar}
         aria-label={`Quitar «${tarea.texto}»`}
       >
         <X size={14} aria-hidden="true" />
-      </button>
+      </BotonPlano>
     </li>
   );
 }
@@ -129,9 +130,9 @@ export default function TareasDelDia({ claveUsuario }: Props) {
               <span className={s.resumen}>
                 {/* Sólo aparece cuando hay algo tildado para sacar. */}
                 {hechas > 0 && (
-                  <button type="button" className={s.limpiar} onClick={limpiar}>
+                  <BotonPlano type="button" className={s.limpiar} onClick={limpiar}>
                     Limpiar
-                  </button>
+                  </BotonPlano>
                 )}
                 <span className={s.cuenta}>
                   {hechas}/{tareas.length}
@@ -165,14 +166,14 @@ export default function TareasDelDia({ claveUsuario }: Props) {
                 disabled={llena}
               />
               <BotonPrioridad prioridad={prioridad} onClick={rotarPrioridad} />
-              <button
+              <BotonPlano
                 type="submit"
                 className={s.agregar}
                 aria-label="Agregar tarea"
                 disabled={!texto.trim() || llena}
               >
                 <Plus size={16} aria-hidden="true" />
-              </button>
+              </BotonPlano>
             </form>
           </div>
         </div>

@@ -7,6 +7,7 @@ import FiltersSection from "./FiltersSection";
 import FieldSelector from "./FieldSelector";
 import ExportButtons from "./ExportButtons";
 import s from "./export.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 interface Props {
   items: ObraSocialListItem[];
@@ -33,14 +34,14 @@ export default function ExportPanel({ items, onClose }: Props) {
               Filtrá, elegí columnas y descargá en Excel o PDF.
             </p>
           </div>
-          <button
+          <BotonPlano
             type="button"
             className={s.closeBtn}
             onClick={onClose}
             aria-label="Cerrar panel"
           >
             <X size={18} />
-          </button>
+          </BotonPlano>
         </div>
 
         {/* Scrollable body */}

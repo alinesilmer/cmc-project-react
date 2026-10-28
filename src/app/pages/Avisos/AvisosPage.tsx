@@ -29,6 +29,7 @@ import { detalleDeError } from "@/app/shared/lib/httpErrors";
 import Franja from "@/app/components/layout/Franja/Franja";
 import FieldError from "@/app/components/ui/FieldError/FieldError";
 import Cargando from "@/app/components/ui/Cargando/Cargando";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 const AVISOS_KEY = ["avisos", "historial"] as const;
 
@@ -191,7 +192,7 @@ export default function AvisosPage() {
                 const { Icono } = estiloDe(t);
                 const elegido = formData.tipo === t;
                 return (
-                  <button
+                  <BotonPlano
                     key={t}
                     type="button"
                     role="radio"
@@ -201,7 +202,7 @@ export default function AvisosPage() {
                   >
                     <Icono size={16} aria-hidden="true" />
                     {t}
-                  </button>
+                  </BotonPlano>
                 );
               })}
             </div>
@@ -263,7 +264,7 @@ export default function AvisosPage() {
                     </span>
                     <h3 className={s.avisoTitulo}>{a.titulo}</h3>
                     {a.activo ? (
-                      <button
+                      <BotonPlano
                         type="button"
                         className={s.iconBtn}
                         onClick={() => {
@@ -274,7 +275,7 @@ export default function AvisosPage() {
                         aria-label={`Bajar de la app: ${a.titulo}`}
                       >
                         <EyeOff size={17} />
-                      </button>
+                      </BotonPlano>
                     ) : (
                       <span />
                     )}

@@ -1,0 +1,192 @@
+@use "@/app/styles/all.scss" as *;
+
+// El selector de obra social de «Actualizar padrones».
+.osPicker {
+  position: relative;
+  flex: 1 1 16rem;
+  min-width: 0;
+}
+
+.osButton {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  width: 100%;
+  height: 3rem;
+  padding: 0 $spacing-4;
+  font: inherit;
+  text-align: left;
+  color: $gray-900;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $radio-lg;
+  box-shadow: 0 8px 22px -16px rgba($primary-blue-darker, 0.5);
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+
+  &:hover:not(:disabled),
+  &[aria-expanded="true"] {
+    border-color: $primary-blue;
+  }
+
+  &:focus-visible {
+    outline: none;
+    border-color: $primary-blue;
+    box-shadow: 0 0 0 3px rgba($primary-blue, 0.14);
+  }
+
+  &:disabled {
+    cursor: progress;
+    color: $gray-500;
+  }
+}
+
+.osIcono {
+  flex-shrink: 0;
+  color: $primary-blue;
+}
+
+.osButtonValue {
+  flex: 1;
+  min-width: 0;
+  font-family: $fuente-titulos;
+  font-size: $font-size-xl;
+  font-weight: $font-weight-normal;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chevron {
+  flex-shrink: 0;
+  width: 1.1rem;
+  height: 1.1rem;
+  color: $gray-500;
+  transition: transform 0.2s ease;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  right: 0;
+  left: 0;
+  z-index: 30;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $radio-lg;
+  box-shadow: 0 24px 48px -24px rgba($primary-blue-darker, 0.55);
+  overflow: hidden;
+}
+
+.dropdownSearch {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: $spacing-3 $spacing-4;
+  border-bottom: 1px solid $gray-200;
+}
+
+.searchIconSmall {
+  flex-shrink: 0;
+  width: 1rem;
+  height: 1rem;
+  color: $gray-400;
+}
+
+.dropdownInput {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  font-size: $font-size-base;
+  color: $gray-900;
+  background: transparent;
+  border: 0;
+  outline: none;
+
+  &::placeholder {
+    color: $gray-400;
+  }
+}
+
+.dropdownMeta {
+  padding: $spacing-2 $spacing-4;
+  font-size: $font-size-sm;
+  color: $gray-500;
+  background: $gray-50;
+}
+
+.dropdownList {
+  max-height: 20rem;
+  overflow-y: auto;
+}
+
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-3;
+  width: 100%;
+  padding: $spacing-3 $spacing-4;
+  font: inherit;
+  font-size: $font-size-base;
+  text-align: left;
+  color: $gray-800;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+
+  &:hover {
+    background: $secondary-blue;
+  }
+}
+
+.dropdownItemActive {
+  font-weight: $font-weight-semibold;
+  color: $primary-blue;
+  background: $secondary-blue;
+}
+
+.dropdownItemName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dropdownItemCode {
+  flex-shrink: 0;
+  font-size: $font-size-sm;
+  font-variant-numeric: tabular-nums;
+  color: $gray-500;
+}
+
+.emptyMessage {
+  margin: 0;
+  padding: $spacing-5;
+  font-size: $font-size-base;
+  text-align: center;
+  color: $gray-500;
+}
+
+.errorMessage {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-3;
+  padding: $spacing-3 $spacing-4;
+  font-size: $font-size-base;
+  color: $danger-red;
+  background: rgba($danger-red, 0.07);
+  border: 1px solid rgba($danger-red, 0.3);
+  border-radius: $radio-md;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chevron {
+    transition: none;
+  }
+}

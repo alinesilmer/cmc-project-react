@@ -5,6 +5,7 @@ import { useState, useRef, useEffect, useId } from "react";
 import { createPortal } from "react-dom";
 import styles from "./PdfUpload.module.scss";
 import paleta from "@/app/styles/paleta.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 type ValidationReason = "type" | "size";
 
@@ -152,14 +153,14 @@ const PdfUpload: React.FC<PdfUploadProps> = ({
               <h3 id={`file-upload-title-${uid}`} className={styles.modalTitle}>
                 {label}
               </h3>
-              <button
+              <BotonPlano
                 type="button"
                 className={styles.modalClose}
                 aria-label="Cerrar"
                 onClick={closeModal}
               >
                 ×
-              </button>
+              </BotonPlano>
             </div>
 
             {selectedFile && (
@@ -204,7 +205,7 @@ const PdfUpload: React.FC<PdfUploadProps> = ({
                       </span>
                     </div>
                   </div>
-                  <button
+                  <BotonPlano
                     type="button"
                     className={styles.removeButton}
                     onClick={(e) => {
@@ -214,7 +215,7 @@ const PdfUpload: React.FC<PdfUploadProps> = ({
                     aria-label="Eliminar archivo"
                   >
                     ×
-                  </button>
+                  </BotonPlano>
                 </div>
               ) : (
                 <div className={styles.uploadPrompt}>
@@ -239,13 +240,13 @@ const PdfUpload: React.FC<PdfUploadProps> = ({
             )}
 
             <div className={styles.modalFooter}>
-              <button type="button" className={styles.secondaryBtn} onClick={closeModal}>
+              <BotonPlano type="button" className={styles.secondaryBtn} onClick={closeModal}>
                 Cerrar
-              </button>
+              </BotonPlano>
               {selectedFile && (
-                <button type="button" className={styles.primaryBtn} onClick={closeModal}>
+                <BotonPlano type="button" className={styles.primaryBtn} onClick={closeModal}>
                   Listo
-                </button>
+                </BotonPlano>
               )}
             </div>
           </div>
@@ -270,14 +271,14 @@ const PdfUpload: React.FC<PdfUploadProps> = ({
             style={{ maxWidth: "500px" }}
           >
             <div className={styles.modalHeader}>
-              <button
+              <BotonPlano
                 type="button"
                 className={styles.modalClose}
                 aria-label="Cerrar"
                 onClick={closeHelpModal}
               >
                 ×
-              </button>
+              </BotonPlano>
             </div>
 
             <div style={{ padding: "1rem 0", lineHeight: "1.6", color: paleta.tonoAzul650B }}>
@@ -295,9 +296,9 @@ const PdfUpload: React.FC<PdfUploadProps> = ({
             </div>
 
             <div className={styles.modalFooter}>
-              <button type="button" className={styles.primaryBtn} onClick={closeHelpModal}>
+              <BotonPlano type="button" className={styles.primaryBtn} onClick={closeHelpModal}>
                 Entendido
-              </button>
+              </BotonPlano>
             </div>
           </div>
         </div>,
@@ -312,7 +313,7 @@ const PdfUpload: React.FC<PdfUploadProps> = ({
           <label className={styles.label}>{label}{required && <span className={styles.required}> *</span>}</label>
         </div>
 
-        <button
+        <BotonPlano
           type="button"
           className={`${styles.iconTrigger} ${selectedFile ? styles.iconSuccess : ""}`}
           onClick={openModal}
@@ -323,7 +324,7 @@ const PdfUpload: React.FC<PdfUploadProps> = ({
             <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
             <path d="M12,11L16,15H13V19H11V15H8L12,11Z" />
           </svg>
-        </button>
+        </BotonPlano>
 
         {error && !selectedFile && (
           <span className={styles.errorMessage} role="alert">

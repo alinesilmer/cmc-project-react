@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Eye } from "lucide-react";
 
 import s from "./BotonVer.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 type Props = {
   /** Qué se abre, para el lector de pantalla y el globo: «Ver ficha», «Ver OSDE». */
@@ -24,8 +25,8 @@ export default function BotonVer({ etiqueta = "Ver", disabled = false, onClick, 
     );
   }
   return (
-    <button type="button" className={s.ver} onClick={onClick} disabled={disabled} title={etiqueta} aria-label={etiqueta}>
+    <BotonPlano type="button" className={s.ver} onClick={onClick} disabled={disabled} title={etiqueta} aria-label={etiqueta}>
       {ojo}
-    </button>
+    </BotonPlano>
   );
 }

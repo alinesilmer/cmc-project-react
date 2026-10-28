@@ -16,10 +16,10 @@ import type {
 import AplicarNiveladoModal from "../components/AplicarNiveladoModal";
 import ReplicarFamiliaBlock, {
   ErrorReplica, ResultadoReplica,
-} from "@/app/components/molecules/ReplicarFamilia/ReplicarFamiliaBlock";
+} from "@/app/pages/NomencladorNacional/components/ReplicarFamilia/ReplicarFamiliaBlock";
 import {
   REPLICA_INICIAL, destinosReplica, type ReplicaState,
-} from "@/app/components/molecules/ReplicarFamilia/replicaState";
+} from "@/app/pages/NomencladorNacional/components/ReplicarFamilia/replicaState";
 import type { ObraSocialListItem } from "../../ObrasSociales/obrasSociales.types";
 import { hoyISO } from "@/app/shared/lib/fechas";
 import CampoFecha from "@/app/components/ui/CampoFecha/CampoFecha";
@@ -27,6 +27,7 @@ import { extractDetail } from "@/app/pages/NomencladorNacional/NomencladorGaleno
 import Button from "@/app/components/ui/Button/Button";
 import Dialogo from "@/app/components/ui/Dialogo/Dialogo";
 import paleta from "@/app/styles/paleta.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -509,14 +510,14 @@ export default function GalenoCreateModal({
                   <span key={b.osNro} className={styles.osChip}>
                     <span className={styles.osAcNro}>{b.osNro}</span>
                     {osName(b.osNro)}
-                    <button
+                    <BotonPlano
                       type="button"
                       className={styles.osChipClear}
                       title="Quitar obra social"
                       onClick={() => removeOs(b.osNro)}
                     >
                       <XIcon size={12} />
-                    </button>
+                    </BotonPlano>
                   </span>
                 ))}
               </div>
@@ -566,14 +567,14 @@ export default function GalenoCreateModal({
               {blocks.length > 1 && (
                 <div className={styles.tabs}>
                   {blocks.map((b) => (
-                    <button
+                    <BotonPlano
                       key={b.osNro}
                       className={`${styles.tab} ${activeOs === b.osNro ? styles.tabActive : ""}`}
                       onClick={() => setActiveOs(b.osNro)}
                     >
                       {osName(b.osNro)}
                       <span className={styles.tabCount}>{b.drafts.length}</span>
-                    </button>
+                    </BotonPlano>
                   ))}
                 </div>
               )}
@@ -598,13 +599,13 @@ export default function GalenoCreateModal({
                       onRemoveNivel={(idx) => removeNivelRow(activeBlock.osNro, d.uid, idx)}
                     />
                   ))}
-                  <button
+                  <BotonPlano
                     type="button"
                     className={styles.addNivelBtn}
                     onClick={() => addDraft(activeBlock.osNro)}
                   >
                     <Plus size={14} /> Agregar galeno a {osName(activeBlock.osNro)}
-                  </button>
+                  </BotonPlano>
                 </div>
               )}
             </>
@@ -644,14 +645,14 @@ function DraftCard({
           {draft.codigo && <span className={styles.draftCode}>{draft.codigo}</span>}
         </span>
         {canRemove && (
-          <button
+          <BotonPlano
             type="button"
             className={styles.removeNivelBtn}
             title="Quitar galeno"
             onClick={onRemove}
           >
             <Trash2 size={13} />
-          </button>
+          </BotonPlano>
         )}
       </div>
 
@@ -737,14 +738,14 @@ function DraftCard({
                       </div>
                     )}
                     {!row.fromPlantilla && !draft.sinNivel && (
-                      <button
+                      <BotonPlano
                         type="button"
                         className={styles.removeNivelBtn}
                         title="Quitar nivel"
                         onClick={() => onRemoveNivel(idx)}
                       >
                         <XIcon size={13} />
-                      </button>
+                      </BotonPlano>
                     )}
                   </div>
                   <div className={styles.formRow3}>
@@ -783,9 +784,9 @@ function DraftCard({
               ))}
             </div>
             {!draft.sinNivel && (
-              <button type="button" className={styles.addNivelBtn} onClick={onAddNivel}>
+              <BotonPlano type="button" className={styles.addNivelBtn} onClick={onAddNivel}>
                 <Plus size={14} /> Agregar nivel extra
-              </button>
+              </BotonPlano>
             )}
           </div>
 
@@ -863,9 +864,9 @@ function ResultSummary({
                 <strong>{n.nombre}</strong>: darle a {osName(r.osNro)} sus {n.total_codigos} códigos con precio
                 según el nivel de cada uno.
               </span>
-              <button className={styles.btnPrimary} onClick={() => setAplicar({ r, n })}>
+              <BotonPlano className={styles.btnPrimary} onClick={() => setAplicar({ r, n })}>
                 Aplicar
-              </button>
+              </BotonPlano>
             </div>
           ))}
         </div>

@@ -17,6 +17,7 @@ import CargaCantidadYCalculo from "./CargaCantidadYCalculo";
 import CargaMontos from "./CargaMontos";
 import CargaEquipo from "./CargaEquipo";
 import CargaPie from "./CargaPie";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 const CargaFacturacion: React.FC = () => {
   const ctx = useCargaFacturacion();
@@ -38,13 +39,13 @@ const CargaFacturacion: React.FC = () => {
         {errorPrecarga ? (
           <div className={comun.errorBox}>
             <AlertTriangle size={14} style={{ verticalAlign: "-2px" }} aria-hidden="true" /> No se pudieron cargar los médicos, las obras sociales y las clínicas.{" "}
-            <button
+            <BotonPlano
               type="button"
               className={comun.periodoLinkBtn}
               onClick={() => cargarCatalogos()}
             >
               Reintentar
-            </button>
+            </BotonPlano>
           </div>
         ) : (
           <p className={comun.mutedText}>Cargando formulario, esperá…</p>
@@ -83,13 +84,13 @@ const CargaFacturacion: React.FC = () => {
         </div>
         <div className={comun.errorBox}>
           {errorEdicion}{" "}
-          <button
+          <BotonPlano
             type="button"
             className={comun.periodoLinkBtn}
             onClick={() => (capa ? capa.cerrar() : navigate(volverA))}
           >
             Volver
-          </button>
+          </BotonPlano>
         </div>
       </div>
     );

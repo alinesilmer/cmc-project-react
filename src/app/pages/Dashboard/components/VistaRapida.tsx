@@ -5,6 +5,7 @@ import type { Vista } from "../vistasInicio";
 import s from "./VistaRapida.module.scss";
 import SearchField from "@/app/components/ui/SearchField/SearchField";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 const ESQUELETO = Array.from({ length: 8 }, (_, i) => i);
 
@@ -140,7 +141,7 @@ export default function VistaRapida({ vistas }: { vistas: Vista[] }) {
          
           const activa = v.id === vista.id;
           return (
-            <button
+            <BotonPlano
               key={v.id}
               type="button"
               role="tab"
@@ -151,7 +152,7 @@ export default function VistaRapida({ vistas }: { vistas: Vista[] }) {
               onClick={() => elegir(v.id)}
             >
               {v.titulo}
-            </button>
+            </BotonPlano>
           );
         })}
       </div>

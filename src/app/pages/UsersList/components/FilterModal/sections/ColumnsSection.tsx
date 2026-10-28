@@ -1,6 +1,7 @@
 import { AlertTriangle, Check } from "lucide-react";
 
 import styles from "@/app/pages/UsersList/components/FilterModal/FilterModal.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 type ColumnGroup = "identificacion" | "profesional" | "consultorio" | "fiscal" | "personal";
 
@@ -70,13 +71,13 @@ export function ColumnsSection({ columns, onToggleColumn, onSetColumns }: Props)
 
   return (
     <>
-      <button
+      <BotonPlano
         type="button"
         className={styles.selectAllBtn}
         onClick={() => onSetColumns(allSelected ? [] : [...ALL_KEYS])}
       >
         {allSelected ? "Quitar todos" : "Agregar todos"}
-      </button>
+      </BotonPlano>
 
       <div className={styles.colGroups}>
         {GRUPOS.map((g) => {
@@ -93,20 +94,20 @@ export function ColumnsSection({ columns, onToggleColumn, onSetColumns }: Props)
                     </span>
                   )}
                 </h4>
-                <button
+                <BotonPlano
                   type="button"
                   className={styles.colGroupToggle}
                   onClick={() => alternarGrupo(g.id)}
                 >
                   {puestos === campos.length ? "Quitar todos" : "Agregar todos"}
-                </button>
+                </BotonPlano>
               </div>
 
               <div className={styles.colOptions}>
                 {campos.map((c) => {
                   const activo = elegidas.has(c.key);
                   return (
-                    <button
+                    <BotonPlano
                       key={c.key}
                       type="button"
                       role="checkbox"
@@ -118,7 +119,7 @@ export function ColumnsSection({ columns, onToggleColumn, onSetColumns }: Props)
                         {activo && <Check size={12} strokeWidth={3} />}
                       </span>
                       <span className={styles.colOptionLabel}>{c.label}</span>
-                    </button>
+                    </BotonPlano>
                   );
                 })}
               </div>

@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertTriangle, Trash2, Info } from "lucide-react";
 import styles from "./ConfirmModal.module.scss";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 type ConfirmVariant = "danger" | "warning" | "info";
 
@@ -57,15 +58,15 @@ export default function ConfirmModal({
             </div>
             <p className={styles.body}>{message}</p>
             <div className={styles.footer}>
-              <button className={styles.btnCancel} onClick={onCancel}>
+              <BotonPlano className={styles.btnCancel} onClick={onCancel}>
                 {cancelLabel}
-              </button>
-              <button
+              </BotonPlano>
+              <BotonPlano
                 className={`${styles.btnConfirm} ${styles[`btnConfirm${capitalize(variant)}`]}`}
                 onClick={onConfirm}
               >
                 {confirmLabel}
-              </button>
+              </BotonPlano>
             </div>
           </motion.div>
         </motion.div>

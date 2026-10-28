@@ -3,7 +3,7 @@ import { BloquePrecio } from "./BloquePrecio";
 import { erroresDe } from "./porOS.helpers";
 import paleta from "@/app/styles/paleta.module.scss";
 import { ComoSeFactura } from "./ComoSeFactura";
-import ReplicarFamiliaBlock, { ErrorReplica, ResultadoReplica } from "@/app/components/molecules/ReplicarFamilia/ReplicarFamiliaBlock";
+import ReplicarFamiliaBlock, { ErrorReplica, ResultadoReplica } from "@/app/pages/NomencladorNacional/components/ReplicarFamilia/ReplicarFamiliaBlock";
 import type { PorOSCtx } from "./useNomencladorPorOS";
 
 export default function ModalCrearPrecio({ ctx }: { ctx: PorOSCtx }) {

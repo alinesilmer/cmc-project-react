@@ -14,6 +14,7 @@ import { esInactivoEnPadron, safeStr } from "./helpers";
 import comun from "./Comun.module.scss";
 import styles from "./PorSocio.module.scss";;
 import Tabla from "@/app/components/ui/Tabla/Tabla";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 const DIEZ_MINUTOS = 10 * 60 * 1000;
 
@@ -88,14 +89,14 @@ export default function PorSocio() {
         </div>
 
         {socioId !== null && (
-          <button
+          <BotonPlano
             type="button"
             className={comun.ajusteBtn}
             onClick={() => navigate(`/panel/doctors/${socioId}`, { state: { tab: "padrones" } })}
           >
             Abrir legajo
             <ArrowUpRight size={15} aria-hidden="true" />
-          </button>
+          </BotonPlano>
         )}
       </div>
 

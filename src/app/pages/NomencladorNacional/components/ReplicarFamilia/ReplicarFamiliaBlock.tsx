@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 
-import MultiSelectBuscable from "../MultiSelectBuscable/MultiSelectBuscable";
+import MultiSelectBuscable from "@/app/components/ui/MultiSelectBuscable/MultiSelectBuscable";
 import styles from "./ReplicarFamilia.module.scss";
 import type { ReplicaState } from "./replicaState";
 import type {
