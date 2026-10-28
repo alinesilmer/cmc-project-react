@@ -8,8 +8,6 @@ export type Pago = {
   descripcion: string | null;
   estado: "A" | "C" | "P";
   cierre_timestamp: string | null;
-  // 1 = las deducciones cambiaron y la vista previa quedó vieja.
-  deducciones_dirty?: boolean | number;
   total_bruto: string;
   total_debitos: string;
   total_creditos: string;

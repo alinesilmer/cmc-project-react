@@ -127,8 +127,6 @@ export const generarDescuento = <T>(pagoId: number, descId: number) =>
   postJSON<T>(`/api/deducciones/${pagoId}/colegio/bulk_generar_descuento/${descId}`);
 export const deshacerDescuento = <T>(pagoId: number, descId: number) =>
   delJSON<T>(`/api/deducciones/${pagoId}/colegio/deshacer/${descId}`);
-export const refrescarDeducciones = <T>(pagoId: number) =>
-  postJSON<T>(`/api/deducciones/${pagoId}/deducciones/refrescar`);
 export const cancelarDeduccion = (id: number) => patchJSON(`/api/deducciones/${id}`, { estado: "cancelado" });
 
 // ── Informes, vistas previas y recibos de un pago ─────────────────

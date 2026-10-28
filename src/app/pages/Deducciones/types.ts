@@ -90,7 +90,6 @@ export type Pago = {
   anio: number;
   mes: number;
   estado: "A" | "C";
-  deducciones_dirty?: boolean;
 };
 
 export type ResumenPagoAbierto = {

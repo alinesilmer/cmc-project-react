@@ -1,0 +1,777 @@
+// Copia de los estilos de «Padrones» tal como estaban antes de que esa pantalla los separara por
+// componente (commit e4c862d): esta pantalla se arma con las mismas clases y se tiene que ver igual.
+@use "@/app/styles/all.scss" as *;
+
+// Sección Padrones, con la misma franja de Validaciones: arriba el azul con el título y las dos solapas.
+
+
+.fondo {
+  @include franja-pagina($franja-alto);
+}
+
+.container {
+  width: 100%;
+  max-width: 1536px;
+  margin: 0 auto;
+  padding: 0 $spacing-12 $spacing-12;
+
+  @media (max-width: 1200px) {
+    padding: 0 $spacing-8 $spacing-10;
+  }
+
+  @media (max-width: $breakpoint-md) {
+    padding: 0 $spacing-4 $spacing-8;
+  }
+}
+
+// ── Cabecera ─────────────────────────────────────────────────────────────────
+
+// Mide lo que la franja menos el relleno de arriba de la página, así las solapas terminan justo donde termina el azul.
+.cabecera {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: $spacing-4;
+  height: calc(#{$franja-alto} - 0.5rem);
+  margin-bottom: $spacing-6;
+  padding-top: $spacing-6;
+}
+
+// `margin: auto 0` lo centra en el espacio que queda sobre las solapas.
+.title {
+  margin: auto 0;
+  @include titulo-franja;
+  color: var(--franja-titulo, #{$franja-crema});
+}
+
+.solapas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: $spacing-2;
+}
+
+.solapa {
+  @include franja-solapa;
+}
+
+.solapaActiva,
+.solapaActiva:hover {
+  @include franja-solapa-activa;
+}
+
+// ── Cajas de opciones ────────────────────────────────────────────────────────
+
+// Dos cajas: qué se consulta y cómo se ve (Configuración), y qué se lleva (Descargas).
+.cajaFila {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-2;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+
+  // `display: flex` le ganaría al atributo: la solapa oculta tiene que ocultarse.
+  &[hidden] {
+    display: none;
+  }
+}
+
+// ── Barra: selector y exportaciones ──────────────────────────────────────────
+
+.barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-3;
+}
+
+.osPicker {
+  position: relative;
+  flex: 1 1 16rem;
+  min-width: 0;
+}
+
+.socioPicker {
+  flex: 1 1 22rem;
+  max-width: 36rem;
+  min-width: 0;
+}
+
+.osButton {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  width: 100%;
+  height: 3rem;
+  padding: 0 $spacing-4;
+  font: inherit;
+  text-align: left;
+  color: $gray-900;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $radio-lg;
+  box-shadow: 0 8px 22px -16px rgba($primary-blue-darker, 0.5);
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+
+  &:hover:not(:disabled),
+  &[aria-expanded="true"] {
+    border-color: $primary-blue;
+  }
+
+  &:focus-visible {
+    outline: none;
+    border-color: $primary-blue;
+    box-shadow: 0 0 0 3px rgba($primary-blue, 0.14);
+  }
+
+  &:disabled {
+    cursor: progress;
+    color: $gray-500;
+  }
+}
+
+.osIcono {
+  flex-shrink: 0;
+  color: $primary-blue;
+}
+
+.osButtonValue {
+  flex: 1;
+  min-width: 0;
+  font-family: $fuente-titulos;
+  font-size: $font-size-xl;
+  font-weight: $font-weight-normal;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chevron {
+  flex-shrink: 0;
+  width: 1.1rem;
+  height: 1.1rem;
+  color: $gray-500;
+  transition: transform 0.2s ease;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  right: 0;
+  left: 0;
+  z-index: 30;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $radio-lg;
+  box-shadow: 0 24px 48px -24px rgba($primary-blue-darker, 0.55);
+  overflow: hidden;
+}
+
+.dropdownSearch {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: $spacing-3 $spacing-4;
+  border-bottom: 1px solid $gray-200;
+}
+
+.searchIconSmall {
+  flex-shrink: 0;
+  width: 1rem;
+  height: 1rem;
+  color: $gray-400;
+}
+
+.dropdownInput {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  font-size: $font-size-base;
+  color: $gray-900;
+  background: transparent;
+  border: 0;
+  outline: none;
+
+  &::placeholder {
+    color: $gray-400;
+  }
+}
+
+.clearBtn {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  color: $gray-500;
+  background: transparent;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+
+  &:hover {
+    color: $danger-red;
+    background: $gray-100;
+  }
+}
+
+.dropdownMeta {
+  padding: $spacing-2 $spacing-4;
+  font-size: $font-size-sm;
+  color: $gray-500;
+  background: $gray-50;
+}
+
+.dropdownList {
+  max-height: 20rem;
+  overflow-y: auto;
+}
+
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-3;
+  width: 100%;
+  padding: $spacing-3 $spacing-4;
+  font: inherit;
+  font-size: $font-size-base;
+  text-align: left;
+  color: $gray-800;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+
+  &:hover {
+    background: $secondary-blue;
+  }
+}
+
+.dropdownItemActive {
+  font-weight: $font-weight-semibold;
+  color: $primary-blue;
+  background: $secondary-blue;
+}
+
+.dropdownItemName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dropdownItemCode {
+  flex-shrink: 0;
+  font-size: $font-size-sm;
+  font-variant-numeric: tabular-nums;
+  color: $gray-500;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-2;
+}
+
+// ── Herramientas de la tabla ─────────────────────────────────────────────────
+
+.herramientas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-3;
+}
+
+.searchWrapper {
+  flex: 1 1 20rem;
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  min-width: 0;
+  height: 2.75rem;
+  padding: 0 $spacing-4;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: 999px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+
+  &:focus-within {
+    border-color: $primary-blue;
+    box-shadow: 0 0 0 3px rgba($primary-blue, 0.12);
+  }
+}
+
+.searchIcon {
+  flex-shrink: 0;
+  width: 1.1rem;
+  height: 1.1rem;
+  color: $gray-400;
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  font-size: $font-size-base;
+  color: $gray-900;
+  background: transparent;
+  border: 0;
+  outline: none;
+
+  &::placeholder {
+    color: $gray-400;
+  }
+}
+
+.ajusteBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  height: 2.75rem;
+  padding: 0 $spacing-4;
+  font: inherit;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  color: $gray-800;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background-color 0.15s;
+
+  b {
+    display: grid;
+    place-items: center;
+    min-width: 1.4rem;
+    height: 1.4rem;
+    padding: 0 $spacing-1;
+    font-size: $font-size-sm;
+    color: $white;
+    background: $primary-blue;
+    border-radius: 999px;
+  }
+
+  &:hover:not(:disabled) {
+    color: $primary-blue;
+    border-color: $primary-blue;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $accent-blue;
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    color: $gray-400;
+    cursor: default;
+  }
+}
+
+.camposWarn {
+  padding: 2px $spacing-2;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-bold;
+  color: $primary-yellow-dark;
+  background: $primary-yellow;
+  border-radius: 999px;
+}
+
+.inactivosHint {
+  margin: 0;
+  font-size: $font-size-sm;
+  color: $gray-500;
+}
+
+// ── Estados ──────────────────────────────────────────────────────────────────
+
+.emptyState,
+.loadingState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-3;
+  padding: $spacing-16 $spacing-5;
+  background: $white;
+  border: 1px dashed $gray-300;
+  border-radius: $radio-lg;
+  text-align: center;
+}
+
+.emptyIcon {
+  color: $gray-300;
+}
+
+.emptyTitle {
+  margin: 0;
+  font-family: $fuente-titulos;
+  font-size: $font-size-2xl;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: $gray-600;
+}
+
+.emptyMessage {
+  margin: 0;
+  padding: $spacing-5;
+  font-size: $font-size-base;
+  text-align: center;
+  color: $gray-500;
+}
+
+.loadingText {
+  margin: 0;
+  font-size: $font-size-base;
+  color: $gray-500;
+}
+
+.progressBar {
+  width: min(100%, 16rem);
+  height: 0.3rem;
+  background: $gray-200;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progressFill {
+  width: 40%;
+  height: 100%;
+  background: $primary-blue;
+  border-radius: 999px;
+  animation: avanzar 1.1s ease-in-out infinite;
+}
+
+@keyframes avanzar {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}
+
+.errorMessage {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-3;
+  padding: $spacing-3 $spacing-4;
+  font-size: $font-size-base;
+  color: $danger-red;
+  background: rgba($danger-red, 0.07);
+  border: 1px solid rgba($danger-red, 0.3);
+  border-radius: $radio-md;
+}
+
+.errorClose {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  padding: $spacing-1;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  border-radius: $radio-sm;
+  cursor: pointer;
+}
+
+// ── Tabla ────────────────────────────────────────────────────────────────────
+
+.resultsCount {
+  margin: 0;
+  font-size: $font-size-base;
+  color: $gray-500;
+
+  strong {
+    font-family: $fuente-titulos;
+    font-weight: 800;
+    color: $primary-blue;
+  }
+}
+
+// Suave: sin rayas verticales, cabecera en el azul del Colegio, filas con aire y un resaltado celeste al pasar.
+.tableWrapper {
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $radio-lg;
+  box-shadow: 0 14px 34px -26px rgba($primary-blue-darker, 0.55);
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: $font-size-base;
+
+  th {
+    padding: $spacing-3 $spacing-4;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    text-align: left;
+    white-space: nowrap;
+    color: $white;
+    background: $primary-blue;
+  }
+
+  td {
+    padding: $spacing-4;
+    color: $gray-700;
+    border-bottom: 1px solid $gray-100;
+    vertical-align: middle;
+  }
+
+  tbody tr {
+    transition: background-color 0.12s;
+  }
+
+  tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
+  tbody tr:hover td {
+    background: $secondary-blue;
+  }
+
+  th.centrada,
+  td.centrada {
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+}
+
+.tdName {
+  min-width: 14rem;
+  font-weight: $font-weight-semibold;
+  color: $gray-900 !important;
+}
+
+.colAccion {
+  width: 1%;
+  text-align: right !important;
+  white-space: nowrap;
+}
+
+.vacio {
+  color: $gray-300;
+}
+
+// Celda en espera mientras llegan las fichas.
+.hueso {
+  display: inline-block;
+  width: 4rem;
+  height: 0.7rem;
+  background: $gray-200;
+  border-radius: $radio-xs;
+  animation: latir 1.2s ease-in-out infinite;
+}
+
+@keyframes latir {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.noResults {
+  padding: $spacing-10 $spacing-4 !important;
+  text-align: center;
+  color: $gray-500 !important;
+}
+
+.verBtn {
+  padding: $spacing-1 $spacing-4;
+  font: inherit;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $primary-blue;
+  background: $secondary-blue;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 0.15s, background-color 0.15s;
+
+  &:hover:not(:disabled) {
+    color: $white;
+    background: $primary-blue;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $accent-blue;
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    color: $gray-400;
+    background: $gray-100;
+    cursor: default;
+  }
+}
+
+// ── Paginación ───────────────────────────────────────────────────────────────
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-2;
+}
+
+.paginationPages {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+}
+
+.paginationBtn {
+  display: grid;
+  place-items: center;
+  min-width: 2.25rem;
+  height: 2.25rem;
+  padding: 0 $spacing-2;
+  font: inherit;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  color: $gray-700;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: 999px;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    color: $primary-blue;
+    border-color: $primary-blue;
+  }
+
+  &:disabled {
+    color: $gray-300;
+    cursor: default;
+  }
+}
+
+.paginationBtnActive,
+.paginationBtnActive:hover:not(:disabled) {
+  color: $white;
+  background: $primary-blue;
+  border-color: $primary-blue;
+}
+
+.paginationEllipsis {
+  padding: 0 $spacing-1;
+  color: $gray-400;
+}
+
+// ── Envío de la lista ────────────────────────────────────────────────────────
+
+.envioTexto {
+  display: block;
+  width: 100%;
+  padding: $spacing-4;
+  font: inherit;
+  font-size: $font-size-base;
+  line-height: 1.6;
+  color: $gray-900;
+  background: $gray-50;
+  border: 1px solid $gray-200;
+  border-radius: $radio-md;
+  resize: vertical;
+
+  &:focus {
+    outline: none;
+    border-color: $primary-blue;
+    box-shadow: 0 0 0 3px rgba($primary-blue, 0.12);
+  }
+}
+
+// ── Recuento de errores ──────────────────────────────────────────────────────
+
+.recuentoResumen {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  margin: 0 0 $spacing-3;
+  font-size: $font-size-lg;
+  color: $gray-700;
+
+  strong {
+    font-family: $fuente-titulos;
+    font-size: $font-size-2xl;
+    font-weight: 800;
+    color: $primary-blue;
+  }
+
+  svg {
+    color: $success-green;
+  }
+}
+
+.recuentoAviso {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  margin: 0 0 $spacing-3;
+  font-size: $font-size-sm;
+  color: $gray-500;
+}
+
+.recuentoLista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.recuentoItem {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  padding: $spacing-2 0;
+  border-bottom: 1px solid $gray-100;
+
+  &:last-child {
+    border-bottom: 0;
+  }
+}
+
+.recuentoNro {
+  flex: 0 0 4.5rem;
+  font-size: $font-size-sm;
+  font-variant-numeric: tabular-nums;
+  color: $gray-500;
+}
+
+.recuentoNombre {
+  flex: 1;
+  min-width: 0;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  color: $gray-900;
+  overflow-wrap: anywhere;
+}
+
+.recuentoPie {
+  margin: $spacing-3 0 0;
+  font-size: $font-size-sm;
+  color: $gray-500;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progressFill,
+  .hueso {
+    animation: none;
+  }
+
+  .solapa,
+  .chevron,
+  .table tbody tr,
+  .verBtn {
+    transition: none;
+  }
+}

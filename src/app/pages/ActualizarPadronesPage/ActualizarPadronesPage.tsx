@@ -9,8 +9,8 @@ import Tabla from "@/app/components/ui/Tabla/Tabla";
 import { useAppSnackbar } from "@/app/hooks/useAppSnackbar";
 import { fetchObrasSociales } from "@/app/pages/AfiliadosPorObraSocialPage/api";
 import type { ObraSocial } from "@/app/pages/AfiliadosPorObraSocialPage/types";
-// Franja, solapas, tabla y paginación son los de «Padrones»: la pantalla se ve igual.
-import padrones from "@/app/pages/AfiliadosPorObraSocialPage/Padrones.module.scss";
+// Franja, solapas, tabla y paginación como los de «Padrones» (copia local de sus estilos).
+import padrones from "./Padrones.module.scss";
 import {
   TAMANO_PAGINA, adherirSocios, fetchCandidatos, mensajeDeError, quitarSocios,
   type Candidato, type PaginaCandidatos, type Vista,

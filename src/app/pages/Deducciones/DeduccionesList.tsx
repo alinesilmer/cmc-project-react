@@ -672,11 +672,7 @@ const DeduccionesList: React.FC = () => {
                   <div className={s.dato}><span>Deducciones en el pago</span><b>{resumen.cantidad.toLocaleString("es-AR")}</b></div>
                   <div className={s.dato}><span>A descontar</span><b>{formatMoney(resumen.total)}</b></div>
                 </div>
-                {pago.deducciones_dirty ? (
-                  <p className={lq.alerta}>Las deducciones cambiaron: el monto a descontar es una estimación. Se actualiza al refrescar el pago o al cerrarlo.</p>
-                ) : (
-                  <p className={s.nota}>Se descuenta según lo que cobra cada médico. Al cerrar el pago se recalcula todo.</p>
-                )}
+                <p className={s.nota}>Se descuenta según lo que cobra cada médico. Al cerrar el pago se recalcula todo.</p>
                 {conceptosVisibles.length > 0 && (
                   <ul className={s.conceptos}>
                     {conceptosVisibles.map((c) => (

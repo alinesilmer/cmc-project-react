@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { crearLiquidacion, listarAdelantosDePago, listarCompensacionesDePago, listarFacturasParaPago, listarLiquidacionesDePago, listarObrasSociales, quitarAdelantoDelPago, quitarCompensacionDelPago, urlLiquidacion } from "@/app/pages/Pagos/pagos.api";
+import { crearLiquidacion, listarFacturasParaPago, listarLiquidacionesDePago, listarObrasSociales, urlLiquidacion } from "@/app/pages/Pagos/pagos.api";
 import { useAppSnackbar } from "@/app/hooks/useAppSnackbar";
 import Button from "@/app/components/ui/Button/Button";
 import SelectableTable from "@/app/components/ui/SelectableTable/SelectableTable";
@@ -25,9 +25,6 @@ import BotonVer from "@/app/components/ui/BotonVer/BotonVer";
 import Dialogo from "@/app/components/ui/Dialogo/Dialogo";
 import paleta from "@/app/styles/paleta.module.scss";
 import { comoErrorApi } from "@/app/shared/lib/httpErrors";
-import Tabla from "@/app/components/ui/Tabla/Tabla";
-import { type Compensacion, importeConSigno } from "../../Compensaciones/utiles";
-import { type AdelantoListaRow, estadoAdelantoLabel } from "../../Adelantos/utiles";
 
 type Props = {
   pago: Pago;
@@ -46,14 +43,6 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
   const [error, setError] = useState<string | null>(null);
   // Prestaciones que quedaron afuera de la última factura agregada; se queda hasta cerrarlo.
   const [avisoCarga, setAvisoCarga] = useState<string | null>(null);
-
-  // Adelantos que están en este pago (se pagan además de las facturas)
-  const [adelantos, setAdelantos] = useState<AdelantoListaRow[]>([]);
-  const [quitandoAdelanto, setQuitandoAdelanto] = useState<number | null>(null);
-
-  // Compensaciones de este pago (plata a favor o en contra de socios, sin concepto)
-  const [compensaciones, setCompensaciones] = useState<Compensacion[]>([]);
-  const [quitandoComp, setQuitandoComp] = useState<number | null>(null);
 
   // Modal agregar
   const [addOpen, setAddOpen] = useState(false);
@@ -82,64 +71,6 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
   useEffect(() => {
     fetchRows();
   }, [fetchRows]);
-
-  const fetchAdelantos = useCallback(async () => {
-    try {
-      const data = await listarAdelantosDePago(pagoId);
-      setAdelantos(Array.isArray(data) ? data : []);
-    } catch {
-      setAdelantos([]);
-    }
-  }, [pagoId]);
-
-  useEffect(() => {
-    void fetchAdelantos();
-  }, [fetchAdelantos]);
-
-  const fetchCompensaciones = useCallback(async () => {
-    try {
-      const data = await listarCompensacionesDePago(pagoId);
-      setCompensaciones(Array.isArray(data?.items) ? data.items : []);
-    } catch {
-      setCompensaciones([]);
-    }
-  }, [pagoId]);
-
-  useEffect(() => {
-    void fetchCompensaciones();
-  }, [fetchCompensaciones]);
-
-  const quitarCompensacion = async (c: Compensacion) => {
-    setQuitandoComp(c.id);
-    try {
-      await quitarCompensacionDelPago(c.id);
-      notify(`Compensación #${c.id} quitada del pago.`);
-      await fetchCompensaciones();
-      onRefresh?.();
-    } catch (e) {
-      const err = comoErrorApi(e);
-      const detail = err?.response?.data?.detail;
-      notify(typeof detail === "string" ? detail : (err?.message ?? "No se pudo quitar la compensación."), "error");
-    } finally {
-      setQuitandoComp(null);
-    }
-  };
-
-  const quitarAdelanto = async (a: AdelantoListaRow) => {
-    setQuitandoAdelanto(a.id);
-    try {
-      await quitarAdelantoDelPago(a.id);
-      notify(`Adelanto #${a.id} quitado del pago.`);
-      await fetchAdelantos();
-      onRefresh?.();
-    } catch (e) {
-      const err = comoErrorApi(e);
-      const detail = err?.response?.data?.detail;
-      notify(typeof detail === "string" ? detail : (err?.message ?? "No se pudo quitar el adelanto."), "error");
-    } finally {
-      setQuitandoAdelanto(null);
-    }
-  };
 
   const openAddModal = async () => {
     setSelectedOS("");
@@ -345,165 +276,6 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
         onActionComplete={fetchRows}
       />
 
-      {(adelantos.length > 0 || isOpen) && (
-        <section aria-labelledby="pago-adelantos" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <div className={styles.toolbar}>
-            <h3 id="pago-adelantos" style={{ margin: 0, fontSize: 18 }}>Adelantos en este pago</h3>
-            <div className={styles.toolbarLeft}>
-              <Button variant="ghost" onClick={() => navigate("/panel/adelantos")}>
-                Ir a Adelantos →
-              </Button>
-            </div>
-          </div>
-          {adelantos.length === 0 ? (
-            <span style={{ fontSize: 13, color: paleta.gray500 }}>
-              Ningún adelanto en este pago. Los adelantos cerrados se pasan al pago desde Adelantos.
-            </span>
-          ) : (
-            <>
-              <Tabla>
-                <thead>
-                  <tr>
-                    <th>N°</th>
-                    <th>Obra social</th>
-                    <th>Factura</th>
-                    <th>Médicos</th>
-                    <th>Prest.</th>
-                    <th>Importe</th>
-                    <th>Estado</th>
-                    <th aria-label="Acciones" />
-                  </tr>
-                </thead>
-                <tbody>
-                  {adelantos.map((a) => (
-                    <tr key={a.id}>
-                      <td>#{a.id}</td>
-                      <td>{a.obra_social_nombre}</td>
-                      <td>
-                        {nroFacturaMarcado(a.nro_factura, a.factura_version)}
-                        <br />
-                        <small style={{ color: paleta.gray500 }}>
-                          {mesLabel(a.mes_periodo)} {a.anio_periodo}
-                        </small>
-                      </td>
-                      <td>
-                        {a.medico_nombre ?? "—"}
-                        {a.medicos > 1 && (
-                          <>
-                            <br />
-                            <small style={{ color: paleta.gray500 }}>y {a.medicos - 1} más</small>
-                          </>
-                        )}
-                      </td>
-                      <td>{a.prestaciones}</td>
-                      <td>${fmt(a.importe)}</td>
-                      <td>{estadoAdelantoLabel(a.estado)}</td>
-                      <td>
-                        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                          <BotonVer onClick={() => navigate(`/panel/adelantos/${a.id}`)} />
-                          {isOpen && a.estado === "L" && (
-                            <Button
-                              size="sm"
-                              variant="danger"
-                              disabled={quitandoAdelanto === a.id}
-                              onClick={() => void quitarAdelanto(a)}
-                            >
-                              {quitandoAdelanto === a.id ? "Quitando…" : "Quitar del pago"}
-                            </Button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </Tabla>
-              <span style={{ fontSize: 13, color: paleta.gray500 }}>
-                Las facturas de arriba entran sin las prestaciones de estos adelantos: las paga el adelanto. Factura y adelanto
-                pueden estar en el mismo pago.
-              </span>
-            </>
-          )}
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
-            <Resumen rotulo="Facturas" valor={`$${fmt(Number(pago.total_bruto) - Number(pago.total_adelantos ?? 0))}`} />
-            <Resumen rotulo="Adelantos" valor={`$${fmt(pago.total_adelantos ?? 0)}`} />
-            <Resumen
-              rotulo="Compensaciones"
-              valor={importeConSigno(pago.total_compensaciones ?? 0)}
-              nota={`${compensaciones.length} en este pago`}
-            />
-            <Resumen
-              rotulo="Producción (base de porcentuales)"
-              valor={`$${fmt(pago.total_bruto)}`}
-              nota="Facturas + adelantos. Las compensaciones no entran."
-              destacado
-            />
-          </div>
-        </section>
-      )}
-
-      {(compensaciones.length > 0 || isOpen) && (
-        <section aria-labelledby="pago-compensaciones" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          <div className={styles.toolbar}>
-            <h3 id="pago-compensaciones" style={{ margin: 0, fontSize: 18 }}>Compensaciones en este pago</h3>
-            <div className={styles.toolbarLeft}>
-              <Button variant="ghost" onClick={() => navigate("/panel/compensaciones")}>
-                Ir a Compensaciones →
-              </Button>
-            </div>
-          </div>
-          {compensaciones.length === 0 ? (
-            <span style={{ fontSize: 13, color: paleta.gray500 }}>
-              Ninguna compensación en este pago. Se pasan al pago desde Compensaciones.
-            </span>
-          ) : (
-            <>
-              <Tabla>
-                <thead>
-                  <tr>
-                    <th>N°</th>
-                    <th>Socio</th>
-                    <th>Leyenda del recibo</th>
-                    <th>Importe</th>
-                    <th aria-label="Acciones" />
-                  </tr>
-                </thead>
-                <tbody>
-                  {compensaciones.map((c) => (
-                    <tr key={c.id}>
-                      <td>#{c.id}</td>
-                      <td>
-                        {c.medico_nombre ?? "—"}
-                        {c.medico_nro_socio ? (
-                          <>
-                            <br />
-                            <small style={{ color: paleta.gray500 }}>Socio {c.medico_nro_socio}</small>
-                          </>
-                        ) : null}
-                      </td>
-                      <td>{c.leyenda}</td>
-                      <td style={{ fontWeight: 700, color: Number(c.importe) < 0 ? "#b42318" : "#13623a" }}>
-                        {importeConSigno(c.importe)}
-                      </td>
-                      <td>
-                        {isOpen && c.estado === "en_pago" && (
-                          <Button size="sm" variant="danger" disabled={quitandoComp === c.id} onClick={() => void quitarCompensacion(c)}>
-                            {quitandoComp === c.id ? "Quitando…" : "Quitar del pago"}
-                          </Button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </Tabla>
-              <span style={{ fontSize: 13, color: paleta.gray500 }}>
-                La negativa se resta antes de las deducciones, como un débito. Si al socio no le alcanza, al cerrar el pago el
-                faltante queda como «Saldo deudor de débitos» y se le cobra en el próximo pago.
-              </span>
-            </>
-          )}
-        </section>
-      )}
-
       {/* Modal agregar */}
       {addOpen && (
         <Dialogo
@@ -609,24 +381,5 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
     </div>
   );
 };
-
-const Resumen: React.FC<{ rotulo: string; valor: string; destacado?: boolean; nota?: string }> = ({ rotulo, valor, destacado, nota }) => (
-  <div
-    style={{
-      flex: "1 1 200px",
-      display: "flex",
-      flexDirection: "column",
-      gap: 4,
-      padding: "12px 16px",
-      background: destacado ? "#eef4fc" : paleta.white,
-      border: `1px solid ${destacado ? "#c9daf0" : paleta.gray200}`,
-      borderRadius: 14,
-    }}
-  >
-    <span style={{ fontSize: 12, fontWeight: 600, color: destacado ? paleta.primaryBlue : paleta.gray600 }}>{rotulo}</span>
-    <b style={{ fontSize: 20, fontVariantNumeric: "tabular-nums", color: destacado ? paleta.primaryBlue : "inherit" }}>{valor}</b>
-    {nota && <span style={{ fontSize: 12, color: destacado ? paleta.primaryBlue : paleta.gray600 }}>{nota}</span>}
-  </div>
-);
 
 export default TabFacturas;

@@ -71,16 +71,37 @@ type CompensacionRecibo = {
   importe: number;
 };
 
+// Débito o crédito de un lote cuya factura no está en el pago (lote sin factura, por ejemplo).
+type OtroAjusteRecibo = AjusteItem & {
+  obra_social: string;
+  periodo: string;
+  tipo: "debito" | "credito";
+};
+
 type Detalle = {
   liquidaciones: Record<string, LiquidacionDetalle>;
   adelantos?: { total: number; detalle: AdelantoRecibo[] };
   compensaciones?: { total: number; detalle: CompensacionRecibo[] };
   deducciones: { total: number; detalle: DeduccionItem[] };
+  otros_ajustes?: { total_debitos: number; total_creditos: number; detalle: OtroAjusteRecibo[] };
 };
 
+// Totales que calculó la API al generar el recibo: son los que valen.
+type ResumenRecibo = {
+  honorarios: number;
+  gastos: number;
+  bruto: number;
+  debitos: number;
+  creditos: number;
+  compensaciones?: number;
+  reconocido: number;
+  deducciones: number;
+  neto_a_pagar: number;
+};
 
 type DetalleJson = {
   info_medico?: InfoMedico;
+  resumen?: ResumenRecibo;
   detalle?: Detalle;
 };
 
@@ -103,6 +124,9 @@ const ESTADO_LABEL: Record<string, string> = {
   liquidado: "Liquidado",
   emitido: "Emitido",
 };
+
+// El recibo no lleva número (lo pidió el Colegio): se lo nombra por el socio.
+const nombreSocio = (r: ReciboRow) => r.detalle_json?.info_medico?.nombre ?? `Médico #${r.medico_id}`;
 
 const estadoClass = (e: string) => {
   if (e === "emitido")    return styles.reciboEmitido;
@@ -180,7 +204,7 @@ const TabRecibos: React.FC<Props> = ({ pagoId }) => {
     setDeleting(true);
     try {
       await borrarRecibos(pagoId, { recibo_ids: [deleteTarget.id] });
-      notify(`Recibo ${deleteTarget.nro_recibo} eliminado.`);
+      notify(`Recibo de ${nombreSocio(deleteTarget)} eliminado.`);
       setDeleteTarget(null);
       await loadData(estadoFiltro);
     } catch (e) {
@@ -238,18 +262,16 @@ const TabRecibos: React.FC<Props> = ({ pagoId }) => {
       doc.setFont("helvetica", "normal"); doc.text(String(info.matricula), left + 58, y);
       y += 16;
     }
-    doc.setFont("helvetica", "bold"); doc.text("Nro. Recibo:", left, y);
-    doc.setFont("helvetica", "normal"); doc.text(recibo.nro_recibo, left + 75, y);
-    doc.setFont("helvetica", "bold"); doc.text("Fecha Emisión:", col2x, y);
+    // Sin número de recibo: el Colegio no lo usa.
+    doc.setFont("helvetica", "bold"); doc.text("Fecha Emisión:", left, y);
     doc.setFont("helvetica", "normal");
     doc.text(
       recibo.emision_timestamp ? new Date(recibo.emision_timestamp).toLocaleDateString("es-AR") : "—",
-      col2x + 85, y,
+      left + 85, y,
     );
-    y += 16;
-    doc.setFont("helvetica", "bold"); doc.text("Estado:", left, y);
+    doc.setFont("helvetica", "bold"); doc.text("Estado:", col2x, y);
     doc.setFont("helvetica", "normal");
-    doc.text((ESTADO_LABEL[recibo.estado] ?? recibo.estado).toUpperCase(), left + 45, y);
+    doc.text((ESTADO_LABEL[recibo.estado] ?? recibo.estado).toUpperCase(), col2x + 45, y);
     y += 24;
 
     if (detalle) {
@@ -306,6 +328,31 @@ const TabRecibos: React.FC<Props> = ({ pagoId }) => {
           styles: { fontSize: 9, cellPadding: 4 },
           headStyles: { fillColor: [27, 86, 255], textColor: 255, fontStyle: "bold" },
           columnStyles: { 1: { halign: "right" }, 2: { halign: "right" }, 3: { halign: "right" }, 4: { halign: "right" }, 5: { halign: "right" } },
+          margin: { left, right: 40 },
+        });
+        y = finDeTabla(doc) + 16;
+      }
+
+      // ── Débitos y créditos de lotes cuya factura no está en el pago ──
+      const otrosAjustes = detalle.otros_ajustes?.detalle ?? [];
+      if (otrosAjustes.length > 0) {
+        doc.setFont("helvetica", "bold"); doc.setFontSize(11); doc.setTextColor(27, 86, 255);
+        doc.text("Otros débitos y créditos", left, y); y += 6;
+        autoTable(doc, {
+          startY: y,
+          head: [["Obra Social / Lote", "Período", "Débitos", "Créditos"]],
+          body: otrosAjustes.map((aj) => [
+            `${aj.obra_social} — Lote #${aj.lote_id}${aj.observacion ? ` — ${aj.observacion}` : ""}`,
+            aj.periodo,
+            aj.tipo === "debito" ? `-$${fmt(aj.total)}` : "",
+            aj.tipo === "credito" ? `+$${fmt(aj.total)}` : "",
+          ]),
+          styles: { fontSize: 9, cellPadding: 4 },
+          headStyles: { fillColor: [27, 86, 255], textColor: 255, fontStyle: "bold" },
+          columnStyles: {
+            2: { halign: "right", textColor: [185, 28, 28] },
+            3: { halign: "right", textColor: [6, 95, 70] },
+          },
           margin: { left, right: 40 },
         });
         y = finDeTabla(doc) + 16;
@@ -368,20 +415,18 @@ const TabRecibos: React.FC<Props> = ({ pagoId }) => {
         y = finDeTabla(doc) + 16;
       }
 
-      // ── Resumen ──
-      const liqVals = Object.values(detalle.liquidaciones);
-      const sumLiq  = (fn: (l: LiquidacionDetalle) => number) => liqVals.reduce((a, l) => a + fn(l), 0);
-      // El adelanto es producción del médico: suma a honorarios, gastos y bruto.
-      const sumAdel = (fn: (a: AdelantoRecibo) => number) => adelantos.reduce((a, x) => a + fn(x), 0);
-      const totalHon = sumLiq((l) => l.total_honorarios) + sumAdel((a) => a.total_honorarios);
-      const totalGas = sumLiq((l) => l.total_gastos) + sumAdel((a) => a.total_gastos);
-      const totalBru = sumLiq((l) => l.total_bruto) + sumAdel((a) => a.total);
-      const totalDeb = sumLiq((l) => l.debitos.total);
-      const totalCrd = sumLiq((l) => l.creditos.total);
-      const totalComp = detalle.compensaciones?.total ?? 0;
-      const totalRec = totalBru + totalCrd - totalDeb + totalComp;
-      const totalDed = detalle.deducciones.total;
-      const neto     = Math.max(0, totalRec - totalDed);
+      // ── Resumen: el que guardó la API, que es el monto del recibo. Volver a sumar acá
+      //    dejaba afuera los otros débitos y créditos y el neto no coincidía (N17). ──
+      const r = dj?.resumen;
+      const totalHon = r?.honorarios ?? 0;
+      const totalGas = r?.gastos ?? 0;
+      const totalBru = r?.bruto ?? 0;
+      const totalDeb = r?.debitos ?? 0;
+      const totalCrd = r?.creditos ?? 0;
+      const totalComp = r?.compensaciones ?? detalle.compensaciones?.total ?? 0;
+      const totalRec = r?.reconocido ?? 0;
+      const totalDed = r?.deducciones ?? detalle.deducciones.total;
+      const neto     = Number(recibo.total_neto);
 
       doc.setFont("helvetica", "bold"); doc.setFontSize(11); doc.setTextColor(27, 86, 255);
       doc.text("Resumen Financiero", left, y); y += 6;
@@ -415,19 +460,18 @@ const TabRecibos: React.FC<Props> = ({ pagoId }) => {
       });
     }
 
-    doc.save(`recibo_${recibo.nro_recibo}.pdf`);
+    doc.save(`recibo_pago${pagoId}_socio${info?.nro_socio ?? recibo.medico_id}.pdf`);
   };
 
   // ── Columnas ──
 
   const columns: ColumnDef<ReciboRow>[] = [
-    { key: "nro_recibo", header: "Nro. Recibo" },
     {
       key: "medico_id",
       header: "Socio",
       render: (r) => (
         <div>
-          <div style={{ fontWeight: 500 }}>{r.detalle_json?.info_medico?.nombre ?? `Médico #${r.medico_id}`}</div>
+          <div style={{ fontWeight: 500 }}>{nombreSocio(r)}</div>
           {r.detalle_json?.info_medico?.nro_socio != null && (
             <div style={{ fontSize: 11, color: paleta.gray400 }}>Socio #{r.detalle_json.info_medico.nro_socio}</div>
           )}
@@ -570,7 +614,7 @@ const TabRecibos: React.FC<Props> = ({ pagoId }) => {
           }
         >
               <p>
-                ¿Eliminar el recibo <strong>{deleteTarget.nro_recibo}</strong>?
+                ¿Eliminar el recibo de <strong>{nombreSocio(deleteTarget)}</strong>?
                 <br />
                 <span style={{ fontSize: 12, color: paleta.gray500 }}>Esta acción no se puede deshacer.</span>
               </p>

@@ -24,10 +24,18 @@ export type Compensacion = {
   medico_id: number;
   medico_nombre: string | null;
   medico_nro_socio: number | null;
-  importe: string;
+  // En cuotas: una fila por cuota; las de un plan comparten plan_id (el id de la cuota 1).
+  plan_id: number | null;
+  cuota_nro: number;
+  cuotas_total: number;
+  importe: string; // el de esta cuota
+  importe_total: string | null; // el de todo el plan
   leyenda: string;
   nota_interna: string | null;
   estado: EstadoCompensacion;
+  // Mes desde el que la cuota entra sola al pago abierto; sin mes, entra a mano.
+  mes_aplicar: number | null;
+  anio_aplicar: number | null;
   pago_id: number | null;
   fecha_caja: string | null;
   motivo_anulacion: string | null;
@@ -53,4 +61,17 @@ export const fechaCorta = (iso: string | null | undefined): string => {
   if (!iso) return "—";
   const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
   return m ? `${m[3]}/${m[2]}/${m[1]}` : iso;
+};
+
+/** «11/2026», o null si la cuota no tiene mes. */
+export const mesCuota = (c: Pick<Compensacion, "mes_aplicar" | "anio_aplicar">): string | null =>
+  c.mes_aplicar && c.anio_aplicar ? `${String(c.mes_aplicar).padStart(2, "0")}/${c.anio_aplicar}` : null;
+
+/** Reparte un total en cuotas como la API: partes iguales truncadas al centavo, el resto en la última. */
+export const repartirCuotas = (total: number, n: number): number[] => {
+  if (!Number.isFinite(total) || total <= 0 || !Number.isInteger(n) || n < 1) return [];
+  const centavos = Math.round(total * 100);
+  const base = Math.floor(centavos / n);
+  if (base === 0) return [];
+  return Array.from({ length: n }, (_, i) => (i === n - 1 ? centavos - base * (n - 1) : base) / 100);
 };

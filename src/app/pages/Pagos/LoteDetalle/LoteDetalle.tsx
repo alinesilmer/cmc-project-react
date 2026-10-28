@@ -25,10 +25,11 @@ import paleta from "@/app/styles/paleta.module.scss";
 import { comoErrorApi, detalleDeError } from "@/app/shared/lib/httpErrors";
 
 const OBSERVACION_OPTIONS = [
-  "Falta firma",
-  "Falta sello",
-  "Diferencia de valores",
-  "Falta datos",
+  "Falta firma y sello prestador",
+  "Falta informe",
+  "Falta autorización",
+  "Falta firma y aclaración afiliado",
+  "Ajuste valor",
 ];
 const OTRO = "__otro__";
 

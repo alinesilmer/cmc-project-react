@@ -3,7 +3,7 @@ import { ArrowRightCircle, ArrowLeftCircle } from "lucide-react";
 
 import { formatMoney } from "../money";
 import type { ColumnaVista } from "./vista/types";
-import { RESUMEN_TIPO_LABEL, sumaEquipo, sumarTotales, sumarUnidades, totalesPorTipo } from "./totales";
+import { RESUMEN_TIPO_LABEL, sumaEquipo, sumarTotales, sumarUnidades, textoAuditadas, totalesPorTipo } from "./totales";
 import { clavePaciente } from "./equipo";
 import FilaPrestacion from "./FilaPrestacion";
 import type { FilaAcciones, PrestacionConSocio } from "./FilaPrestacion";
@@ -207,7 +207,7 @@ function GrupoTabla({
           <tr key={`subtotal-${g.key}-${medico.cod_medico}-${medico.id}`} className={styles.subtotalMedicoRow}>
             <td colSpan={colSpan}>
               <div className={styles.subtotalMedicoContent}>
-                <span>Subtotal socio {medico.cod_medico} {medico.nombreSocio ?? ""} ({sumarUnidades(incluidas)})</span>
+                <span>Subtotal socio {medico.cod_medico} {medico.nombreSocio ?? ""} ({sumarUnidades(incluidas)}) · {textoAuditadas(incluidas)}</span>
                 <span className={styles.subtotalMedicoMontos}>
                   <span>Coseguro: <strong>{formatMoney(totales.totalCoseguro)}</strong></span>
                   <span>Total: <strong>{formatMoney(totales.totalSubtotal)}</strong></span>
@@ -254,6 +254,7 @@ function GrupoTabla({
               {RESUMEN_TIPO_LABEL[t.tipo]} ({t.cantidad}): <strong>{formatMoney(t.total)}</strong>
             </span>
           ))}
+          <span className={styles.resumenMoney}><strong>{textoAuditadas(g.sumables)}</strong></span>
           {conAcciones && <div className={styles.resumenActions}>
             <button type="button" className={styles.resumenActionBtn} disabled={grupoBusy}
               onClick={() => accionesGrupo.onMarcarTodos(g)}>

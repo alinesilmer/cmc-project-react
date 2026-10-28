@@ -3,8 +3,8 @@ import { Building2, ChevronDown, Search } from "lucide-react";
 
 import type { ObraSocial } from "@/app/pages/AfiliadosPorObraSocialPage/types";
 import { buildOsCode, normalize } from "@/app/pages/AfiliadosPorObraSocialPage/helpers";
-// Mismo selector que «Padrones»: los estilos del desplegable se comparten.
-import styles from "@/app/pages/AfiliadosPorObraSocialPage/Padrones.module.scss";
+// Mismo selector que «Padrones», con la copia local de sus estilos.
+import styles from "./Padrones.module.scss";
 
 const MAX_SIN_BUSCAR = 80;
 

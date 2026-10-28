@@ -21,8 +21,10 @@ import {
   ADELANTO_PRESTACIONES_URL,
   ADELANTO_URL,
   type Adelanto,
+  type AjustePrestacion,
   type PrestacionFactura,
   type PrestacionesPage,
+  dondeVaElAjuste,
   estadoAdelantoLabel,
   etiquetaEstadoPrestacion,
   fechaCorta,
@@ -79,7 +81,31 @@ const mensajeDe = (e: any, porDefecto: string) => {
   return typeof detail === "string" ? detail : (e?.message ?? porDefecto);
 };
 
-type Marcada = { importe: number; medicoId: number | null };
+type Marcada = { importe: number; medicoId: number | null; conAjustes: boolean };
+
+const AVISO_AJUSTES =
+  "El adelanto paga lo que vale cada prestación. Los débitos y créditos cargados no se restan acá: " +
+  "se descuentan (o suman) una sola vez, cuando su lote entra a un pago.";
+
+/** Débitos y créditos cargados a la prestación, con el lote en que están. Solo informa. */
+const CeldaAjustes: React.FC<{ ajustes: AjustePrestacion[] }> = ({ ajustes }) => {
+  if (ajustes.length === 0) return <span className={lq.tenue}>—</span>;
+  return (
+    <>
+      {ajustes.map((a, i) => (
+        <span key={a.ajuste_id} title={a.observacion ?? undefined}>
+          {i > 0 && <br />}
+          <span className={`${s.monto} ${a.tipo === "debito" ? lq.menos : lq.mas}`}>
+            {a.tipo === "debito" ? "−" : "+"}${fmt(a.total)}
+          </span>
+          {a.observacion && <small className={lq.tenue}> {a.observacion}</small>}
+          <br />
+          <small className={lq.tenue}>{dondeVaElAjuste(a)}</small>
+        </span>
+      ))}
+    </>
+  );
+};
 
 const AdelantoDetalle: React.FC = () => {
   const { adelantoId } = useParams();
@@ -181,7 +207,7 @@ const AdelantoDetalle: React.FC = () => {
     setMarcadas((prev) => {
       const sig = new Map(prev);
       if (sig.has(p.id)) sig.delete(p.id);
-      else sig.set(p.id, { importe: Number(p.importe_total), medicoId: p.medico_id });
+      else sig.set(p.id, { importe: Number(p.importe_total), medicoId: p.medico_id, conAjustes: p.ajustes.length > 0 });
       return sig;
     });
   };
@@ -193,23 +219,33 @@ const AdelantoDetalle: React.FC = () => {
     setMarcadas((prev) => {
       const sig = new Map(prev);
       if (todasMarcadas) disponiblesDeLaPagina.forEach((p) => sig.delete(p.id));
-      else disponiblesDeLaPagina.forEach((p) => sig.set(p.id, { importe: Number(p.importe_total), medicoId: p.medico_id }));
+      else
+        disponiblesDeLaPagina.forEach((p) =>
+          sig.set(p.id, { importe: Number(p.importe_total), medicoId: p.medico_id, conAjustes: p.ajustes.length > 0 }),
+        );
       return sig;
     });
   };
 
   const totalMarcado = useMemo(() => [...marcadas.values()].reduce((acc, m) => acc + m.importe, 0), [marcadas]);
   const medicosMarcados = useMemo(() => new Set([...marcadas.values()].map((m) => m.medicoId)).size, [marcadas]);
+  const marcadasConAjustes = useMemo(() => [...marcadas.values()].filter((m) => m.conAjustes).length, [marcadas]);
 
   const agregar = async () => {
     if (marcadas.size === 0) return;
     setAgregando(true);
     try {
-      const r = await postJSON<{ agregadas: number; rechazadas: { id: number; motivo: string }[] }>(
+      const r = await postJSON<{ agregadas: number; rechazadas: { id: number; motivo: string }[]; con_ajustes: number }>(
         ADELANTO_ITEMS_URL(id),
         { detalle_ids: [...marcadas.keys()] },
       );
       if (r.agregadas) notify(`${r.agregadas} prestación${r.agregadas !== 1 ? "es agregadas" : " agregada"} al adelanto.`);
+      if (r.con_ajustes)
+        notify(
+          `${r.con_ajustes} tiene${r.con_ajustes !== 1 ? "n" : ""} débitos o créditos cargados: se adelanta lo que vale la ` +
+            "prestación y el ajuste se aplica cuando su lote entre a un pago.",
+          "warning",
+        );
       if (r.rechazadas.length) {
         const ejemplos = r.rechazadas.slice(0, 3).map((x) => `#${x.id}: ${x.motivo}`).join("; ");
         notify(
@@ -300,6 +336,16 @@ const AdelantoDetalle: React.FC = () => {
               <span>Adelantado</span>
               <b>${fmt(adelanto.importe)}</b>
             </div>
+            {(Number(adelanto.debitos) > 0 || Number(adelanto.creditos) > 0) && (
+              <div className={lq.tiraDato} title={AVISO_AJUSTES}>
+                <span>Débitos / créditos cargados (van con su lote)</span>
+                <b>
+                  {Number(adelanto.debitos) > 0 && <span className={lq.menos}>−${fmt(adelanto.debitos)}</span>}
+                  {Number(adelanto.debitos) > 0 && Number(adelanto.creditos) > 0 && " · "}
+                  {Number(adelanto.creditos) > 0 && <span className={lq.mas}>+${fmt(adelanto.creditos)}</span>}
+                </b>
+              </div>
+            )}
             {adelanto.observacion && <span className={lq.tiraTexto}>{adelanto.observacion}</span>}
             {adelanto.pago_id && (
               <div className={lq.tiraDato}>
@@ -362,6 +408,7 @@ const AdelantoDetalle: React.FC = () => {
                       <th>Función</th>
                       <th>Honorarios</th>
                       <th>Importe</th>
+                      <th>Débitos / créditos</th>
                       {abierto && <th aria-label="Quitar" />}
                     </tr>
                   </thead>
@@ -386,6 +433,9 @@ const AdelantoDetalle: React.FC = () => {
                         <td>{it.funcion ?? "—"}</td>
                         <td className={s.monto}>${fmt(it.honorarios)}</td>
                         <td className={s.monto}>${fmt(it.importe_total)}</td>
+                        <td>
+                          <CeldaAjustes ajustes={it.ajustes} />
+                        </td>
                         {abierto && (
                           <td>
                             {quitandoId === it.id ? (
@@ -409,6 +459,7 @@ const AdelantoDetalle: React.FC = () => {
                 </Tabla>
               )}
             </div>
+            {adelanto.items.some((it) => it.ajustes.length > 0) && <p className={s.nota}>{AVISO_AJUSTES}</p>}
           </section>
 
           {abierto && (
@@ -486,6 +537,7 @@ const AdelantoDetalle: React.FC = () => {
                         <th>Función</th>
                         <th>Equipo</th>
                         <th>Importe</th>
+                        <th>Débitos / créditos</th>
                         <th>Estado</th>
                       </tr>
                     </thead>
@@ -531,6 +583,9 @@ const AdelantoDetalle: React.FC = () => {
                             <td>{p.equipo ?? <span className={lq.tenue}>—</span>}</td>
                             <td className={s.monto}>${fmt(p.importe_total)}</td>
                             <td>
+                              <CeldaAjustes ajustes={p.ajustes} />
+                            </td>
+                            <td>
                               <span className={`${s.chip} ${CHIP_DE[p.estado]}`}>{etiquetaEstadoPrestacion(p)}</span>
                             </td>
                           </tr>
@@ -560,6 +615,7 @@ const AdelantoDetalle: React.FC = () => {
                   <span>
                     <b>{marcadas.size} elegida{marcadas.size !== 1 ? "s" : ""}</b> · <b>${fmt(totalMarcado)}</b> · {medicosMarcados} médico
                     {medicosMarcados !== 1 ? "s" : ""}
+                    {marcadasConAjustes > 0 && ` · ${marcadasConAjustes} con débitos o créditos (van con su lote)`}
                   </span>
                   <span className={s.barraAcciones}>
                     {/* El ghost lleva texto oscuro: sobre la barra azul no se lee, se pasa a blanco. */}
@@ -612,6 +668,12 @@ const AdelantoDetalle: React.FC = () => {
             <DialogoAviso>
               Se paga a {adelanto.medicos} médico{adelanto.medicos !== 1 ? "s" : ""} por ${fmt(adelanto.importe)}. Los porcentuales
               (contribuciones) se descuentan de ese importe, como en cualquier pago.
+              {(Number(adelanto.debitos) > 0 || Number(adelanto.creditos) > 0) && (
+                <>
+                  {" "}Sus prestaciones tienen débitos (${fmt(adelanto.debitos)}) o créditos (${fmt(adelanto.creditos)}) cargados: no
+                  se restan del adelanto, se aplican cuando su lote entre a un pago.
+                </>
+              )}
             </DialogoAviso>
           )}
         </Dialogo>

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { cancelarDeduccion, getPagoMedicoActualizado, refrescarDeducciones } from "@/app/pages/Pagos/pagos.api";
+import { cancelarDeduccion, getPagoMedicoActualizado } from "@/app/pages/Pagos/pagos.api";
 import Button from "@/app/components/ui/Button/Button";
 import Card from "@/app/components/ui/Card/Card";
 import styles from "./tabs.module.scss";
@@ -78,11 +78,20 @@ type CompensacionDetalleItem = {
   importe: number;
 };
 
+// Débito o crédito de un lote cuya factura no está en el pago (lote sin factura, por ejemplo):
+// cuenta en los totales del médico pero no cae dentro de ninguna liquidación.
+type OtroAjusteItem = AjusteItem & {
+  obra_social: string;
+  periodo: string;
+  tipo: "debito" | "credito";
+};
+
 type Detalle = {
   liquidaciones: Record<string, LiquidacionDetalle>;
   adelantos?: { total: number; detalle: AdelantoDetalleItem[] };
   compensaciones?: { total: number; detalle: CompensacionDetalleItem[] };
   deducciones: { total: number; detalle: DeduccionItem[] };
+  otros_ajustes?: { total_debitos: number; total_creditos: number; detalle: OtroAjusteItem[] };
 };
 
 type MedicoEntry = {
@@ -193,6 +202,7 @@ const DetallePanel: React.FC<{
   const liquidaciones = Object.entries(detalle.liquidaciones);
   const adelantos = detalle.adelantos?.detalle ?? [];
   const compensaciones = detalle.compensaciones?.detalle ?? [];
+  const otrosAjustes = detalle.otros_ajustes?.detalle ?? [];
   const deducciones = detalle.deducciones.detalle;
 
   return (
@@ -256,6 +266,37 @@ const DetallePanel: React.FC<{
           </Tabla>
         )}
       </div>
+
+      {/* Débitos y créditos de lotes cuya factura no está en el pago */}
+      {otrosAjustes.length > 0 && (
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: paleta.gray600, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
+            Otros débitos y créditos
+          </div>
+          <Tabla className={styles.table} style={{ fontSize: 12 }}>
+            <thead>
+              <tr>
+                <th>Obra Social</th>
+                <th>Período</th>
+                <th>Lote</th>
+                <th className={styles.numCell}>Débitos</th>
+                <th className={styles.numCell}>Créditos</th>
+              </tr>
+            </thead>
+            <tbody>
+              {otrosAjustes.map((aj, i) => (
+                <tr key={aj.ajuste_id ?? i}>
+                  <td style={{ fontWeight: 500 }}>{aj.obra_social}</td>
+                  <td>{aj.periodo}</td>
+                  <td>#{aj.lote_id}{aj.observacion ? ` — ${aj.observacion}` : ""}</td>
+                  <td className={`${styles.numCell} ${styles.negative}`}>{aj.tipo === "debito" ? `-$${fmt(aj.total)}` : ""}</td>
+                  <td className={`${styles.numCell} ${styles.positive}`}>{aj.tipo === "credito" ? `+$${fmt(aj.total)}` : ""}</td>
+                </tr>
+              ))}
+            </tbody>
+          </Tabla>
+        </div>
+      )}
 
       {/* Adelantos */}
       {adelantos.length > 0 && (
@@ -411,12 +452,11 @@ const TabVistaPreviaPago: React.FC<Props> = ({ pago, pagoId }) => {
   const [quitando, setQuitando] = useState<string | null>(null);
 
   // Saca del pago un porcentual (contribución, impuesto…) sin tocar las cuotas: lo cancela, y no vuelve a
-  // aparecer en este pago. Después refresca la vista previa de deducciones y recarga a los médicos.
+  // aparecer en este pago. La API rehace sola el orden de cobro; acá se recarga a los médicos.
   const quitarDelPago = async (clave: string, ids: number[]) => {
     setQuitando(clave);
     try {
       for (const id of ids) await cancelarDeduccion(id);
-      await refrescarDeducciones(pagoId);
       await handleGenerar(true);
     } catch (e) {
       const err = comoErrorApi(e);

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { deshacerDescuento, editarConcepto, generarDescuento, getDeduccionesPorPago, listarConceptos, refrescarDeducciones } from "@/app/pages/Pagos/pagos.api";
+import { deshacerDescuento, editarConcepto, generarDescuento, getDeduccionesPorPago, listarConceptos } from "@/app/pages/Pagos/pagos.api";
 import { useAppSnackbar } from "@/app/hooks/useAppSnackbar";
 import Button from "@/app/components/ui/Button/Button";
 import Card from "@/app/components/ui/Card/Card";
@@ -28,10 +28,6 @@ type ConceptoApi = {
   precio?: number | string;
   porcentaje?: number | string;
 };
-type RefrescarResult = {
-  pago_id: number;
-  manuales_enroladas: number;
-};
 type PorPagoResult = {
   existe: boolean;
   pago_id: number;
@@ -50,8 +46,6 @@ const TabDeducciones: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
 
   // Deducciones ya generadas para este pago
   const [generadoInfo, setGeneradoInfo] = useState<PorPagoResult | null>(null);
-
-  const [refrescando, setRefrescando] = useState(false);
 
   // Modal generar
   const [genTarget, setGenTarget] = useState<Concepto | null>(null);
@@ -109,29 +103,6 @@ const TabDeducciones: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
       (item) =>
         item.descuento_id === descId && item.generado_en_pago_id !== null,
     ) ?? false;
-
-  const handleRefrescar = async () => {
-    setRefrescando(true);
-    try {
-      const r = await refrescarDeducciones<RefrescarResult>(pagoId);
-      notify(
-        r.manuales_enroladas
-          ? `Entraron al pago ${r.manuales_enroladas} cuota${r.manuales_enroladas !== 1 ? "s" : ""} pendiente${r.manuales_enroladas !== 1 ? "s" : ""}.`
-          : "Deducciones al día. No había cuotas nuevas para este pago.",
-      );
-      await loadGeneradoInfo();
-      onRefresh?.();
-    } catch (e) {
-      const err = comoErrorApi(e);
-      const detail = err?.response?.data?.detail;
-      notify(
-        typeof detail === "string" ? detail : (err?.message ?? "No se pudo refrescar."),
-        "error",
-      );
-    } finally {
-      setRefrescando(false);
-    }
-  };
 
   const handleGenerar = async () => {
     if (!genTarget) return;
@@ -231,21 +202,9 @@ const TabDeducciones: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
           {descuentos.length} descuento{descuentos.length !== 1 ? "s" : ""}{" "}
           disponibles
         </span>
-        {pago.estado === "A" && (
-          <div className={styles.toolbarLeft}>
-            <Button variant="secondary" onClick={handleRefrescar} disabled={refrescando}>
-              {refrescando ? "Refrescando…" : "Refrescar deducciones"}
-            </Button>
-          </div>
-        )}
       </div>
 
       {error && <div className={styles.errorBanner}>{error}</div>}
-      {pago.estado === "A" && !!pago.deducciones_dirty && (
-        <div className={styles.errorBanner} role="status">
-          Las deducciones cambiaron y la vista previa quedó vieja. Tocá «Refrescar deducciones» para actualizarla.
-        </div>
-      )}
 
       <Card className={styles.tableCard}>
         {loading ? (

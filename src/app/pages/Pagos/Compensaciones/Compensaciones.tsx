@@ -25,7 +25,15 @@ import {
   estadoCompensacionLabel,
   fechaCorta,
   importeConSigno,
+  mesCuota,
+  repartirCuotas,
 } from "./utiles";
+
+// «2026-11» (input type=month) ⇄ mes y año.
+const mesDeInput = (v: string): { mes_inicio: number; anio_inicio: number } | null => {
+  const m = /^(\d{4})-(\d{2})$/.exec(v);
+  return m ? { anio_inicio: Number(m[1]), mes_inicio: Number(m[2]) } : null;
+};
 
 const estadoClass = (e: string) =>
   ({
@@ -72,12 +80,15 @@ const Compensaciones: React.FC = () => {
   const [fImporte, setFImporte] = useState("");
   const [fLeyenda, setFLeyenda] = useState("");
   const [fNota, setFNota] = useState("");
+  const [fCuotas, setFCuotas] = useState("1");
+  const [fMes, setFMes] = useState(""); // mes de la cuota 1; vacío = el del pago abierto (o el actual)
   const [fDestino, setFDestino] = useState<Destino>("pendiente");
   const [guardando, setGuardando] = useState(false);
 
   // Anulación
   const [anulando, setAnulando] = useState<Compensacion | null>(null);
   const [motivo, setMotivo] = useState("");
+  const [alcance, setAlcance] = useState<"plan" | "cuota">("plan");
   const [procesandoAnular, setProcesandoAnular] = useState(false);
 
   const buildParams = useCallback(() => {
@@ -141,35 +152,60 @@ const Compensaciones: React.FC = () => {
     setFImporte("");
     setFLeyenda("");
     setFNota("");
+    setFCuotas("1");
+    setFMes("");
     setFDestino("pendiente");
     setFormOpen(true);
   };
 
+  // Se edita el plan entero: importe total, cantidad de cuotas, leyenda y nota.
+  const totalDe = (c: Compensacion) => Math.abs(Number(c.importe_total ?? c.importe));
   const abrirEdicion = (c: Compensacion) => {
     setEditando(c);
     setFMedico(c.medico_id);
     setFSentido(Number(c.importe) < 0 ? "contra" : "favor");
-    setFImporte(String(Math.abs(Number(c.importe))));
+    setFImporte(String(totalDe(c)));
     setFLeyenda(c.leyenda);
     setFNota(c.nota_interna ?? "");
+    setFCuotas(String(c.cuotas_total));
+    setFMes(""); // vacío: no cambia
     setFormOpen(true);
   };
 
   const importeNumero = Number(fImporte.replace(",", "."));
-  const formValido = !!fMedico && Number.isFinite(importeNumero) && importeNumero > 0 && fLeyenda.trim().length > 0;
+  const cuotasNumero = Number(fCuotas);
+  // En caja va en una sola cuota.
+  useEffect(() => {
+    if (cuotasNumero > 1 && fDestino === "caja") setFDestino("pendiente");
+  }, [cuotasNumero, fDestino]);
+  const partes = repartirCuotas(importeNumero, cuotasNumero);
+  const formValido =
+    !!fMedico &&
+    Number.isFinite(importeNumero) &&
+    importeNumero > 0 &&
+    cuotasNumero >= 1 &&
+    cuotasNumero <= 60 &&
+    partes.length > 0 &&
+    !(fDestino === "caja" && cuotasNumero > 1) &&
+    fLeyenda.trim().length > 0;
 
   const guardar = async () => {
     if (!formValido || !fMedico) return;
     const importe = fSentido === "contra" ? -importeNumero : importeNumero;
+    const mes = mesDeInput(fMes);
     setGuardando(true);
     try {
       if (editando) {
-        await patchJSON(COMPENSACION_URL(editando.id), {
-          medico_id: fMedico,
-          importe,
-          leyenda: fLeyenda.trim(),
-          nota_interna: fNota.trim() || null,
-        });
+        // Sólo lo que cambió: con alguna cuota ya pagada, la API acepta leyenda y nota pero no importe ni cuotas.
+        const cambios: Record<string, unknown> = {};
+        const signoOriginal = Number(editando.importe) < 0 ? -1 : 1;
+        if (fMedico !== editando.medico_id) cambios.medico_id = fMedico;
+        if (importe !== signoOriginal * totalDe(editando)) cambios.importe = importe;
+        if (cuotasNumero !== editando.cuotas_total) cambios.cuotas = cuotasNumero;
+        if (mes) Object.assign(cambios, mes);
+        if (fLeyenda.trim() !== editando.leyenda) cambios.leyenda = fLeyenda.trim();
+        if ((fNota.trim() || null) !== (editando.nota_interna ?? null)) cambios.nota_interna = fNota.trim() || null;
+        await patchJSON(COMPENSACION_URL(editando.id), cambios);
         notify("Compensación actualizada.");
       } else {
         await postJSON(COMPENSACIONES_RAIZ, {
@@ -177,14 +213,20 @@ const Compensaciones: React.FC = () => {
           importe,
           leyenda: fLeyenda.trim(),
           nota_interna: fNota.trim() || null,
+          cuotas: cuotasNumero,
+          ...(fDestino === "pendiente" && mes ? mes : {}),
           destino: fDestino,
         });
         notify(
           fDestino === "pago"
-            ? "Compensación creada y pasada al pago abierto."
+            ? cuotasNumero > 1
+              ? `Compensación creada en ${cuotasNumero} cuotas: la primera pasó al pago abierto.`
+              : "Compensación creada y pasada al pago abierto."
             : fDestino === "caja"
               ? "Compensación registrada como pagada en caja."
-              : "Compensación creada.",
+              : cuotasNumero > 1
+                ? `Compensación creada en ${cuotasNumero} cuotas.`
+                : "Compensación creada.",
         );
       }
       setFormOpen(false);
@@ -201,8 +243,9 @@ const Compensaciones: React.FC = () => {
     if (!anulando || !motivo.trim()) return;
     setProcesandoAnular(true);
     try {
-      await postJSON(COMPENSACION_ANULAR_URL(anulando.id), { motivo: motivo.trim() });
-      notify("Compensación anulada.");
+      const todoElPlan = anulando.cuotas_total > 1 && alcance === "plan";
+      await postJSON(COMPENSACION_ANULAR_URL(anulando.id), { motivo: motivo.trim(), alcance: todoElPlan ? "plan" : "cuota" });
+      notify(todoElPlan ? "Cuotas pendientes del plan anuladas." : "Compensación anulada.");
       setAnulando(null);
       setMotivo("");
       void fetchLista();
@@ -214,7 +257,16 @@ const Compensaciones: React.FC = () => {
   };
 
   const columns: ColumnDef<Compensacion>[] = [
-    { key: "id", header: "N°", render: (c) => <span className={lq.monto}>#{c.id}</span> },
+    {
+      key: "id",
+      header: "N°",
+      render: (c) => (
+        <span className={s.celdaDoble}>
+          <span className={lq.monto}>#{c.plan_id ?? c.id}</span>
+          {c.cuotas_total > 1 && <small>Cuota {c.cuota_nro}/{c.cuotas_total}</small>}
+        </span>
+      ),
+    },
     {
       key: "created_at",
       header: "Cargada",
@@ -254,13 +306,21 @@ const Compensaciones: React.FC = () => {
       header: "Importe",
       alignRight: true,
       render: (c) => (
-        <span
-          className={`${lq.monto} ${c.estado === "anulada" ? s.anulada : Number(c.importe) < 0 ? lq.menos : lq.mas}`}
-          style={{ fontWeight: 700 }}
-        >
-          {importeConSigno(c.importe)}
+        <span className={s.celdaDoble}>
+          <span
+            className={`${lq.monto} ${c.estado === "anulada" ? s.anulada : Number(c.importe) < 0 ? lq.menos : lq.mas}`}
+            style={{ fontWeight: 700 }}
+          >
+            {importeConSigno(c.importe)}
+          </span>
+          {c.cuotas_total > 1 && c.importe_total != null && <small>de {importeConSigno(c.importe_total)}</small>}
         </span>
       ),
+    },
+    {
+      key: "mes_aplicar",
+      header: "Mes",
+      render: (c) => mesCuota(c) ?? <span className={lq.tenue} title="Anterior a las cuotas: entra a mano">A mano</span>,
     },
     {
       key: "estado",
@@ -300,6 +360,7 @@ const Compensaciones: React.FC = () => {
                 e.stopPropagation();
                 setAnulando(c);
                 setMotivo("");
+                setAlcance("plan");
               }}
             >
               <Ban size={16} />
@@ -356,7 +417,9 @@ const Compensaciones: React.FC = () => {
       "pendiente",
       "en_pago",
       "Solo se pueden quitar del pago compensaciones que estén en el pago abierto.",
-      (n) => `¿Quitar ${n} compensaci${n !== 1 ? "ones" : "ón"} del pago? Vuelven a pendientes.`,
+      (n) =>
+        `¿Quitar ${n} compensaci${n !== 1 ? "ones" : "ón"} del pago? Vuelven a pendientes y pasan al mes siguiente ` +
+        "(las cuotas que siguen se corren un mes).",
       "quitada del pago",
       "quitadas del pago",
     ),
@@ -378,8 +441,8 @@ const Compensaciones: React.FC = () => {
       <Franja titulo="Compensaciones" icono={HandCoins} />
 
       <p className={s.intro}>
-        Plata que se le da o se le cobra a un socio por única vez, sin un concepto del catálogo: un regalo, un reintegro, una
-        rotura. Entra a un pago o se paga en caja.
+        Plata que se le da o se le cobra a un socio sin un concepto del catálogo: un regalo, un reintegro, una rotura. Va de una
+        vez o en cuotas: cada cuota entra sola al pago abierto cuando llega su mes. También se puede pagar en caja.
       </p>
 
       <Caja titulo="Configuración">
@@ -464,7 +527,7 @@ const Compensaciones: React.FC = () => {
 
       {formOpen && (
         <Dialogo
-          titulo={editando ? `Editar compensación #${editando.id}` : "Nueva compensación"}
+          titulo={editando ? `Editar compensación #${editando.plan_id ?? editando.id}` : "Nueva compensación"}
           icono={editando ? Pencil : Plus}
           onClose={guardando ? undefined : () => setFormOpen(false)}
           acciones={
@@ -508,7 +571,7 @@ const Compensaciones: React.FC = () => {
             </div>
           </DialogoCampo>
 
-          <DialogoCampo rotulo="Importe ($)" htmlFor="comp-importe">
+          <DialogoCampo rotulo="Importe total ($)" htmlFor="comp-importe">
             <input
               id="comp-importe"
               type="number"
@@ -521,6 +584,38 @@ const Compensaciones: React.FC = () => {
               placeholder="0,00"
             />
           </DialogoCampo>
+
+          <DialogoCampo rotulo="Cuotas" htmlFor="comp-cuotas">
+            <input
+              id="comp-cuotas"
+              type="number"
+              inputMode="numeric"
+              min="1"
+              max="60"
+              step="1"
+              value={fCuotas}
+              onChange={(e) => setFCuotas(e.target.value)}
+              disabled={guardando}
+            />
+            {cuotasNumero > 1 && partes.length > 0 && (
+              <small className={lq.tenue}>
+                {partes[0] === partes[partes.length - 1]
+                  ? `${cuotasNumero} cuotas de $${fmt(partes[0])}`
+                  : `${cuotasNumero - 1} cuotas de $${fmt(partes[0])} y la última de $${fmt(partes[partes.length - 1])}`}
+                , una por mes.
+              </small>
+            )}
+          </DialogoCampo>
+
+          {(editando || fDestino === "pendiente") && (
+            <DialogoCampo
+              rotulo={editando ? "Mes de la primera cuota (vacío: no cambia)" : "Mes de la primera cuota"}
+              htmlFor="comp-mes"
+            >
+              <input id="comp-mes" type="month" value={fMes} onChange={(e) => setFMes(e.target.value)} disabled={guardando} />
+              {!editando && !fMes && <small className={lq.tenue}>Vacío: el mes del pago abierto o, si no hay, el actual.</small>}
+            </DialogoCampo>
+          )}
 
           <DialogoCampo rotulo="Leyenda del recibo (la ve el socio)" htmlFor="comp-leyenda">
             <input
@@ -549,16 +644,22 @@ const Compensaciones: React.FC = () => {
             <DialogoCampo rotulo="Cómo se paga">
               <div className={s.destinos} role="radiogroup" aria-label="Cómo se paga">
                 <label className={lq.casilla}>
-                  <input type="radio" name="destino" checked={fDestino === "pago"} onChange={() => setFDestino("pago")} disabled={guardando} />
-                  Pasar al pago abierto
-                </label>
-                <label className={lq.casilla}>
                   <input type="radio" name="destino" checked={fDestino === "pendiente"} onChange={() => setFDestino("pendiente")} disabled={guardando} />
-                  Dejar pendiente, para pasarla a un pago más adelante
+                  Por mes: cada cuota entra sola al pago abierto cuando llega su mes
                 </label>
                 <label className={lq.casilla}>
-                  <input type="radio" name="destino" checked={fDestino === "caja"} onChange={() => setFDestino("caja")} disabled={guardando} />
-                  Ya se pagó en caja (hoy)
+                  <input type="radio" name="destino" checked={fDestino === "pago"} onChange={() => setFDestino("pago")} disabled={guardando} />
+                  {cuotasNumero > 1 ? "La primera cuota al pago abierto ya; las demás, una por mes" : "Pasar al pago abierto ya"}
+                </label>
+                <label className={lq.casilla}>
+                  <input
+                    type="radio"
+                    name="destino"
+                    checked={fDestino === "caja"}
+                    onChange={() => setFDestino("caja")}
+                    disabled={guardando || cuotasNumero > 1}
+                  />
+                  Ya se pagó en caja (hoy){cuotasNumero > 1 ? " — sólo en una cuota" : ""}
                 </label>
               </div>
             </DialogoCampo>
@@ -589,9 +690,24 @@ const Compensaciones: React.FC = () => {
           }
         >
           <p>
-            ¿Anular la compensación <strong>#{anulando.id}</strong> de <strong>{anulando.medico_nombre}</strong> por{" "}
-            <strong>{importeConSigno(anulando.importe)}</strong> ({anulando.leyenda})?
+            ¿Anular la compensación <strong>#{anulando.plan_id ?? anulando.id}</strong>
+            {anulando.cuotas_total > 1 ? ` (cuota ${anulando.cuota_nro}/${anulando.cuotas_total})` : ""} de{" "}
+            <strong>{anulando.medico_nombre}</strong> por <strong>{importeConSigno(anulando.importe)}</strong> ({anulando.leyenda})?
           </p>
+          {anulando.cuotas_total > 1 && (
+            <DialogoCampo rotulo="Qué se anula">
+              <div className={s.destinos} role="radiogroup" aria-label="Qué se anula">
+                <label className={lq.casilla}>
+                  <input type="radio" name="alcance" checked={alcance === "plan"} onChange={() => setAlcance("plan")} disabled={procesandoAnular} />
+                  Todas las cuotas pendientes del plan
+                </label>
+                <label className={lq.casilla}>
+                  <input type="radio" name="alcance" checked={alcance === "cuota"} onChange={() => setAlcance("cuota")} disabled={procesandoAnular} />
+                  Sólo esta cuota
+                </label>
+              </div>
+            </DialogoCampo>
+          )}
           <DialogoCampo rotulo="Motivo (obligatorio)" htmlFor="comp-motivo">
             <input
               id="comp-motivo"

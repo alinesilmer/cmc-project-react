@@ -44,7 +44,7 @@ const RefacturacionesList: React.FC = () => {
   const [filterOs, setFilterOs] = useState("");
   const [filterMes, setFilterMes] = useState("");
   const [filterAnio, setFilterAnio] = useState("");
-  const [filterEstado, setFilterEstado] = useState("A");
+  const [filterEstado, setFilterEstado] = useState("");
 
   // List
   const [lotes, setLotes] = useState<RefacturacionListItem[]>([]);
