@@ -5,7 +5,7 @@ import ZonaCarga from "./ZonaCarga";
 import HistorialValores from "./HistorialValores";
 import VerPdf from "./VerPdf";
 import { useValoresEticos } from "./useValoresEticos";
-import s from "./ValoresEticos.module.scss";
+import s from "./valoresEticos.module.scss";
 import Cargando from "@/app/components/ui/Cargando/Cargando";
 import Paso from "@/app/components/ui/Paso/Paso";
 import c from "@/app/components/ui/Paso/Campos.module.scss";
