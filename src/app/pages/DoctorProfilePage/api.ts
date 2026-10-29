@@ -260,6 +260,19 @@ export const getListEspecialidades = () =>
 export const setMedicoEstado = (id: string | number, estado_cuenta: EstadoCuenta) =>
   patchJSON(`/api/medicos/${id}/estado`, { estado_cuenta });
 
+export type RenovarPasswordOut = {
+  medico_id: number;
+  /** La única vez que sale de la API: se muestra para dictarla y no se guarda. */
+  password_provisoria: string;
+  /** ISO con zona. */
+  vence: string;
+  horas_vigencia: number;
+};
+
+// POST /medicos/:id/renovar-password — genera una contraseña provisoria que vence y corta las sesiones del socio.
+export const renovarPassword = (id: string | number) =>
+  postJSON<RenovarPasswordOut>(`/api/medicos/${id}/renovar-password`, {});
+
 // DELETE /medicos/:id
 export const deleteMedico = (id: string | number) =>
   delJSON(`/api/medicos/${id}`);

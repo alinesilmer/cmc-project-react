@@ -16,7 +16,7 @@ const DESTACADOS: Destacado[] = [
   { icono: Sparkles, texto: "Un paso y listo" },
 ];
 
-/** Cambio de contraseña obligatorio: la cuenta todavía tiene la contraseña provisoria del alta (ver RequireAuth). */
+/** Cambio de contraseña obligatorio: la cuenta todavía tiene la contraseña del alta o la provisoria de "Renovar contraseña" (ver RequireAuth). */
 export default function CambiarPassword() {
   const navigate = useNavigate();
   const [actual, setActual] = useState("");
@@ -61,7 +61,7 @@ export default function CambiarPassword() {
       </span>
       <h1 className={styles.titulo}>Creá tu contraseña</h1>
       <p className={styles.bajada}>
-        Todavía tenés la contraseña provisoria del alta. Elegí una nueva para seguir.
+        Todavía tenés una contraseña provisoria. Elegí una nueva para seguir.
       </p>
 
       <form className={styles.form} onSubmit={guardar} noValidate>

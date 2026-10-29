@@ -2,7 +2,7 @@
 
 import React, { Suspense, lazy, useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { Pencil, ShieldCheck, Trash2, User } from "lucide-react";
+import { KeyRound, Pencil, ShieldCheck, Trash2, User } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import "react-datepicker/dist/react-datepicker.css";
 
@@ -34,6 +34,7 @@ import TabDatos from "./legajo/TabDatos";
 import TabDocumentos from "./legajo/TabDocumentos";
 import TabEspecialidades from "./legajo/TabEspecialidades";
 import TabPermisos from "./legajo/TabPermisos";
+import RenovarPasswordModal from "./legajo/RenovarPasswordModal";
 import { crearReportar } from "./legajo/reportar";
 import { TAB_ICONS, TAB_LABELS } from "./legajo/pestanas";
 import type { TabKey } from "./legajo/legajo.types";
@@ -133,6 +134,9 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
   const reportar = crearReportar(readOnly && !editaSuLegajo, setReportTarget);
 
   const [delOpen, setDelOpen] = useState(false);
+  const [renovarOpen, setRenovarOpen] = useState(false);
+  // La propia se cambia con la actual, no se renueva (la API también lo rechaza).
+  const puedeRenovar = can("medico:renovar_password") && !esLegajoPropio;
 
   useEffect(() => {
     const estado = location.state as { fromPath?: string; tab?: string } | null;
@@ -211,6 +215,18 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                           inputProps={{ "aria-label": "Activar o dar de baja la cuenta" }}
                         />
                       </div>
+
+                      {puedeRenovar && (
+                        <Button
+                          variant="ghost"
+                          onClick={() => setRenovarOpen(true)}
+                          title="Generar una contraseña provisoria para dictársela al socio"
+                          style={{ marginLeft: 12 }}
+                        >
+                          <KeyRound size={16} />
+                          &nbsp;Renovar contraseña
+                        </Button>
+                      )}
 
                       <Button
                         variant="danger"
@@ -469,6 +485,14 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
           <p>¿Querés continuar?</p>
         </div>
       </ActionModal>
+
+      {renovarOpen && data && (
+        <RenovarPasswordModal
+          medicoId={medicoId}
+          nombre={data.name}
+          onClose={() => setRenovarOpen(false)}
+        />
+      )}
 
       <ReportarCambioModal
         target={reportTarget}
