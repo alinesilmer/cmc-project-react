@@ -1,5 +1,5 @@
-import { useEffect } from "react";
-import { detailMessage, type PrestacionItem, type PrestacionUpdate, type ViaPractica } from "../types";
+import { useEffect, useRef } from "react";
+import { detailMessage, type MedicoOption, type PrestacionItem, type PrestacionUpdate, type ViaPractica } from "../types";
 import { toInt } from "./carga.helpers";
 import { parseMoney } from "../money";
 import { anularPrestacion, crearPrestaciones, editarPrestacion } from "../api";
@@ -10,7 +10,9 @@ import type { useCargaCambiosCtx } from "./useCargaCambios";
 
 /** Parte de la lógica de CargaFacturacion: hidratación al editar, complementar o replicar. El texto es el del componente original. */
 export function useCargaEdicion(previo: useCargaContextoCtx & useCargaPreciosCtx & useCargaCambiosCtx) {
-  const { navigate, notify, capa, editId, fromFactura, isEdit, isComplemento, editMeta, setEditMeta, setErrorEdicion, setEditHidratado, setMedicoPreset, setCodigoPreset, setClinicaPreset, setEjecutorPreset, autorizacion, codMedico, payeeEsOrganizacion, codMedicoEjecutor, obraSocial, periodo, periodoOverride, afiliadoId, dni, fechaPractica, codClinica, codNomenclador, cantidad, sesion, tipoCalculo, via, porcentaje, honorarios, gastos, coseguro, tipoPrestador, montoAyudante, ayudantes, pediatra, autorizacionPorIntegrante, setGuardando, ayudantesOriginalesRef, pediatraOriginalRef, headPrestacionIdRef, setUltimoMedico, precio, precioPediatra, volverA, validate, resetForm, modoEdicionAnteriorRef } = previo;
+  const { navigate, notify, capa, editId, fromFactura, isEdit, isComplemento, editMeta, setEditMeta, setErrorEdicion, setEditHidratado, setMedicoPreset, setCodigoPreset, setClinicaPreset, setEjecutorPreset, autorizacion, codMedico, medicoSeleccionado, payeeEsOrganizacion, codMedicoEjecutor, obraSocial, periodo, periodoOverride, afiliadoId, dni, fechaPractica, codClinica, codNomenclador, cantidad, sesion, tipoCalculo, via, porcentaje, honorarios, gastos, coseguro, tipoPrestador, montoAyudante, ayudantes, pediatra, autorizacionPorIntegrante, setGuardando, ayudantesOriginalesRef, pediatraOriginalRef, headPrestacionIdRef, setUltimoMedico, setRefreshKey, precio, precioPediatra, volverA, validate, resetForm, modoEdicionAnteriorRef } = previo;
+  // Médico de la prestación recién guardada: al volver a la carga, la tabla de abajo lo sigue mostrando (ya recargada) aunque el reset limpie el formulario.
+  const medicoGuardadoRef = useRef<MedicoOption | null>(null);
   useEffect(() => {
     const salioDeEdicion = modoEdicionAnteriorRef.current && !isEdit;
     modoEdicionAnteriorRef.current = isEdit;
@@ -22,7 +24,10 @@ export function useCargaEdicion(previo: useCargaContextoCtx & useCargaPreciosCtx
     setEjecutorPreset(null);
     setCodigoPreset(null);
     setClinicaPreset(null);
-    setUltimoMedico(null);
+    setUltimoMedico(medicoGuardadoRef.current);
+    medicoGuardadoRef.current = null;
+    // Mismo médico/OS/período que en la edición no cambia ninguna prop de la tabla: sin esto mostraría los datos de antes de guardar.
+    setRefreshKey((k) => k + 1);
     ayudantesOriginalesRef.current = [];
     headPrestacionIdRef.current = null;
     resetForm();
@@ -123,7 +128,7 @@ export function useCargaEdicion(previo: useCargaContextoCtx & useCargaPreciosCtx
       // 3. Los ayudantes originales que ya no están → se anulan.
       const removidos = ayudantesOriginalesRef.current.filter((id) => !idsVigentes.has(id));
       for (const id of removidos) {
-        await anularPrestacion(id);
+        await anularPrestacion(id, { motivo: "equipo_editado" });
       }
 
       // 2b. Reconciliar el PEDIATRA — bloque PARALELO al de ayudantes: no reutiliza ni modifica el de arriba.
@@ -166,7 +171,7 @@ export function useCargaEdicion(previo: useCargaContextoCtx & useCargaPreciosCtx
         } else {
           // Nuevo. Si había un pediatra ORIGINAL distinto, se reemplaza: se anula antes de crear el nuevo .
           if (pediatraOriginalId) {
-            await anularPrestacion(pediatraOriginalId);
+            await anularPrestacion(pediatraOriginalId, { motivo: "equipo_editado" });
           }
           await crearPrestaciones({
             obra_social: obraSocialEfectiva,
@@ -176,7 +181,7 @@ export function useCargaEdicion(previo: useCargaContextoCtx & useCargaPreciosCtx
         }
       } else if (pediatraOriginalId) {
         // Se quitó el pediatra que había, sin agregar uno nuevo → se anula.
-        await anularPrestacion(pediatraOriginalId);
+        await anularPrestacion(pediatraOriginalId, { motivo: "equipo_editado" });
       }
 
       notify("Prestación actualizada.");
@@ -189,6 +194,7 @@ export function useCargaEdicion(previo: useCargaContextoCtx & useCargaPreciosCtx
         capa.cerrar(Number(editId));
         return;
       }
+      medicoGuardadoRef.current = medicoSeleccionado;
       navigate(volverA);
       // Al detalle de factura se vuelve donde se estaba (lo restaura el listado): subir
       // acá lo pisaría.

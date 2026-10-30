@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { focusFirstField, nextFocusable } from "./focusNav";
 import type { useCargaContextoCtx } from "./useCargaContexto";
 import type { useCargaPreciosCtx } from "./useCargaPrecios";
@@ -18,14 +18,27 @@ export function useCargaPantalla(previo: useCargaContextoCtx & useCargaPreciosCt
   // eslint-disable-next-line react-hooks/exhaustive-deps -- los setters y refs vienen de otra parte del hook: son estables
   }, [resetTick, guardando]);
 
+  // Con el mouse el foco llega en el mousedown: si el centrado mueve el campo antes del
+  // mouseup, el click cae afuera y no se marca (los radios de Tipo de prestador/cálculo).
+  // Por eso, si hay un botón apretado, se centra recién cuando terminó el click.
+  const punteroAbajoRef = useRef(false);
+  const marcarPuntero = () => {
+    punteroAbajoRef.current = true;
+    window.addEventListener("pointerup", () => { punteroAbajoRef.current = false; }, { once: true });
+  };
+
   // Enter avanza al campo siguiente.
   const centrarCampoEnfocado = (e: React.FocusEvent<HTMLDivElement>) => {
     const el = e.target as HTMLElement;
     if (!/^(INPUT|SELECT|TEXTAREA)$/.test(el.tagName)) return;
-    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    const centrar = () => el.scrollIntoView({ behavior: "smooth", block: "center" });
+    if (!punteroAbajoRef.current) { centrar(); return; }
+    // setTimeout: el click se despacha después del pointerup, en la misma tarea.
+    window.addEventListener("pointerup", () => window.setTimeout(centrar, 0), { once: true });
   };
 
   const handleFormKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    punteroAbajoRef.current = false;
     if (e.key !== "Enter") return;
     if (e.shiftKey || e.ctrlKey || e.metaKey || e.altKey) return;
     if (e.defaultPrevented) return;
@@ -77,6 +90,7 @@ export function useCargaPantalla(previo: useCargaContextoCtx & useCargaPreciosCt
 
   return {
     centrarCampoEnfocado,
+    marcarPuntero,
     handleFormKeyDown,
     formDisabled,
     maxAyudantes,
