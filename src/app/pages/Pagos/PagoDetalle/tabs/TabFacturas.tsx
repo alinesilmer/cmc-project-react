@@ -1,10 +1,12 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
+  cambiarPorcentajePago,
   crearLiquidacion,
   listarFacturasParaPago,
   listarLiquidacionesDePago,
   listarObrasSociales,
+  porcentajeSugerido,
   urlLiquidacion,
 } from "@/app/pages/Pagos/pagos.api";
 import { useAppSnackbar } from "@/app/hooks/useAppSnackbar";
@@ -29,10 +31,18 @@ import {
 // Comment
 import AppSearchSelect from "@/app/components/ui/AppSearchSelect/AppSearchSelect";
 import BotonVer from "@/app/components/ui/BotonVer/BotonVer";
-import Dialogo from "@/app/components/ui/Dialogo/Dialogo";
+import Dialogo, { DialogoCampo } from "@/app/components/ui/Dialogo/Dialogo";
 import paleta from "@/app/styles/paleta.module.scss";
 import { comoErrorApi } from "@/app/shared/lib/httpErrors";
 import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
+
+// «98,4» o «98.4» -> 98.4; NaN si no es un número.
+const aNumero = (t: string) => Number(String(t).trim().replace(",", "."));
+const porcentajeValido = (n: number) => Number.isFinite(n) && n > 0 && n <= 200;
+const verPorcentaje = (v: string | number | undefined | null) => {
+  const n = Number(v ?? 100);
+  return `${(Number.isFinite(n) ? n : 100).toLocaleString("es-AR", { maximumFractionDigits: 2 })} %`;
+};
 
 type Props = {
   pago: Pago;
@@ -61,6 +71,13 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
   const [loadingFacturas, setLoadingFacturas] = useState(false);
   const [selectedFactura, setSelectedFactura] = useState("");
   const [adding, setAdding] = useState(false);
+  // Porcentaje de pago de la factura que se agrega (se elige cada vez; viene sugerido el último usado).
+  const [porcentaje, setPorcentaje] = useState("100");
+
+  // Cambiar el porcentaje de una factura que ya está en el pago
+  const [editRow, setEditRow] = useState<Liquidacion | null>(null);
+  const [editPorc, setEditPorc] = useState("100");
+  const [savingPorc, setSavingPorc] = useState(false);
 
   const fetchRows = useCallback(async () => {
     setLoading(true);
@@ -84,6 +101,7 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
     setSelectedOS("");
     setSelectedFactura("");
     setFacturas([]);
+    setPorcentaje("100");
     setAddOpen(true);
     if (obrasSociales.length === 0) {
       setLoadingOS(true);
@@ -104,6 +122,9 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
     setSelectedFactura("");
     setFacturas([]);
     if (!numVal) return;
+    porcentajeSugerido(numVal)
+      .then((s) => setPorcentaje(String(Number(s.porcentaje_pago))))
+      .catch(() => setPorcentaje("100"));
     setLoadingFacturas(true);
     try {
       const data = await listarFacturasParaPago(numVal, pagoId);
@@ -119,14 +140,17 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
     (f) => String(f.FACTURA_ID) === selectedFactura,
   );
 
+  const porcentajeNum = aNumero(porcentaje);
+
   const handleAdd = async () => {
-    if (!selectedOS || !selectedFactura) return;
+    if (!selectedOS || !selectedFactura || !porcentajeValido(porcentajeNum)) return;
     setAdding(true);
     try {
       const created = await crearLiquidacion({
         pago_id: pagoId,
         obra_social_id: selectedOS,
         factura_id: Number(selectedFactura),
+        porcentaje_pago: porcentajeNum,
       });
       setRows((prev) => [...prev, created]);
       setAddOpen(false);
@@ -166,6 +190,29 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
     }
   };
 
+  const abrirCambioPorcentaje = (r: Liquidacion) => {
+    setEditRow(r);
+    setEditPorc(String(Number(r.porcentaje_pago ?? 100)));
+  };
+
+  const guardarPorcentaje = async () => {
+    if (!editRow || !porcentajeValido(aNumero(editPorc))) return;
+    setSavingPorc(true);
+    try {
+      const actualizada = await cambiarPorcentajePago(editRow.id, aNumero(editPorc));
+      setRows((prev) => prev.map((x) => (x.id === actualizada.id ? { ...x, ...actualizada } : x)));
+      setEditRow(null);
+      notify(`Porcentaje de pago: ${verPorcentaje(actualizada.porcentaje_pago)}. Importes recalculados sobre lo facturado.`);
+      onRefresh?.();
+    } catch (e) {
+      const err = comoErrorApi(e);
+      const detail = err?.response?.data?.detail;
+      notify(typeof detail === "string" ? detail : (err?.message ?? "No se pudo cambiar el porcentaje."), "error");
+    } finally {
+      setSavingPorc(false);
+    }
+  };
+
   const columns: ColumnDef<Liquidacion>[] = [
     { key: "obra_social_id", header: "Obra Social (ID)" },
     {
@@ -177,6 +224,31 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
       key: "nro_factura",
       header: "Nro. Factura",
       render: (r) => nroFacturaMarcado(r.nro_factura, r.factura_version),
+    },
+    {
+      key: "porcentaje_pago",
+      header: "% de pago",
+      alignRight: true,
+      render: (r) => (
+        <>
+          <span style={Number(r.porcentaje_pago ?? 100) !== 100 ? { fontWeight: 600 } : undefined}>{verPorcentaje(r.porcentaje_pago)}</span>
+          {isOpen && (
+            <>
+              {" "}
+              <BotonPlano
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  abrirCambioPorcentaje(r);
+                }}
+                style={{ background: "none", border: 0, cursor: "pointer", textDecoration: "underline", color: "inherit" }}
+              >
+                Cambiar
+              </BotonPlano>
+            </>
+          )}
+        </>
+      ),
     },
     {
       key: "total_honorarios",
@@ -319,7 +391,7 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
               <Button
                 variant="primary"
                 onClick={handleAdd}
-                disabled={adding || !selectedOS || !selectedFactura}
+                disabled={adding || !selectedOS || !selectedFactura || !porcentajeValido(porcentajeNum)}
               >
                 {adding ? "Agregando…" : "Agregar"}
               </Button>
@@ -407,6 +479,80 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
               </div>
             )}
           </div>
+          <DialogoCampo rotulo="% de pago de la factura" htmlFor="pago-porcentaje">
+            <input
+              id="pago-porcentaje"
+              type="text"
+              inputMode="decimal"
+              value={porcentaje}
+              onChange={(e) => setPorcentaje(e.target.value)}
+              disabled={adding}
+              placeholder="100"
+            />
+          </DialogoCampo>
+          {!porcentajeValido(porcentajeNum) ? (
+            <span style={{ fontSize: 12, color: paleta.gray500 }}>Poné un número entre 0,01 y 200.</span>
+          ) : (
+            <span style={{ fontSize: 12, color: paleta.gray500 }}>
+              Se paga el {verPorcentaje(porcentajeNum)} de lo facturado (honorarios, gastos, créditos y débitos de la factura).
+              {facturaElegida && porcentajeNum !== 100 && (
+                <> Aproximadamente ${fmt((Number(facturaElegida.IMPORTE) * porcentajeNum) / 100)} en lugar de ${fmt(facturaElegida.IMPORTE)}.</>
+              )}
+            </span>
+          )}
+          {porcentajeValido(porcentajeNum) && porcentajeNum > 100 && (
+            <div
+              role="note"
+              style={{
+                marginTop: 8,
+                padding: "10px 12px",
+                fontSize: 13,
+                lineHeight: 1.5,
+                color: paleta.tonoNaranja800,
+                background: paleta.tonoNaranja50C,
+                border: `1px solid ${paleta.tonoNaranja200}`,
+                borderRadius: 10,
+              }}
+            >
+              <b>Más del 100 %</b>: se paga más de lo facturado. Usalo sólo para conciliar una diferencia que ningún crédito justifique.
+            </div>
+          )}
+        </Dialogo>
+      )}
+
+      {/* Modal cambiar porcentaje */}
+      {editRow && (
+        <Dialogo
+          titulo="Porcentaje de pago"
+          onClose={() => setEditRow(null)}
+          acciones={
+            <>
+              <Button variant="secondary" onClick={() => setEditRow(null)} disabled={savingPorc}>
+                Cancelar
+              </Button>
+              <Button variant="primary" onClick={guardarPorcentaje} disabled={savingPorc || !porcentajeValido(aNumero(editPorc))}>
+                {savingPorc ? "Guardando…" : "Guardar"}
+              </Button>
+            </>
+          }
+        >
+          <span style={{ fontSize: 13, color: paleta.gray500 }}>
+            Factura {nroFacturaMarcado(editRow.nro_factura, editRow.factura_version)} — {mesLabel(editRow.mes_periodo)} {editRow.anio_periodo}.
+            Se recalculan los renglones, créditos y débitos de la factura sobre lo facturado.
+          </span>
+          <DialogoCampo rotulo="% de pago de la factura" htmlFor="pago-porcentaje-edit">
+            <input
+              id="pago-porcentaje-edit"
+              type="text"
+              inputMode="decimal"
+              value={editPorc}
+              onChange={(e) => setEditPorc(e.target.value)}
+              disabled={savingPorc}
+            />
+          </DialogoCampo>
+          {!porcentajeValido(aNumero(editPorc)) && (
+            <span style={{ fontSize: 12, color: paleta.gray500 }}>Poné un número entre 0,01 y 200.</span>
+          )}
         </Dialogo>
       )}
     </div>

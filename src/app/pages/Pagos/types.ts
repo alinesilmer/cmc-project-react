@@ -68,6 +68,8 @@ export type Liquidacion = {
   total_debitos: string;
   total_creditos: string;
   total_neto: string;
+  // Porcentaje de lo facturado que se paga (100 = todo; IOSCOR 98 / 98,4). Los importes ya vienen multiplicados.
+  porcentaje_pago?: string | number;
 };
 
 export type Ajuste = {
