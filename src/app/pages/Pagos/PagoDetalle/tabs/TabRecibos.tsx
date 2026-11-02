@@ -82,6 +82,8 @@ type Detalle = {
   liquidaciones: Record<string, LiquidacionDetalle>;
   adelantos?: { total: number; detalle: AdelantoRecibo[] };
   compensaciones?: { total: number; detalle: CompensacionRecibo[] };
+  // Deuda de liquidaciones anteriores: se resta del reconocido como un débito (ya está en «débitos»).
+  arrastres?: { total: number; detalle: { deduccion_id: number; periodo: string; total: number }[] };
   deducciones: { total: number; detalle: DeduccionItem[] };
   otros_ajustes?: { total_debitos: number; total_creditos: number; detalle: OtroAjusteRecibo[] };
 };
@@ -92,6 +94,7 @@ type ResumenRecibo = {
   gastos: number;
   bruto: number;
   debitos: number;
+  arrastres?: number; // saldo arrastrado: ya está sumado en `debitos`
   creditos: number;
   compensaciones?: number;
   reconocido: number;
@@ -417,7 +420,25 @@ const TabRecibos: React.FC<Props> = ({ pagoId }) => {
 
       // ── Resumen: el que guardó la API, que es el monto del recibo. Volver a sumar acá
       //    dejaba afuera los otros débitos y créditos y el neto no coincidía (N17). ──
+      // ── Saldo arrastrado: lo que el médico debía de liquidaciones anteriores ──
+      const arrastres = detalle.arrastres?.detalle ?? [];
+      if (arrastres.length > 0) {
+        doc.setFont("helvetica", "bold"); doc.setFontSize(11); doc.setTextColor(27, 86, 255);
+        doc.text("Saldo arrastrado de liquidaciones anteriores", left, y); y += 6;
+        autoTable(doc, {
+          startY: y,
+          head: [["Período de origen", "Importe"]],
+          body: arrastres.map((a) => [a.periodo || "—", `-$${fmt(a.total)}`]),
+          styles: { fontSize: 9, cellPadding: 5 },
+          headStyles: { fillColor: [27, 86, 255], textColor: 255, fontStyle: "bold" },
+          columnStyles: { 1: { halign: "right", textColor: [185, 28, 28] } },
+          margin: { left, right: 40 },
+        });
+        y = finDeTabla(doc) + 16;
+      }
+
       const r = dj?.resumen;
+      const totalArr = r?.arrastres ?? detalle.arrastres?.total ?? 0;
       const totalHon = r?.honorarios ?? 0;
       const totalGas = r?.gastos ?? 0;
       const totalBru = r?.bruto ?? 0;
@@ -436,6 +457,7 @@ const TabRecibos: React.FC<Props> = ({ pagoId }) => {
         ["Gastos",      `$${fmt(totalGas)}`],
         ["Bruto",       `$${fmt(totalBru)}`],
         ["Débitos",    `-$${fmt(totalDeb)}`],
+        ...(totalArr > 0 ? [["   incluye saldo arrastrado", `-$${fmt(totalArr)}`]] : []),
         ["Créditos",   `+$${fmt(totalCrd)}`],
         ...(totalComp !== 0 ? [["Compensaciones", `${totalComp < 0 ? "-" : "+"}$${fmt(Math.abs(totalComp))}`]] : []),
         ["Reconocido",  `$${fmt(totalRec)}`],

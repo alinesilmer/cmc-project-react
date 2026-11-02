@@ -370,6 +370,11 @@ export type SocioDescuento = {
   descuento_nombre: string | null;
   descuento_precio: number | null;
   descuento_porcentaje: number | null;
+  /** Importe propio de este socio en el concepto (null = rige el del concepto). */
+  porcentaje_propio: number | null;
+  monto_propio: number | null;
+  /** Veces que se cobra el importe fijo en cada período (1 = normal). */
+  multiplicador: number;
   pagador_medico_id: number | null;
   pagador_nombre: string | null;
   pagador_nro_socio: number | null;
@@ -396,11 +401,19 @@ export const createSocioDescuento = (payload: {
   medico_id: number;
   descuento_id: number;
   pagador_medico_id?: number | null;
+  porcentaje_propio?: number | null;
+  monto_propio?: number | null;
 }) => postJSON<SocioDescuento>(`/api/deducciones/socios`, payload);
 
 export const patchSocioDescuento = (
   id: number,
-  payload: { descuento_id?: number; pagador_medico_id?: number | null }
+  payload: {
+    descuento_id?: number;
+    pagador_medico_id?: number | null;
+    porcentaje_propio?: number | null;
+    monto_propio?: number | null;
+    multiplicador?: number;
+  }
 ) => patchJSON<SocioDescuento>(`/api/deducciones/socios/${id}`, payload);
 
 export const deleteSocioDescuento = (id: number) =>

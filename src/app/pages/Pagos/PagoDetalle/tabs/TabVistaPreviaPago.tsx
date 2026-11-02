@@ -23,6 +23,7 @@ type Resumen = {
   gastos: number;
   bruto: number;
   debitos: number;
+  arrastres?: number; // saldo arrastrado: ya está sumado en `debitos`
   creditos: number;
   reconocido: number;
   deducciones: number;
@@ -90,6 +91,8 @@ type Detalle = {
   liquidaciones: Record<string, LiquidacionDetalle>;
   adelantos?: { total: number; detalle: AdelantoDetalleItem[] };
   compensaciones?: { total: number; detalle: CompensacionDetalleItem[] };
+  // Deuda de liquidaciones anteriores: se resta del reconocido como un débito (ya está en «débitos»).
+  arrastres?: { total: number; detalle: { deduccion_id: number; periodo: string; total: number }[] };
   deducciones: { total: number; detalle: DeduccionItem[] };
   otros_ajustes?: { total_debitos: number; total_creditos: number; detalle: OtroAjusteItem[] };
 };
@@ -202,6 +205,7 @@ const DetallePanel: React.FC<{
   const liquidaciones = Object.entries(detalle.liquidaciones);
   const adelantos = detalle.adelantos?.detalle ?? [];
   const compensaciones = detalle.compensaciones?.detalle ?? [];
+  const arrastres = detalle.arrastres?.detalle ?? [];
   const otrosAjustes = detalle.otros_ajustes?.detalle ?? [];
   const deducciones = detalle.deducciones.detalle;
 
@@ -362,6 +366,36 @@ const DetallePanel: React.FC<{
               ))}
             </tbody>
           </Tabla>
+        </div>
+      )}
+
+      {/* Saldo arrastrado */}
+      {arrastres.length > 0 && (
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: paleta.gray600, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
+            Saldo arrastrado
+          </div>
+          <Tabla className={styles.table} style={{ fontSize: 12, maxWidth: 620 }}>
+            <thead>
+              <tr>
+                <th>Deuda de liquidaciones anteriores</th>
+                <th>Período de origen</th>
+                <th className={styles.numCell}>Importe</th>
+              </tr>
+            </thead>
+            <tbody>
+              {arrastres.map((a) => (
+                <tr key={a.deduccion_id}>
+                  <td style={{ fontWeight: 500 }}>#{a.deduccion_id}</td>
+                  <td>{a.periodo || "—"}</td>
+                  <td className={`${styles.numCell} ${styles.negative}`}>-${fmt(a.total)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </Tabla>
+          <div style={{ fontSize: 11, color: paleta.gray500, marginTop: 6 }}>
+            Se resta del reconocido como un débito: ya está incluido en el total de débitos.
+          </div>
         </div>
       )}
 
