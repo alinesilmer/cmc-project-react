@@ -17,6 +17,15 @@ export type Pago = {
   total_adelantos?: string;
   // Compensaciones del pago, con signo (+ a favor de socios, − en contra). Ya están en total_neto, no en total_bruto.
   total_compensaciones?: string;
+  // `total_debitos` incluye el saldo arrastrado de los médicos (como el sistema anterior): acá van por separado.
+  total_debitos_os?: string;
+  total_arrastres?: string;
+  // Del saldo arrastrado, lo que de verdad se cobra en este pago (el resto vuelve al mes siguiente).
+  total_arrastres_cobrado?: string;
+  // Lo que los médicos que deben más de lo que produjeron dejan para el pago siguiente (con el pago cerrado).
+  total_negativo_proximo_mes?: string;
+  // Lo que se les paga a todos los médicos (suma de sus netos): es el único «total a pagar» de todas las solapas.
+  total_a_pagar?: string;
 };
 
 // Qué pasó con las prestaciones de una factura al agregarla al pago.

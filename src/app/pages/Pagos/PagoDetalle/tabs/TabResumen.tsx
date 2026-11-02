@@ -101,6 +101,19 @@ type VistaPrevia = {
   lotes: { items: LoteItem[]; totales: LoteTotales };
   adelantos?: { items: AdelantoItem[]; totales: { total_bruto: string } };
   compensaciones?: { items: CompensacionItem[]; totales: { a_favor: string; en_contra: string; neto: string } };
+  // Las mismas cifras del encabezado del pago.
+  resumen?: {
+    total_bruto: string;
+    total_debitos_os: string;
+    total_arrastres: string;
+    total_arrastres_cobrado: string;
+    total_creditos: string;
+    total_compensaciones: string;
+    total_deduccion: string;
+    total_neto: string;
+    total_negativo_proximo_mes: string;
+    total_a_pagar: string;
+  };
 };
 
 type Props = { pagoId: number };
@@ -157,13 +170,15 @@ const TabResumen: React.FC<Props> = ({ pagoId }) => {
     items.reduce((acc, l) => acc + Number(l.total_creditos), 0);
 
   // El adelanto es producción del médico: suma al total a pagar igual que una factura.
-  const totalAPagar =
-    Number(liquidaciones.totales.total_neto) +
-    Number(adelantos.totales.total_bruto) +
-    Number(compensaciones.totales.neto) -
-    Number(deducciones.totales.total_monto) +
-    Number(lotes.totales.total_creditos) -
-    Number(lotes.totales.total_debitos);
+  // Un solo total a pagar para todo el sistema: el que calcula la API (suma de los netos de los médicos). Antes se
+  // sumaba acá otra vez los débitos y créditos de los lotes con factura, que la liquidación ya trae descontados.
+  const resumen = data.resumen;
+  const totalAPagar = resumen
+    ? Number(resumen.total_a_pagar)
+    : Number(liquidaciones.totales.total_neto) +
+      Number(adelantos.totales.total_bruto) +
+      Number(compensaciones.totales.neto) -
+      Number(deducciones.totales.total_monto);
 
   const periodoLabel = `${mesLabel(data.mes)} ${data.anio}`;
   const docTitle = `Vista Previa Pago - ${periodoLabel}`;

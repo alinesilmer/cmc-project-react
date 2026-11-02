@@ -133,6 +133,8 @@ type Totales = {
   total_reconocido: number;
   total_deducciones: number;
   total_neto_a_pagar: number;
+  total_arrastres: number;
+  total_negativo_proximo_mes: number;
 };
 
 function transformResponse(data: ApiResponse): { rows: MedicoRow[]; totales: Totales } {
@@ -165,6 +167,10 @@ function transformResponse(data: ApiResponse): { rows: MedicoRow[]; totales: Tot
     total_reconocido: sum("reconocido"),
     total_deducciones: sum("deducciones"),
     total_neto_a_pagar: sum("neto_a_pagar"),
+    // el saldo arrastrado viene sumado dentro de «debitos» de cada médico
+    total_arrastres: rows.reduce((acc, r) => acc + (r.detalle.arrastres?.total ?? 0), 0),
+    // lo que los médicos con reconocido negativo dejan para el mes siguiente (igual que «Monto negativo próx. mes» del sistema anterior)
+    total_negativo_proximo_mes: rows.reduce((acc, r) => acc + Math.max(-r.reconocido, 0), 0),
   };
 
   return { rows, totales };

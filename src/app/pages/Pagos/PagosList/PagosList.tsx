@@ -231,7 +231,7 @@ const PagosList: React.FC = () => {
                   <td className={`${l.monto} ${l.menos}`}>-${fmt(p.total_debitos)}</td>
                   <td className={`${l.monto} ${l.mas}`}>+${fmt(p.total_creditos)}</td>
                   <td className={`${l.monto} ${l.menos}`}>-${fmt(p.total_deduccion)}</td>
-                  <td className={`${l.monto} ${l.neto}`}>${fmt(p.total_neto)}</td>
+                  <td className={`${l.monto} ${l.neto}`}>${fmt(p.total_a_pagar ?? p.total_neto)}</td>
                   <td onClick={(e) => e.stopPropagation()}>
                     <div className={l.accionesFila}>
                       <BotonVer to={`/panel/liquidation/${p.id}`} etiqueta={`Ver pago de ${mesLabel(p.mes)} ${p.anio}`} />
