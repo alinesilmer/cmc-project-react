@@ -13,6 +13,7 @@ import Franja from "@/app/components/layout/Franja/Franja";
 import SearchField from "@/app/components/ui/SearchField/SearchField";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
 import BotonVer from "@/app/components/ui/BotonVer/BotonVer";
+import Paginador from "@/app/components/ui/Paginador/Paginador";
 import s from "./ActualizacionesValores.module.scss";
 import Cargando from "@/app/components/ui/Cargando/Cargando";
 import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
@@ -21,6 +22,12 @@ const MESES = [
   "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
   "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
 ];
+
+/** Cuántas obras sociales entran por página, repartidas entre los meses que toquen. */
+const POR_PAGINA = 25;
+
+/** Un trozo de mes: las filas que entran en la página y cuántas tiene el mes en total. */
+type MesVisible = { mes: string; filas: MesActualizaciones["obras_sociales"]; total: number };
 
 /** `"2026-07"` → `"Julio 2026"`. Sin `Date`: no hay zona horaria que corra el mes. */
 function tituloMes(mes: string): string {
@@ -32,6 +39,8 @@ function tituloMes(mes: string): string {
 export default function ActualizacionesValores() {
   const [busqueda, setBusqueda] = useState("");
   const [anio, setAnio] = useState<string>("");
+  const [mes, setMes] = useState<string>("");
+  const [pagina, setPagina] = useState(1);
   const [cerrados, setCerrados] = useState<Set<string>>(new Set());
 
   const { data: todos = [], isLoading, isError } = useQuery({
@@ -52,11 +61,22 @@ export default function ActualizacionesValores() {
     [meses],
   );
 
+  const porAnio = useMemo(
+    () => (anio ? meses.filter((m) => m.mes.startsWith(anio)) : meses),
+    [meses, anio],
+  );
+
+  // Sólo los meses que existen en el año elegido (`"01"`…`"12"`): no se ofrece uno vacío.
+  const mesesDelAnio = useMemo(
+    () => [...new Set(porAnio.map((m) => m.mes.slice(5)))].sort(),
+    [porAnio],
+  );
+
   const filtrados = useMemo<MesActualizaciones[]>(() => {
     const q = busqueda.trim().toLowerCase();
-    const porAnio = anio ? meses.filter((m) => m.mes.startsWith(anio)) : meses;
-    if (!q) return porAnio;
-    return porAnio
+    const porMes = mes ? porAnio.filter((m) => m.mes.endsWith(`-${mes}`)) : porAnio;
+    if (!q) return porMes;
+    return porMes
       .map((m) => {
         const obras_sociales = m.obras_sociales.filter(
           (o) =>
@@ -73,7 +93,34 @@ export default function ActualizacionesValores() {
       })
       // Un mes que se queda sin obras sociales tras filtrar no se muestra: el encabezado vacío sólo agrega ruido a la lista de resultados.
       .filter((m) => m.obras_sociales.length > 0);
-  }, [meses, busqueda, anio]);
+  }, [porAnio, mes, busqueda]);
+
+  const totalFilas = useMemo(
+    () => filtrados.reduce((n, m) => n + m.obras_sociales.length, 0),
+    [filtrados],
+  );
+  const totalPaginas = Math.max(1, Math.ceil(totalFilas / POR_PAGINA));
+  const paginaActual = Math.min(pagina, totalPaginas);
+
+  // Se corta la lista de filas, no la de meses: un mes con 60 obras sociales también se reparte.
+  const visibles = useMemo<MesVisible[]>(() => {
+    let saltar = (paginaActual - 1) * POR_PAGINA;
+    let quedan = POR_PAGINA;
+    const salida: MesVisible[] = [];
+    for (const m of filtrados) {
+      if (quedan <= 0) break;
+      const total = m.obras_sociales.length;
+      if (saltar >= total) {
+        saltar -= total;
+        continue;
+      }
+      const filas = m.obras_sociales.slice(saltar, saltar + quedan);
+      saltar = 0;
+      quedan -= filas.length;
+      salida.push({ mes: m.mes, filas, total });
+    }
+    return salida;
+  }, [filtrados, paginaActual]);
 
   const alternar = (mes: string) =>
     setCerrados((prev) => {
@@ -91,22 +138,33 @@ export default function ActualizacionesValores() {
         <SearchField
           placeholder="Buscar obra social…"
           value={busqueda}
-          onChange={(e) => setBusqueda(e.target.value)}
-          onClear={() => setBusqueda("")}
+          onChange={(e) => { setBusqueda(e.target.value); setPagina(1); }}
+          onClear={() => { setBusqueda(""); setPagina(1); }}
         />
 
-        <div className={s.anios} role="group" aria-label="Año">
-          {["", ...anios].map((a) => (
-            <BotonPlano
-              key={a || "todos"}
-              type="button"
-              className={`${s.anio} ${anio === a ? s.anioActivo : ""}`}
-              aria-pressed={anio === a}
-              onClick={() => setAnio(a)}
-            >
-              {a || "Todos"}
-            </BotonPlano>
-          ))}
+        <div className={s.selectores}>
+          <select
+            className={s.selector}
+            value={anio}
+            aria-label="Año"
+            onChange={(e) => { setAnio(e.target.value); setMes(""); setPagina(1); }}
+          >
+            <option value="">Todos los años</option>
+            {anios.map((a) => (
+              <option key={a} value={a}>{a}</option>
+            ))}
+          </select>
+          <select
+            className={s.selector}
+            value={mes}
+            aria-label="Mes"
+            onChange={(e) => { setMes(e.target.value); setPagina(1); }}
+          >
+            <option value="">Todos los meses</option>
+            {mesesDelAnio.map((m) => (
+              <option key={m} value={m}>{MESES[Number(m) - 1]}</option>
+            ))}
+          </select>
         </div>
       </div>
 
@@ -118,8 +176,8 @@ export default function ActualizacionesValores() {
         <div className={s.estado}>No se pudieron cargar las actualizaciones.</div>
       ) : !filtrados.length ? (
         <div className={s.estado}>
-          {busqueda || anio
-            ? "Nada coincide con esos filtros."
+          {busqueda || anio || mes
+            ?"Nada coincide con esos filtros."
             : "Todavía no hay valores cargados."}
         </div>
       ) : (
@@ -131,20 +189,21 @@ export default function ActualizacionesValores() {
                 <th className={s.colNro}>N°</th>
                 <th>Obra social</th>
                 <th>Vigencia</th>
+                <th>Cargado el</th>
                 <th>Respaldo</th>
                 <th className={s.colVer} />
               </tr>
             </thead>
-            {filtrados.map((mes) => {
-              const abierto = !cerrados.has(mes.mes);
+            {visibles.map((tramo) => {
+              const abierto = !cerrados.has(tramo.mes);
               return (
-                <tbody key={mes.mes}>
+                <tbody key={tramo.mes}>
                   <tr className={s.mes}>
-                    <td colSpan={5}>
+                    <td colSpan={6}>
                       <BotonPlano
                         type="button"
                         className={s.mesBoton}
-                        onClick={() => alternar(mes.mes)}
+                        onClick={() => alternar(tramo.mes)}
                         aria-expanded={abierto}
                       >
                         <ChevronDown
@@ -152,18 +211,19 @@ export default function ActualizacionesValores() {
                           aria-hidden="true"
                           className={`${s.chev} ${abierto ? s.chevAbierto : ""}`}
                         />
-                        <span className={s.mesTitulo}>{tituloMes(mes.mes)}</span>
-                        <span className={s.mesCuenta}>{mes.obras_sociales.length}</span>
+                        <span className={s.mesTitulo}>{tituloMes(tramo.mes)}</span>
+                        <span className={s.mesCuenta}>{tramo.total}</span>
                       </BotonPlano>
                     </td>
                   </tr>
 
                   {abierto &&
-                    mes.obras_sociales.map((o) => (
+                    tramo.filas.map((o) => (
                       <tr key={`${o.obra_social_nro}-${o.vigencia_desde}`} className={s.fila}>
                         <td className={s.nro}>{o.obra_social_nro}</td>
                         <td className={s.osNombre}>{o.nombre}</td>
                         <td>{formatFecha(o.vigencia_desde)}</td>
+                        <td>{formatFecha(o.cargado_el)}</td>
                         <td>
                           {o.tiene_documento ? (
                             <span className={s.docBadge}>
@@ -187,6 +247,16 @@ export default function ActualizacionesValores() {
             })}
           </Tabla>
         </div>
+      )}
+
+      {!isLoading && !isError && totalFilas > 0 && (
+        <Paginador
+          pagina={paginaActual}
+          totalPaginas={totalPaginas}
+          onCambiar={setPagina}
+          resumen={`${totalFilas} ${totalFilas === 1 ? "actualización" : "actualizaciones"}`}
+          numerado
+        />
       )}
     </div>
   );

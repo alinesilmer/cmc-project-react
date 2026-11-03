@@ -4,9 +4,9 @@ import type React from "react";
 import { useEffect, useMemo, useState, useRef } from "react";
 import styles from "./UsersList.module.scss";
 import { listarSocios, type MedicoRow } from "./usersList.api";
-import { ShieldCheck, SlidersHorizontal, Users } from "lucide-react";
+import { Building2, HeartHandshake, ShieldCheck, SlidersHorizontal, UserCheck, UserX, Users } from "lucide-react";
 import Button from "@/app/components/ui/Button/Button";
-import Franja from "@/app/components/layout/Franja/Franja";
+import Franja, { Solapa } from "@/app/components/layout/Franja/Franja";
 import Modal from "@/app/components/ui/Modal/Modal";
 import FilterModal from "@/app/pages/UsersList/components/FilterModal/FilterModal";
 import { useNavigate } from "react-router-dom";
@@ -521,12 +521,30 @@ function applyMedicosFilters(rows: MedicoRow[], filters: FilterSelection): Medic
 
 const PAGE_SIZE = 50;
 
+type TabSocios = "activos" | "inactivos" | "adherentes" | "organizaciones";
+
+const TABS_SOCIOS: { id: TabSocios; titulo: string; icono: typeof Users }[] = [
+  { id: "activos", titulo: "Activos", icono: UserCheck },
+  { id: "inactivos", titulo: "Inactivos", icono: UserX },
+  { id: "adherentes", titulo: "Adherentes", icono: HeartHandshake },
+  { id: "organizaciones", titulo: "Organizaciones", icono: Building2 },
+];
+
+// Lo que cada solapa le pide al servidor: `/api/medicos/all` ya filtra por estas columnas.
+const PARAMS_TAB: Record<TabSocios, Record<string, string>> = {
+  activos: { estado: "activos" },
+  inactivos: { estado: "inactivos" },
+  adherentes: { adherente: "1" },
+  organizaciones: { es_organizacion: "1" },
+};
+
 const UsersList: React.FC = () => {
   const [rawUsers, setRawUsers] = useState<MedicoRow[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [initialized, setInitialized] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(0);
+  const [tab, setTab] = useState<TabSocios>("activos");
   const [isLastPage, setIsLastPage] = useState(false);
   const navigate = useNavigate();
 
@@ -592,6 +610,7 @@ const UsersList: React.FC = () => {
       const filterParams = mapUIToQuery(committedFilters);
       const params: Record<string, unknown> = {
         ...filterParams,
+        ...PARAMS_TAB[tab],
         skip: page * PAGE_SIZE,
         limit: PAGE_SIZE,
       };
@@ -617,7 +636,7 @@ const UsersList: React.FC = () => {
       cancelled = true;
       if (debounceRef.current) window.clearTimeout(debounceRef.current);
     };
-  }, [committedFilters, searchTerm, page]);
+  }, [committedFilters, searchTerm, page, tab]);
 
   // El servidor ya aplica la mayoría de los filtros; client-only: adherente, tieneMalapraxis (belt-and-suspenders)
   const filteredUsers = useMemo(() => {
@@ -764,7 +783,13 @@ const UsersList: React.FC = () => {
 
   return (
     <div className={styles.container}>
-      <Franja titulo="Socios" icono={Users} />
+      <Franja titulo="Socios" icono={Users}>
+        {TABS_SOCIOS.map(({ id, titulo, icono: Icono }) => (
+          <Solapa key={id} activa={tab === id} onClick={() => { setTab(id); setPage(0); }}>
+            <Icono size={18} /> {titulo}
+          </Solapa>
+        ))}
+      </Franja>
 
       <div className={styles.barra}>
         <SearchField

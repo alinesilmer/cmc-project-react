@@ -98,6 +98,8 @@ interface ObraSocialActualizada {
   vigencia_desde: string;
   /** Filas de `nm_valores` cargadas con esa vigencia. */
   codigos: number;
+  /** Cuándo se terminó de cargar (`YYYY-MM-DDTHH:MM:SS`); `null` si no hay dato. */
+  cargado_el: string | null;
   tiene_documento: boolean;
 }
 

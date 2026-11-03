@@ -32,7 +32,7 @@
 }
 
 
-// ── Barra: el buscador y, a la derecha, los años ────────────────────────────
+// ── Barra: el buscador y, a la derecha, el año y el mes ─────────────────────
 
 .barra {
   display: flex;
@@ -42,24 +42,23 @@
   gap: $spacing-3 $spacing-5;
 }
 
-.anios {
+.selectores {
   display: flex;
   flex-wrap: wrap;
   gap: $spacing-2;
 }
 
-.anio {
+.selector {
   min-height: 2.75rem;
-  padding: 0 $spacing-5;
+  padding: 0 $spacing-4;
   font: inherit;
-  font-weight: $font-weight-semibold;
-  font-variant-numeric: tabular-nums;
+  font-weight: $font-weight-normal;
   color: $gray-700;
   background: $white;
   border: 1px solid $gray-300;
   border-radius: 999px;
   cursor: pointer;
-  transition: background-color 0.12s, border-color 0.12s, color 0.12s;
+  transition: border-color 0.12s;
 
   &:hover {
     border-color: $franja-azul;
@@ -69,12 +68,6 @@
     outline: 2px solid $franja-azul;
     outline-offset: 2px;
   }
-}
-
-.anioActivo {
-  color: $franja-crema;
-  background: $franja-azul;
-  border-color: $franja-azul;
 }
 
 .estado {
@@ -219,7 +212,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .chev,
-  .anio {
+  .selector {
     transition: none;
   }
 }

@@ -174,9 +174,7 @@ export default function ActualizarPadronesPage() {
         : `${cantidad} socios seleccionados`;
   const nombres =
     cantidad === 0
-      ? modo === "adherir"
-        ? "Tildá socios en la tabla para adherirlos."
-        : "Tildá socios en la tabla para sacarlos del padrón."
+      ? ""
       : elegidos.slice(0, NOMBRES_EN_BARRA).map(nombreDe).join(" · ") +
         (cantidad > NOMBRES_EN_BARRA ? ` · y ${cantidad - NOMBRES_EN_BARRA} más` : "");
 
@@ -253,11 +251,6 @@ export default function ActualizarPadronesPage() {
                 seleccionada={obra}
                 onElegir={elegirObra}
               />
-              <p className={s.nota}>
-                {modo === "adherir"
-                  ? "El socio queda adherido a todos los planes de la obra social."
-                  : "El socio se quita de todos los planes de la obra social."}
-              </p>
             </Caja>
 
             {obra && datos && (

@@ -17,8 +17,14 @@ export interface DocumentoReporte<T> {
   encabezado?: string;
   /** No sumar la columna de importes (precios unitarios, por ejemplo). */
   sinTotal?: boolean;
+  /** Hoja A4 vertical; sin esto es apaisada. */
+  vertical?: boolean;
+  /** No imprimir el mail del Colegio en el pie. */
+  sinMail?: boolean;
   /** «Octubre 2026». */
   periodo: string;
+  /** Lo que lleva la portada del PDF en lugar de `periodo`. */
+  periodoPortada?: string;
   /** «Todas las obras sociales» o el nombre de la elegida. */
   obraSocial: string;
   columnas: ColumnaExport<T>[];

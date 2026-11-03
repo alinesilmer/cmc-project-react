@@ -212,6 +212,19 @@ h5.section {
   padding-top: $spacing-5;
 }
 
+// Pegada al borde de abajo mientras se edita: Guardar siempre queda a la vista.
+.editActions {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  display: flex;
+  gap: $spacing-3;
+  margin-top: $spacing-5;
+  padding: $spacing-3 0;
+  background: $white;
+  border-top: 1px solid $gray-200;
+}
+
 .tabBodyPadrones {
   padding-top: $spacing-5;
   max-height: calc(100vh - 21.25rem);

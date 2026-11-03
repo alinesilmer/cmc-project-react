@@ -1,6 +1,7 @@
 import { Suspense, lazy, useEffect } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import "./styles/escala.css";
+import "./styles/barras.scss";
 
 const Home = lazy(() => import("./app/inicio/page"));
 const Contacto = lazy(() => import("./app/contact/page"));
