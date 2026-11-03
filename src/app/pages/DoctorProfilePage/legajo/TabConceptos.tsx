@@ -4,11 +4,13 @@ import Button from "@/app/components/ui/Button/Button";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
 import styles from "../DoctorProfilePage.module.scss";
 import PagadorSelect from "./PagadorSelect";
+import ImportePropio from "./ImportePropio";
+import { textoDelConcepto } from "./legajo.helpers";
 import type { LegajoConceptos } from "./useLegajoConceptos";
 import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 export default function TabConceptos({ conceptos }: { conceptos: LegajoConceptos }) {
-  const { sociosDescuento, sdLoading, sdError, conceptOptions, patchingId, deletingId, newRowOpen, setNewRowOpen, newConceptId, setNewConceptId, newPagadorId, setNewPagadorId, savingNew, handlePatchSocioDescuento, handleDeleteSocioDescuento, handleSaveNewSocioDescuento } = conceptos;
+  const { sociosDescuento, sdLoading, sdError, conceptOptions, patchingId, deletingId, newRowOpen, setNewRowOpen, newConceptId, setNewConceptId, newPagadorId, setNewPagadorId, setNewImporte, savingNew, handlePatchSocioDescuento, handleSaveImportePropio, handleSaveMultiplicador, handleDeleteSocioDescuento, handleSaveNewSocioDescuento } = conceptos;
 
   return (
     <>
@@ -21,6 +23,7 @@ export default function TabConceptos({ conceptos }: { conceptos: LegajoConceptos
                 setNewRowOpen(true);
                 setNewConceptId(null);
                 setNewPagadorId(null);
+                setNewImporte(null);
               }}
             >
               <Plus size={16} />
@@ -37,8 +40,9 @@ export default function TabConceptos({ conceptos }: { conceptos: LegajoConceptos
             <Tabla className={styles.table}>
               <thead>
                 <tr>
-                  <th style={{ width: "40%" }}>Concepto</th>
-                  <th style={{ width: "40%" }}>Pagador</th>
+                  <th style={{ width: "32%" }}>Concepto</th>
+                  <th style={{ width: "28%" }}>Importe propio</th>
+                  <th style={{ width: "32%" }}>Pagador</th>
                   <th style={{ width: 120 }}>Acciones</th>
                 </tr>
               </thead>
@@ -51,6 +55,9 @@ export default function TabConceptos({ conceptos }: { conceptos: LegajoConceptos
                         value={newConceptId}
                         onChange={(v) => setNewConceptId(v as number | null)}
                       />
+                    </td>
+                    <td>
+                      <ImportePropio onCambio={setNewImporte} />
                     </td>
                     <td>
                       <PagadorSelect
@@ -73,6 +80,7 @@ export default function TabConceptos({ conceptos }: { conceptos: LegajoConceptos
                             setNewRowOpen(false);
                             setNewConceptId(null);
                             setNewPagadorId(null);
+                            setNewImporte(null);
                           }}
                         >
                           Cancelar
@@ -83,7 +91,7 @@ export default function TabConceptos({ conceptos }: { conceptos: LegajoConceptos
                 )}
                 {sociosDescuento.length === 0 && !newRowOpen ? (
                   <tr>
-                    <td colSpan={3} className={styles.mutedCenter}>
+                    <td colSpan={4} className={styles.mutedCenter}>
                       Sin conceptos asignados.
                     </td>
                   </tr>
@@ -101,6 +109,34 @@ export default function TabConceptos({ conceptos }: { conceptos: LegajoConceptos
                             }
                           }}
                         />
+                      </td>
+                      <td style={{ minWidth: 220 }}>
+                        <ImportePropio
+                          porcentajePropio={sd.porcentaje_propio}
+                          montoPropio={sd.monto_propio}
+                          delConcepto={textoDelConcepto(sd.descuento_precio, sd.descuento_porcentaje)}
+                          disabled={patchingId === sd.id}
+                          onGuardar={(v) => handleSaveImportePropio(sd.id, v)}
+                        />
+                        {sd.porcentaje_propio == null && (sd.descuento_porcentaje ?? 0) === 0 && (
+                          <label className={styles.muted} style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4 }}>
+                            Veces por período
+                            <input
+                              key={`${sd.id}-${sd.multiplicador}`}
+                              type="number"
+                              min={1}
+                              max={12}
+                              defaultValue={sd.multiplicador ?? 1}
+                              disabled={patchingId === sd.id}
+                              style={{ width: 56 }}
+                              onBlur={(e) => {
+                                const n = Math.trunc(Number(e.target.value));
+                                if (n >= 1 && n <= 12 && n !== (sd.multiplicador ?? 1)) handleSaveMultiplicador(sd.id, n);
+                                else e.target.value = String(sd.multiplicador ?? 1);
+                              }}
+                            />
+                          </label>
+                        )}
                       </td>
                       <td style={{ minWidth: 200 }}>
                         <PagadorSelect

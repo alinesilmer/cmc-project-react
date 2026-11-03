@@ -53,7 +53,15 @@ export const listarFacturasParaRefacturar = (obraSocialId: number) =>
 
 export const urlLiquidacion = (id: number) => `/api/liquidacion/liquidaciones_por_os/${id}`;
 
-export type LiquidacionNueva = { pago_id: number; obra_social_id: number; factura_id: number };
+export type LiquidacionNueva = { pago_id: number; obra_social_id: number; factura_id: number; porcentaje_pago?: number };
+
+// El último porcentaje con que se pagó una factura de esa obra social (100 si nunca se pagó). Sólo una sugerencia.
+export const porcentajeSugerido = (obraSocialId: number) =>
+  getJSON<{ obra_social_id: number; porcentaje_pago: string }>("/api/liquidacion/liquidaciones_por_os/porcentaje_sugerido", {
+    obra_social_id: obraSocialId,
+  });
+export const cambiarPorcentajePago = (liquidacionId: number, porcentaje: number) =>
+  patchJSON<Liquidacion>(`/api/liquidacion/liquidaciones_por_os/${liquidacionId}/porcentaje`, { porcentaje_pago: porcentaje });
 
 export const listarLiquidacionesDePago = (pagoId: number) =>
   getJSON<Liquidacion[]>(`/api/liquidacion/liquidaciones_por_os/?pago_id=${pagoId}`);
@@ -127,8 +135,6 @@ export const generarDescuento = <T>(pagoId: number, descId: number) =>
   postJSON<T>(`/api/deducciones/${pagoId}/colegio/bulk_generar_descuento/${descId}`);
 export const deshacerDescuento = <T>(pagoId: number, descId: number) =>
   delJSON<T>(`/api/deducciones/${pagoId}/colegio/deshacer/${descId}`);
-export const refrescarDeducciones = <T>(pagoId: number) =>
-  postJSON<T>(`/api/deducciones/${pagoId}/deducciones/refrescar`);
 export const cancelarDeduccion = (id: number) => patchJSON(`/api/deducciones/${id}`, { estado: "cancelado" });
 
 // ── Informes, vistas previas y recibos de un pago ─────────────────

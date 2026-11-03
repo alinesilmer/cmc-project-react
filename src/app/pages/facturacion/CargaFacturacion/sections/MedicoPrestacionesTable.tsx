@@ -145,9 +145,15 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
   const [nombresIntegrantes, setNombresIntegrantes] = useState<Record<string, string>>({});
   const integrantesPedidosRef = useRef<Set<string>>(new Set());
   const [equiposAbiertos, setEquiposAbiertos] = useState<Set<number>>(new Set());
+  const equiposAutoAbiertosRef = useRef<Set<number>>(new Set());
+
+  // Después de guardar cambian varias props casi juntas (refreshKey, médico, OS, período) y salen
+  // varios pedidos: solo vale la respuesta del último, si no uno más lento pisa al nuevo.
+  const pedidoRef = useRef(0);
 
   const fetchData = useCallback(async () => {
-    if (!codMedico) { setRows([]); setTotalCount(undefined); return; }
+    const pedido = ++pedidoRef.current;
+    if (!codMedico) { setRows([]); setTotalCount(undefined); setLoading(false); return; }
     setLoading(true);
     try {
       const filtros = {
@@ -172,13 +178,17 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
         if (data.length < PAGE_SIZE) break;
         if (total !== undefined && todas.length >= total) break;
       }
+      if (pedido !== pedidoRef.current) return;
+      // Los equipos se vuelven a pedir con las filas nuevas: una edición puede haber sumado o quitado ayudantes.
+      equiposPedidosRef.current = new Set();
       setRows(todas);
       setTotalCount(total ?? todas.length);
     } catch (e) {
+      if (pedido !== pedidoRef.current) return;
       const err = comoErrorApi(e);
       notify(detailMessage(err?.response?.data?.detail) || "Error al cargar las prestaciones del médico.", "error");
     } finally {
-      setLoading(false);
+      if (pedido === pedidoRef.current) setLoading(false);
     }
   }, [codMedico, codObra, periodo, notify]);
 
@@ -221,11 +231,13 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
     idsGrupo.forEach((gid) => equiposPedidosRef.current.add(gid));
 
     let active = true;
+    let terminado = false;
     (async () => {
       const res = await Promise.allSettled(
         idsGrupo.map((gid) => listarPrestaciones({ grupo_equipo_id: gid, estado: "A", limit: 20 })),
       );
       if (!active) return;
+      terminado = true;
       const nuevos: Record<number, PrestacionRead[]> = {};
       res.forEach((r, i) => {
         if (r.status !== "fulfilled") return;
@@ -234,14 +246,23 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
       if (Object.keys(nuevos).length > 0) {
         setEquipos((prev) => ({ ...prev, ...nuevos }));
         // Los equipos arrancan desplegados: el operador tiene que ver de entrada quiénes lo integran, sin necesidad de clickear el badge.
-        setEquiposAbiertos((prev) => {
-          const next = new Set(prev);
-          Object.keys(nuevos).forEach((gid) => next.add(Number(gid)));
-          return next;
-        });
+        // Solo la primera vez: al recargar después de guardar, los que el operador cerró quedan cerrados.
+        const primeraVez = Object.keys(nuevos).map(Number).filter((gid) => !equiposAutoAbiertosRef.current.has(gid));
+        primeraVez.forEach((gid) => equiposAutoAbiertosRef.current.add(gid));
+        if (primeraVez.length > 0) {
+          setEquiposAbiertos((prev) => {
+            const next = new Set(prev);
+            primeraVez.forEach((gid) => next.add(gid));
+            return next;
+          });
+        }
       }
     })();
-    return () => { active = false; };
+    return () => {
+      active = false;
+      // Cortado a mitad de camino (cambiaron las filas): se liberan para que el próximo pase los pida.
+      if (!terminado) idsGrupo.forEach((gid) => equiposPedidosRef.current.delete(gid));
+    };
   }, [rows]);
 
   // Nombres de los socios que integran los equipos ya traídos (el listado por `grupo_equipo_id` solo trae `cod_medico`, igual que el listado principal).

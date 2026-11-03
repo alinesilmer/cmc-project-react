@@ -21,7 +21,7 @@ import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 const CargaFacturacion: React.FC = () => {
   const ctx = useCargaFacturacion();
-  const { navigate, capa, isEdit, isComplemento, isReplicando, loadingReplicar, errorPrecarga, medicosPrecargados, obrasSocialesPrecargadas, clinicasPrecargadas, loadingComplemento, complementoError, loadingEdit, errorEdicion, editHidratado, codMedico, mantener, setMantener, guardando, duplicado, setDuplicado, formRef, refreshKey, volverA, doGuardar, centrarCampoEnfocado, handleFormKeyDown, medicoTabla, codObraTabla, periodoTabla } = ctx;
+  const { navigate, capa, isEdit, isComplemento, isReplicando, loadingReplicar, errorPrecarga, medicosPrecargados, obrasSocialesPrecargadas, clinicasPrecargadas, loadingComplemento, complementoError, loadingEdit, errorEdicion, editHidratado, codMedico, mantener, setMantener, guardando, duplicado, setDuplicado, formRef, refreshKey, volverA, doGuardar, centrarCampoEnfocado, marcarPuntero, handleFormKeyDown, medicoTabla, codObraTabla, periodoTabla } = ctx;
 
 
   // Antes que cualquier otro gate: sin médicos y obras sociales precargados no hay formulario que mostrar.
@@ -167,7 +167,7 @@ const CargaFacturacion: React.FC = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
-        <div className={styles.layout} ref={formRef} onKeyDown={handleFormKeyDown} onFocus={centrarCampoEnfocado}>
+        <div className={styles.layout} ref={formRef} onKeyDown={handleFormKeyDown} onPointerDown={marcarPuntero} onFocus={centrarCampoEnfocado}>
           <CargaMedicoObraSocial ctx={ctx} medicosPrecargados={medicosPrecargados} obrasSocialesPrecargadas={obrasSocialesPrecargadas} />
 
           <CargaPacientePrestacion ctx={ctx} />

@@ -10,6 +10,12 @@ const unidadesDe = (p: PrestacionConSocio): number => (p.cantidad || 1) * (p.ses
 // Cantidad de prestaciones (unidades) de un conjunto de filas.
 export const sumarUnidades = (arr: PrestacionConSocio[]): number => arr.reduce((n, p) => n + unidadesDe(p), 0);
 
+// Prestaciones (unidades) auditadas sobre el total de un conjunto de filas, para el "(12/20) prest. auditadas".
+export const textoAuditadas = (arr: PrestacionConSocio[]): string => {
+  const auditadas = sumarUnidades(arr.filter((p) => p.revisado));
+  return `(${auditadas}/${sumarUnidades(arr)}) prest. auditadas`;
+};
+
 export const sumarTotales = (arr: PrestacionConSocio[]) => arr.reduce(
   (acc, p) => {
     acc.totalHonorarios += parseMoney(p.honorarios);

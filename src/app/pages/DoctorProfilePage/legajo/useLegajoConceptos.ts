@@ -10,6 +10,7 @@ import {
 } from "../api";
 import type { SocioDescuento } from "../api";
 import type { TabKey } from "./legajo.types";
+import type { ImportePropioValor } from "./ImportePropio";
 import { mensajeDe } from "./legajo.helpers";
 
 /** Pestaña Conceptos: descuentos asignados al socio y quién los paga. */
@@ -26,6 +27,7 @@ export function useLegajoConceptos(medicoId: string, tab: TabKey) {
   const [newRowOpen, setNewRowOpen] = useState(false);
   const [newConceptId, setNewConceptId] = useState<number | null>(null);
   const [newPagadorId, setNewPagadorId] = useState<number | null>(null);
+  const [newImporte, setNewImporte] = useState<ImportePropioValor | null>(null);
   const [savingNew, setSavingNew] = useState(false);
 
   useEffect(() => {
@@ -73,6 +75,37 @@ export function useLegajoConceptos(medicoId: string, tab: TabKey) {
     }
   }
 
+  /** Guarda (o quita, con null) el importe propio de la asignación: uno solo de los dos queda cargado. */
+  async function handleSaveImportePropio(id: number, v: ImportePropioValor | null) {
+    setPatchingId(id);
+    try {
+      const updated = await patchSocioDescuento(id, {
+        porcentaje_propio: v?.tipo === "porcentaje" ? Number(v.valor) : null,
+        monto_propio: v?.tipo === "monto" ? Number(v.valor) : null,
+      });
+      setSociosDescuento((prev) => prev.map((sd) => (sd.id === id ? updated : sd)));
+      notify.success(v ? "Importe propio guardado" : "Importe propio quitado");
+    } catch (e: unknown) {
+      notify.error(mensajeDe(e) || "Error al guardar el importe propio");
+    } finally {
+      setPatchingId(null);
+    }
+  }
+
+  /** Guarda las veces por período que se cobra el importe fijo (el sistema anterior: «multiplica»). */
+  async function handleSaveMultiplicador(id: number, n: number) {
+    setPatchingId(id);
+    try {
+      const updated = await patchSocioDescuento(id, { multiplicador: n });
+      setSociosDescuento((prev) => prev.map((sd) => (sd.id === id ? updated : sd)));
+      notify.success("Veces por período guardado");
+    } catch (e: unknown) {
+      notify.error(mensajeDe(e) || "Error al guardar las veces por período");
+    } finally {
+      setPatchingId(null);
+    }
+  }
+
   async function handleDeleteSocioDescuento(id: number) {
     setDeletingId(id);
     try {
@@ -94,11 +127,14 @@ export function useLegajoConceptos(medicoId: string, tab: TabKey) {
         medico_id: Number(medicoId),
         descuento_id: newConceptId,
         pagador_medico_id: newPagadorId ?? null,
+        porcentaje_propio: newImporte?.tipo === "porcentaje" ? Number(newImporte.valor) : null,
+        monto_propio: newImporte?.tipo === "monto" ? Number(newImporte.valor) : null,
       });
       setSociosDescuento((prev) => [...prev, created]);
       setNewRowOpen(false);
       setNewConceptId(null);
       setNewPagadorId(null);
+      setNewImporte(null);
       notify.success("Concepto agregado");
     } catch (e: unknown) {
       notify.error(mensajeDe(e) || "Error al guardar");
@@ -120,8 +156,12 @@ export function useLegajoConceptos(medicoId: string, tab: TabKey) {
     setNewConceptId,
     newPagadorId,
     setNewPagadorId,
+    newImporte,
+    setNewImporte,
     savingNew,
     handlePatchSocioDescuento,
+    handleSaveImportePropio,
+    handleSaveMultiplicador,
     handleDeleteSocioDescuento,
     handleSaveNewSocioDescuento,
   };

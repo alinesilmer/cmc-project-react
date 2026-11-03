@@ -126,6 +126,13 @@
 .chipPagada { color: $gray-600; background: $gray-100; }
 .chipSin { color: $danger-red; background: $tono-rojo-50; }
 
+// Aclaración bajo una tabla (los débitos y créditos van con su lote, no con el adelanto).
+.nota {
+  margin: $spacing-2 0 0;
+  font-size: 0.8125rem;
+  color: $gray-500;
+}
+
 .vacio {
   padding: $spacing-12 $spacing-5;
   text-align: center;

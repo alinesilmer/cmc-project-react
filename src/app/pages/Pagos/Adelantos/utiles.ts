@@ -37,7 +37,35 @@ export type AdelantoListaRow = {
   created_at: string | null;
 };
 
-export type AdelantoItem = {
+// Débito o crédito cargado a la prestación en un lote. Solo informa: el adelanto paga lo que vale la
+// prestación y el ajuste se descuenta (o suma) una sola vez, cuando su lote entra a un pago.
+export type AjustePrestacion = {
+  ajuste_id: number;
+  lote_id: number;
+  lote_estado: "A" | "C" | "L" | "AP" | string;
+  pago_id: number | null;
+  tipo: "debito" | "credito";
+  honorarios: string;
+  gastos: string;
+  total: string;
+  observacion: string | null;
+};
+
+type ConAjustes = {
+  debitos: string;
+  creditos: string;
+  ajustes: AjustePrestacion[];
+};
+
+/** Dónde está el ajuste: «Lote #4 · se aplica cuando entre a un pago», «Lote #4 · en el pago #7»… */
+export const dondeVaElAjuste = (a: AjustePrestacion): string => {
+  const lote = `Lote #${a.lote_id}`;
+  if (a.lote_estado === "AP") return `${lote} · ya aplicado en el pago${a.pago_id ? ` #${a.pago_id}` : ""}`;
+  if (a.lote_estado === "L") return `${lote} · se aplica en el pago${a.pago_id ? ` #${a.pago_id}` : ""}`;
+  return `${lote} · se aplica cuando el lote entre a un pago`;
+};
+
+export type AdelantoItem = ConAjustes & {
   id: number;
   detalle_id: number;
   fecha_practica: string | null;
@@ -68,6 +96,9 @@ export type Adelanto = {
   medicos: number;
   prestaciones: number;
   importe: string;
+  // Débitos y créditos cargados a sus prestaciones: no se restan del importe, van con su lote.
+  debitos: string;
+  creditos: string;
   items: AdelantoItem[];
   pago_abierto_id: number | null;
 };
@@ -95,7 +126,7 @@ export type EstadoPrestacion =
   | "sin_medico"
   | "sin_importe";
 
-export type PrestacionFactura = {
+export type PrestacionFactura = ConAjustes & {
   id: number;
   fecha_practica: string | null;
   codigo: string | null;

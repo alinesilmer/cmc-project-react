@@ -142,3 +142,12 @@ export const fmtDate = (s?: string | null) => (s ? formatFecha(s) : "—");
 export const soloDigitos = (v: unknown) => (v == null ? "" : String(v).replace(/\D/g, ""));
 
 export const DEFAULT_LABELS = [...ATTACH_KEYS, "otro"];
+
+const ARS = new Intl.NumberFormat("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+/** Lo que rige en un concepto si el socio no tiene importe propio: el porcentaje o el precio del concepto. */
+export const textoDelConcepto = (precio?: number | null, porcentaje?: number | null): string => {
+  if (porcentaje && porcentaje > 0) return `${ARS.format(porcentaje)} %`;
+  if (precio && precio > 0) return `$ ${ARS.format(precio)}`;
+  return "sin importe";
+};

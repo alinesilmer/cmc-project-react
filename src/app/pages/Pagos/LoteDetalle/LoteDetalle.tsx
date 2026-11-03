@@ -26,10 +26,11 @@ import { comoErrorApi, detalleDeError } from "@/app/shared/lib/httpErrors";
 import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 const OBSERVACION_OPTIONS = [
-  "Falta firma",
-  "Falta sello",
-  "Diferencia de valores",
-  "Falta datos",
+  "Falta firma y sello prestador",
+  "Falta informe",
+  "Falta autorización",
+  "Falta firma y aclaración afiliado",
+  "Ajuste valor",
 ];
 const OTRO = "__otro__";
 

@@ -241,8 +241,8 @@ const PagoDetalle: React.FC = () => {
             <b>${fmt(pago.total_bruto)}</b>
           </div>
           <div className={lq.tiraDato}>
-            <span>Débitos</span>
-            <b className={lq.menos}>-${fmt(pago.total_debitos)}</b>
+            <span>Débitos de obras sociales</span>
+            <b className={lq.menos}>-${fmt(pago.total_debitos_os ?? pago.total_debitos)}</b>
           </div>
           <div className={lq.tiraDato}>
             <span>Créditos</span>
@@ -253,8 +253,8 @@ const PagoDetalle: React.FC = () => {
             <b className={lq.menos}>-${fmt(pago.total_deduccion)}</b>
           </div>
           <div className={`${lq.tiraDato} ${lq.tiraNeto}`}>
-            <span>Neto</span>
-            <b>${fmt(pago.total_neto)}</b>
+            <span>Total a pagar</span>
+            <b>${fmt(pago.total_a_pagar ?? pago.total_neto)}</b>
           </div>
           <div className={lq.tiraAccion}>{renderActionButton()}</div>
         </div>
