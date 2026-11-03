@@ -434,8 +434,8 @@ export default function RootRoutes() {
               </Route>
             </Route>
 
-            {/* Fuera de AppLayout porque tiene su propia pantalla, pero con sesión: los valores que muestra salen de /api/valores/boletin, que exige `catalogo:leer`. */}
-            <Route element={<RequireScope scope="catalogo:leer" />}>
+            {/* Fuera de AppLayout porque tiene su propia pantalla, pero con sesión: los valores que muestra salen de /api/reportes_nm y /api/galenos, que exigen `nomenclador:leer`. */}
+            <Route element={<RequireScope scope="nomenclador:leer" />}>
               <Route path="/generar-boletin" element={<GenerarBoletin />} />
             </Route>
 

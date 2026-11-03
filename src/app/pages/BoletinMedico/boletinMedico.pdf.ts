@@ -35,7 +35,14 @@ const nombreArchivo = (hoy: Date): string => {
   return `Boletin-${hoy.getFullYear()}${dd(hoy.getMonth() + 1)}${dd(hoy.getDate())}.pdf`;
 };
 
-export async function descargarBoletin(items: ItemBoletin[]): Promise<void> {
+/**
+ * `reemplazaGeneral`: el pediatra recibe sólo su boletín, que sustituye a la consulta y a los galenos.
+ * Sin él, la pediatría (que sólo llega al personal) se suma como una sección más.
+ */
+export async function descargarBoletin(
+  items: ItemBoletin[],
+  { reemplazaGeneral = false }: { reemplazaGeneral?: boolean } = {}
+): Promise<void> {
   const { JsPDF, autoTable } = await cargarLibs();
   const doc = new JsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
 
@@ -104,29 +111,13 @@ export async function descargarBoletin(items: ItemBoletin[]): Promise<void> {
     alternateRowStyles: { fillColor: FILA_ALT },
   };
 
-  // ── Valores de pediatría (sólo pediatras) ──────────────────────────────────
-  // Para un pediatra reemplazan al valor de consulta, igual que en pantalla.
+  // ── Valores de pediatría (pediatras y personal) ──────────────────────────────────
+  // Para un pediatra reemplazan al valor de consulta; el personal los ve aparte, igual que en pantalla.
   const pediatria = items.flatMap((i) =>
     i.pediatria.map((v) => [String(i.nro), i.nombre, v.codigo, v.nombre, formatoPesos.format(v.valor)])
   );
-  if (pediatria.length > 0) {
-    autoTable(doc, {
-      ...estiloTabla,
-      startY: seccion("Valores de pediatría", y),
-      head: [["N°", "Obra social", "Código", "Práctica", "Valor"]],
-      body: pediatria,
-      columnStyles: {
-        0: { cellWidth: 12, halign: "right" },
-        1: { cellWidth: 42 },
-        2: { cellWidth: 18 },
-        4: { cellWidth: 30, halign: "right" },
-      },
-    });
-    y = finDeTabla(doc) + 10;
-  }
-
   // ── Valor de consulta ──────────────────────────────────────────────────────
-  const consulta = pediatria.length > 0 ? [] : items.filter((i) => i.consulta !== null);
+  const consulta = reemplazaGeneral && pediatria.length > 0 ? [] : items.filter((i) => i.consulta !== null);
   if (consulta.length > 0) {
     autoTable(doc, {
       ...estiloTabla,
@@ -145,6 +136,22 @@ export async function descargarBoletin(items: ItemBoletin[]): Promise<void> {
     y = finDeTabla(doc) + 10;
   }
 
+  if (pediatria.length > 0) {
+    autoTable(doc, {
+      ...estiloTabla,
+      startY: seccion("Valores de pediatría", y),
+      head: [["N°", "Obra social", "Código", "Práctica", "Valor"]],
+      body: pediatria,
+      columnStyles: {
+        0: { cellWidth: 12, halign: "right" },
+        1: { cellWidth: 42 },
+        2: { cellWidth: 18 },
+        4: { cellWidth: 30, halign: "right" },
+      },
+    });
+    y = finDeTabla(doc) + 10;
+  }
+
   // ── Galenos (no para pediatras, igual que en pantalla) ─────────────────────
   // Una fila por galeno, con la obra social repetida: en papel se lee de corrido y se puede buscar por nombre de galeno.
   const galenos = items.flatMap((i) =>
@@ -158,7 +165,7 @@ export async function descargarBoletin(items: ItemBoletin[]): Promise<void> {
       g.niveles.length > 1 ? g.niveles.map(etiquetaGaleno).join(", ") : "",
     ])
   );
-  if (galenos.length > 0 && pediatria.length === 0) {
+  if (galenos.length > 0 && !(reemplazaGeneral && pediatria.length > 0)) {
     autoTable(doc, {
       ...estiloTabla,
       startY: seccion("Valores de galeno", y),

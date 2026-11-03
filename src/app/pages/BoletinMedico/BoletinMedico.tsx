@@ -93,8 +93,8 @@ export default function BoletinMedico() {
   const bajar = async () => {
     setBajando(true);
     try {
-      // El PDF de pediatría reemplaza a la consulta y a los galenos: el personal baja el boletín general.
-      await descargarBoletin(personal ? items.map((i) => ({ ...i, pediatria: [] })) : items);
+      // El pediatra baja su boletín en lugar del general; el personal baja todo, con la pediatría como sección aparte.
+      await descargarBoletin(items, { reemplazaGeneral: pediatra });
     } catch (e) {
       console.error("Descarga del boletín:", e);
     } finally {
@@ -157,7 +157,7 @@ export default function BoletinMedico() {
           </p>
         )}
 
-        {/* Se baja el boletín entero, con las tres partes. */}
+        {/* Se baja el boletín entero, con todas sus partes. */}
         <div className={s.descarga}>
           <BotonDescarga formato="pdf" onClick={() => void bajar()} cargando={bajando} disabled={items.length === 0}>
             Boletín
