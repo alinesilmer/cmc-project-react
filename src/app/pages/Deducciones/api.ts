@@ -1,4 +1,5 @@
 import { delJSON, getJSON, patchJSON, postJSON } from "@/app/shared/lib/http";
+import { compararPorNroConcepto } from "@/app/shared/lib/conceptos";
 import type {
   DeduccionCreatePayload,
   DeduccionRead,
@@ -74,7 +75,8 @@ export const fetchDescuentos = async (): Promise<DescuentoOption[]> => {
       };
     })
     .filter((d) => d.id > 0 && d.nombre.length > 0)
-    .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
+    // Por número de concepto (el del Colegio) ascendente; a igual número, por nombre.
+    .sort((a, b) => compararPorNroConcepto(a.nro_colegio, b.nro_colegio) || a.nombre.localeCompare(b.nombre, "es"));
 };
 
 export const fetchMedicos = async (query: string): Promise<MedicoOption[]> => {
@@ -107,12 +109,17 @@ export const fetchOpenPago = async (): Promise<Pago | null> => {
 /** Lo que el pago abierto va a descontar: cantidad, total y detalle por concepto (misma cuenta que la tira del pago). */
 export const fetchResumenPagoAbierto = async (pagoId: number): Promise<ResumenPagoAbierto> => {
   const vp = await getJSON<any>(`/api/pagos/${pagoId}/vista_previa`);
-  const items = (vp?.deducciones?.items ?? []) as Array<{ descuento_nombre: string; cantidad_socios: number; total_monto: number | string }>;
+  const items = (vp?.deducciones?.items ?? []) as Array<{
+    descuento_nombre: string;
+    nro_colegio?: number | null;
+    cantidad_socios: number;
+    total_monto: number | string;
+  }>;
   return {
     cantidad: items.reduce((acc, i) => acc + Number(i.cantidad_socios ?? 0), 0),
     total: Number(vp?.deducciones?.totales?.total_monto ?? 0),
     conceptos: items
-      .map((i) => ({ nombre: i.descuento_nombre || "Sin concepto", cantidad: Number(i.cantidad_socios ?? 0), monto: Number(i.total_monto ?? 0) }))
+      .map((i) => ({ nombre: i.descuento_nombre || "Sin concepto", nro_colegio: i.nro_colegio ?? null, cantidad: Number(i.cantidad_socios ?? 0), monto: Number(i.total_monto ?? 0) }))
       .sort((a, b) => b.monto - a.monto),
   };
 };

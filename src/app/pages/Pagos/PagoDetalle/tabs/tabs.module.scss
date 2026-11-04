@@ -18,6 +18,61 @@
   gap: $spacing-3;
 }
 
+// Filtro con rótulo a la izquierda y acciones a la derecha, alineados por abajo.
+.toolbarFiltro {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: $spacing-3;
+}
+
+// «Imprimir»: la lista aparece al pasar el mouse. El contenedor de la lista toca al botón (sin hueco), así que el mouse
+// puede bajar sin que se cierre; el espacio visual lo da el relleno de arriba de la caja.
+.menuImprimir {
+  position: relative;
+  display: inline-flex;
+}
+
+.menuImprimirLista {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 20;
+  min-width: 100%;
+  padding-top: 0.25rem;
+}
+
+.menuImprimirCaja {
+  display: flex;
+  flex-direction: column;
+  padding: 0.25rem;
+  background: $white;
+  border: 1px solid $gray-200;
+  border-radius: $radio-lg;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.14);
+}
+
+.menuImprimirItem {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.55rem 0.85rem;
+  font: inherit;
+  text-align: left;
+  white-space: nowrap;
+  color: $gray-900;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+
+  svg { flex: none; color: $gray-500; }
+
+  &:hover,
+  &:focus-visible { background: $gray-100; outline: none; }
+}
+
 .toolbarLeft {
   display: flex;
   flex-wrap: wrap;

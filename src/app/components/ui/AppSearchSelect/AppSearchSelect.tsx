@@ -10,6 +10,8 @@ export type AppSearchSelectOption = {
   id: string | number;
   label: string;
   subtitle?: string;
+  /** Número por el que se ordena y se busca (ej. el del concepto: «300 AFIP» -> 300). Si falta, se lee de la etiqueta. */
+  codigo?: number | string;
 };
 
 type Props = {
@@ -28,6 +30,8 @@ type Props = {
    * lo que empieza igual y lo que lo contiene. Ver `ordenarOpciones`. Con `onQueryChange` el orden lo trae el servidor.
    */
   ordenar?: boolean;
+  /** Con `ordenar`: sin texto escrito la lista va por `codigo` ascendente en lugar de alfabética (conceptos). */
+  ordenPorCodigo?: boolean;
 };
 
 const AppSearchSelect: React.FC<Props> = ({
@@ -40,6 +44,7 @@ const AppSearchSelect: React.FC<Props> = ({
   blurOnSelect = true,
   initialInputValue,
   ordenar = false,
+  ordenPorCodigo = false,
 }) => {
   // `options` se reemplaza por completo en cada búsqueda remota, así que la opción ya seleccionada puede desaparecer de la lista.
   const [pinned, setPinned] = useState<AppSearchSelectOption | null>(null);
@@ -90,7 +95,7 @@ const AppSearchSelect: React.FC<Props> = ({
           ? (x) => x
           : ordenar
             // Con una opción ya elegida el campo muestra su etiqueta: se ofrece la lista completa, no sólo esa.
-            ? (opts, estado) => ordenarOpciones(opts, selected && estado.inputValue === selected.label ? "" : estado.inputValue)
+            ? (opts, estado) => ordenarOpciones(opts, selected && estado.inputValue === selected.label ? "" : estado.inputValue, true, ordenPorCodigo)
             : undefined
       }
       isOptionEqualToValue={(opt, val) => String(opt.id) === String(val.id)}

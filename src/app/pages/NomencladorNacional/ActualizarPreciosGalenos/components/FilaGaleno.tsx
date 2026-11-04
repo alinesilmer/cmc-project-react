@@ -6,6 +6,7 @@ import s from "./TablaGalenos.module.scss";
 import FilasNiveles from "./FilasNiveles";
 import type { GalenoResumenOut } from "../../nomenclador.types";
 import { grupoValorActual, montoValido, type Grupo, type ResultadoGuardado } from "../precios.helpers";
+import { formatFecha } from "@/app/shared/lib/fechas";
 import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 type Props = {
@@ -15,6 +16,8 @@ type Props = {
   resultado?: ResultadoGuardado;
   abierto: boolean;
   info?: GalenoResumenOut;
+  /** La última vigencia cargada del galeno (ISO), aunque todavía no rija. */
+  ultimaVigencia: string;
   /** Se está cambiando su visibilidad en el servidor. */
   cambiando: boolean;
   onEditar: (codigo: string, valor: string) => void;
@@ -23,7 +26,7 @@ type Props = {
 };
 
 /** Una fila de la tabla: el galeno, su valor actual, el campo del valor nuevo y si se ve en el boletín; con sus niveles debajo. */
-function FilaGaleno({ grupo, valor, resultado, abierto, info, cambiando, onEditar, onAbrir, onVisible }: Props) {
+function FilaGaleno({ grupo, valor, resultado, abierto, info, ultimaVigencia, cambiando, onEditar, onAbrir, onVisible }: Props) {
   const nuevo = montoValido(valor);
   const clasesValor = [
     s.valor,
@@ -49,6 +52,7 @@ function FilaGaleno({ grupo, valor, resultado, abierto, info, cambiando, onEdita
           {grupo.nivelado ? `${info?.modo === "por_nivel" ? "Precio por nivel" : "Calculado"} · ${grupo.niveles.length} niveles` : "Calculado"}
         </td>
         <td className={s.monto}>{grupoValorActual(grupo)}</td>
+        <td className={s.monto}>{formatFecha(ultimaVigencia)}</td>
         <td>
           <div className={s.celdaValor}>
             <input

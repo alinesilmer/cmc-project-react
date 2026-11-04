@@ -1,12 +1,12 @@
 import { useCallback, useMemo, useState } from "react";
 
-import { actualizarPreciosGalenosLote } from "../nomenclador.api";
-import type { GalenoOut } from "../nomenclador.types";
+import { actualizarPreciosGalenosLote, replicarGalenosLoteEnFamilia } from "../nomenclador.api";
+import type { GalenoOut, ReplicaResultadoItem } from "../nomenclador.types";
 import { avisoVigenciaGaleno } from "../nomenclador.helpers";
 import { montoValido, type Grupo, type ResultadoGuardado } from "./precios.helpers";
 import { useNotify } from "@/app/hooks/useNotify";
 import { hoyISO } from "@/app/shared/lib/fechas";
-import { comoErrorApi } from "@/app/shared/lib/httpErrors";
+import { comoErrorApi, mensajeDeError } from "@/app/shared/lib/httpErrors";
 
 /** Los valores nuevos tipeados, la vigencia y el guardado en lote: todos los galenos se aplican o ninguno. */
 export function useEdicionPrecios(
@@ -14,6 +14,8 @@ export function useEdicionPrecios(
   grupos: Grupo[],
   galenos: GalenoOut[],
   alGuardar: () => Promise<void>,
+  /** Obras sociales vinculadas donde repetir el cambio una vez guardado ([] = sólo en ésta). */
+  destinos: number[],
 ) {
   const notify = useNotify();
   const [edits, setEdits] = useState<Record<string, string>>({});
@@ -22,6 +24,8 @@ export function useEdicionPrecios(
   const [guardando, setGuardando] = useState(false);
   const [resultados, setResultados] = useState<ResultadoGuardado[]>([]);
   const [confirmando, setConfirmando] = useState(false);
+  const [replicaResultados, setReplicaResultados] = useState<ReplicaResultadoItem[]>([]);
+  const [replicaError, setReplicaError] = useState<string | null>(null);
 
   const editar = useCallback((codigo: string, valor: string) => setEdits((prev) => ({ ...prev, [codigo]: valor })), []);
   const alternarAbierto = useCallback((codigo: string) => setAbiertos((prev) => ({ ...prev, [codigo]: !prev[codigo] })), []);
@@ -51,6 +55,8 @@ export function useEdicionPrecios(
     if (guardando || pendientes.length === 0 || !vigencia) return;
     setGuardando(true);
     setResultados([]);
+    setReplicaResultados([]);
+    setReplicaError(null);
 
     // Un solo pedido y una sola transacción en el servidor: con uno por galeno, los lentos cortaban a los 15 s y los siguientes chocaban con ellos.
     const items = pendientes.map((p) => ({ codigo: p.codigo, nuevo_valor_unitario: p.monto }));
@@ -69,6 +75,22 @@ export function useEdicionPrecios(
       );
       setEdits({});
       notify.success(`${items.length} galeno(s) actualizados con éxito.`);
+
+      // Ya quedó en esta obra social: se repite en las vinculadas elegidas. Si eso falla, lo de acá sigue en pie.
+      if (destinos.length > 0) {
+        try {
+          const r = await replicarGalenosLoteEnFamilia({
+            origen_obra_social_nro: obraNro,
+            destinos,
+            operacion: "precios",
+            vigencia_desde: vigencia,
+            items: items.map((i) => ({ codigo: i.codigo, nuevo_valor_unitario: i.nuevo_valor_unitario })),
+          });
+          setReplicaResultados(r.resultados);
+        } catch (e) {
+          setReplicaError(mensajeDeError(e, "Error de red o del servidor."));
+        }
+      }
     } catch (e) {
       const data = comoErrorApi(e).response?.data;
       const errores = Array.isArray(data?.errores) ? (data.errores as { codigo: string; nombre: string; motivo: string }[]) : [];
@@ -102,9 +124,14 @@ export function useEdicionPrecios(
     resultadoPorCodigo,
     guardando,
     confirmando,
+    replicaResultados,
+    replicaError,
+    destinos,
     descartar: () => {
       setEdits({});
       setResultados([]);
+      setReplicaResultados([]);
+      setReplicaError(null);
     },
     pedirConfirmacion: () => pendientes.length > 0 && vigencia !== "" && setConfirmando(true),
     cancelar: () => setConfirmando(false),

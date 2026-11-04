@@ -163,6 +163,16 @@ export type ReplicarValoresFamiliaPayload = {
   };
 };
 
+/** Replica en los otros planes lo hecho en «Actualizar galenos»: el precio de varios galenos (todos sus niveles) o su visibilidad. */
+export type ReplicarGalenosLotePayload = {
+  origen_obra_social_nro: number;
+  destinos: number[];
+  operacion: "precios" | "visibilidad";
+  /** Sólo en `precios`. */
+  vigencia_desde?: string;
+  items: { codigo: string; nuevo_valor_unitario?: number; visible?: boolean }[];
+};
+
 export type ReplicarGalenoFamiliaPayload = {
   origen_obra_social_nro: number;
   destinos: number[];

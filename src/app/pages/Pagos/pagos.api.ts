@@ -141,8 +141,6 @@ export const cancelarDeduccion = (id: number) => patchJSON(`/api/deducciones/${i
 
 export const getInforme = <T>(pagoId: number, tipo: string) => getJSON<T>(`/api/pagos/${pagoId}/informe/${tipo}`);
 export const getVistaPrevia = <T>(pagoId: number) => getJSON<T>(`/api/pagos/${pagoId}/vista_previa`);
-export const getPagoMedicoActualizado = <T>(pagoId: number) =>
-  getJSON<T>(`/api/pagos/${pagoId}/pago_medico_actualizado`);
 
 export const listarRecibos = <T>(pagoId: number, estado: string) => {
   const p = new URLSearchParams({ skip: "0", limit: "1000" });

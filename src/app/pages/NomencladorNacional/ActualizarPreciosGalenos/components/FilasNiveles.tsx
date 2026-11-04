@@ -4,6 +4,7 @@ import s from "./TablaGalenos.module.scss";
 import type { GalenoResumenOut } from "../../nomenclador.types";
 import { formatUnidades, honorarioDe, type Grupo } from "../precios.helpers";
 import { formatoPesos } from "@/app/shared/lib/formatos";
+import { formatFecha } from "@/app/shared/lib/fechas";
 
 type Props = {
   grupo: Grupo;
@@ -42,6 +43,7 @@ export default function FilasNiveles({ grupo, info, nuevo }: Props) {
               )}
             </td>
             <td>{formatoPesos.format(actual)}</td>
+            <td className={s.monto}>{formatFecha(n.vigencia_desde)}</td>
             <td>
               {honActual == null ? (
                 <span className={s.sinDato}>sin unidades de honorarios</span>

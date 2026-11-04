@@ -14,7 +14,6 @@ import {
   fmt,
   mesLabel,
 } from "../types";
-import type ExcelJS from "exceljs";
 import { saveAs } from "@/app/shared/lib/fileSaver";
 import { ArrowLeftRight, X } from "lucide-react";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
@@ -24,6 +23,9 @@ import Dialogo from "@/app/components/ui/Dialogo/Dialogo";
 import paleta from "@/app/styles/paleta.module.scss";
 import { comoErrorApi, detalleDeError } from "@/app/shared/lib/httpErrors";
 import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
+import { CMC_LOGO_SRC, fetchAsDataUrl } from "@/app/shared/lib/documentos/institucion";
+import { generarLotePdf } from "../pdf/loteAjustesPdf";
+import { generarLoteExcel } from "../pdf/loteAjustesExcel";
 
 const OBSERVACION_OPTIONS = [
   "Falta firma y sello prestador",
@@ -341,89 +343,13 @@ const LoteDetalle: React.FC = () => {
 
   const exportExcel = async () => {
     if (!lote) return;
-    const ExcelJSLib = (await import("exceljs")).default;
-    const wb = new ExcelJSLib.Workbook();
-    const ws = wb.addWorksheet("Ajustes");
-    ws.columns = [
-      { header: "Tipo", key: "tipo", width: 10 },
-      { header: "ID Prestación", key: "id_atencion", width: 14 },
-      { header: "Nro Orden", key: "nro_consulta", width: 14 },
-      { header: "Socio", key: "socio", width: 30 },
-      { header: "Código Prest.", key: "codigo_prestacion", width: 16 },
-      { header: "Fecha", key: "fecha_prestacion", width: 14 },
-      { header: "Afiliado", key: "nombre_afiliado", width: 26 },
-      { header: "Honorarios", key: "honorarios", width: 14 },
-      { header: "Gastos", key: "gastos", width: 14 },
-      { header: "Total", key: "total", width: 14 },
-      { header: "Observación", key: "observacion", width: 30 },
-    ] as ExcelJS.Column[];
-    ajustes.forEach((a) => {
-      ws.addRow({
-        tipo: a.tipo === "d" ? "Débito" : "Crédito",
-        id_atencion: a.id_atencion ?? "—",
-        nro_consulta: a.nro_consulta ?? "—",
-        socio: a.nombre_prestador
-          ? `${a.nro_socio ?? ""} ${a.nombre_prestador}`.trim()
-          : `Médico ${a.medico_id}`,
-        codigo_prestacion: a.codigo_prestacion ?? "—",
-        fecha_prestacion: a.fecha_prestacion ?? "—",
-        nombre_afiliado: a.nombre_afiliado ?? "—",
-        honorarios: Number(a.honorarios),
-        gastos: Number(a.gastos),
-        total: Number(a.total),
-        observacion: a.observacion ?? "",
-      });
-    });
-    ws.getRow(1).font = { bold: true };
-    const buf = await wb.xlsx.writeBuffer();
-    saveAs(
-      new Blob([buf], {
-        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      }),
-      `lote_${loteId}_ajustes.xlsx`,
-    );
+    saveAs(await generarLoteExcel(lote, false), `lote_${loteId}_ajustes.xlsx`);
   };
 
   const exportPDF = async () => {
     if (!lote) return;
-    const { jsPDF } = await import("jspdf");
-    const { default: autoTable } = await import("jspdf-autotable");
-    const doc = new jsPDF({ orientation: "landscape" });
-    doc.setFontSize(12);
-    doc.text(`Lote ${loteId} — OS ${lote.obra_social_id} · ${periodo}`, 14, 14);
-    autoTable(doc, {
-      startY: 20,
-      head: [
-        [
-          "Tipo",
-          "ID prest.",
-          "Nro Orden",
-          "Socio",
-          "Código",
-          "Fecha",
-          "Honorarios",
-          "Gastos",
-          "Total",
-          "Observación",
-        ],
-      ],
-      body: ajustes.map((a) => [
-        a.tipo === "d" ? "Débito" : "Crédito",
-        a.id_atencion ?? "—",
-        a.nro_consulta ?? "—",
-        a.nombre_prestador
-          ? `${a.nro_socio ?? ""} ${a.nombre_prestador}`.trim()
-          : `Médico ${a.medico_id}`,
-        a.codigo_prestacion ?? "—",
-        a.fecha_prestacion ?? "—",
-        `$${fmt(a.honorarios)}`,
-        `$${fmt(a.gastos)}`,
-        `$${fmt(a.total)}`,
-        a.observacion ?? "—",
-      ]),
-      styles: { fontSize: 9 },
-      headStyles: { fillColor: [27, 86, 255] },
-    });
+    const logo = await fetchAsDataUrl(CMC_LOGO_SRC);
+    const doc = await generarLotePdf(lote, logo);
     doc.save(`lote_${loteId}_ajustes.pdf`);
   };
 

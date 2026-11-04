@@ -320,7 +320,12 @@ const MedicoPrestacionesTable: React.FC<Props> = ({ codMedico, medicoNombre, med
     setRows((prev) => prev.map((r) => r.id === row.id ? { ...r, revisado: nextValue } : r));
     withBusy(row.id, async () => {
       try {
-        await marcarRevisado(nextValue ? { marcados: [row.id] } : { desmarcados: [row.id] });
+        const filas = await marcarRevisado(nextValue ? { marcados: [row.id] } : { desmarcados: [row.id] });
+        // Al tildar la cabecera el servidor también tilda a su equipo: se refleja lo que devolvió.
+        const delEquipo = new Set(filas.map((f) => f.id).filter((x) => x !== row.id));
+        if (delEquipo.size > 0) {
+          setRows((prev) => prev.map((r) => delEquipo.has(r.id) ? { ...r, revisado: nextValue } : r));
+        }
       } catch {
         setRows((prev) => prev.map((r) => r.id === row.id ? { ...r, revisado: !nextValue } : r));
         notify("No se pudo actualizar el estado de auditoría.", "error");

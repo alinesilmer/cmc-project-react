@@ -16,7 +16,6 @@ import {
   mesLabel,
   type MedicoResult,
 } from "../types";
-import type ExcelJS from "exceljs";
 import { saveAs } from "@/app/shared/lib/fileSaver";
 import { Check, ArrowLeftRight } from "lucide-react";
 import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
@@ -25,6 +24,9 @@ import Dialogo from "@/app/components/ui/Dialogo/Dialogo";
 import paleta from "@/app/styles/paleta.module.scss";
 import { comoErrorApi } from "@/app/shared/lib/httpErrors";
 import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
+import { CMC_LOGO_SRC, fetchAsDataUrl } from "@/app/shared/lib/documentos/institucion";
+import { generarLoteSinFacturaPdf } from "../pdf/loteAjustesPdf";
+import { generarLoteExcel } from "../pdf/loteAjustesExcel";
 type EditForm = { tipo: "d" | "c"; honorarios: string; gastos: string; observacion: string };
 const transitionLabels: Record<string, string> = {
   cerrar: "Cerrar Lote",
@@ -241,56 +243,13 @@ const LoteDetalleSinFactura: React.FC = () => {
 
   const exportExcel = async () => {
     if (!lote) return;
-    const ExcelJSLib = (await import("exceljs")).default;
-    const wb = new ExcelJSLib.Workbook();
-    const ws = wb.addWorksheet("Ajustes");
-    ws.columns = [
-      { header: "Tipo", key: "tipo", width: 10 },
-      { header: "Médico ID", key: "medico_id", width: 12 },
-      { header: "Honorarios", key: "honorarios", width: 14 },
-      { header: "Gastos", key: "gastos", width: 14 },
-      { header: "Total", key: "total", width: 14 },
-      { header: "Observación", key: "observacion", width: 30 },
-    ] as ExcelJS.Column[];
-    (lote.ajustes ?? []).forEach((a) => {
-      ws.addRow({
-        tipo: a.tipo === "d" ? "Débito" : "Crédito",
-        medico_id: a.medico_id,
-        honorarios: Number(a.honorarios),
-        gastos: Number(a.gastos),
-        total: Number(a.total),
-        observacion: a.observacion ?? "",
-      });
-    });
-    ws.getRow(1).font = { bold: true };
-    const buf = await wb.xlsx.writeBuffer();
-    saveAs(
-      new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }),
-      `lote_sf_${loteId}_ajustes.xlsx`,
-    );
+    saveAs(await generarLoteExcel(lote, true), `lote_sf_${loteId}_ajustes.xlsx`);
   };
 
   const exportPDF = async () => {
     if (!lote) return;
-    const { jsPDF } = await import("jspdf");
-    const { default: autoTable } = await import("jspdf-autotable");
-    const doc = new jsPDF({ orientation: "landscape" });
-    doc.setFontSize(12);
-    doc.text(`Lote Sin Factura ${loteId} — OS ${lote.obra_social_id} · ${periodo}`, 14, 14);
-    autoTable(doc, {
-      startY: 20,
-      head: [["Tipo", "Médico ID", "Honorarios", "Gastos", "Total", "Observación"]],
-      body: (lote.ajustes ?? []).map((a) => [
-        a.tipo === "d" ? "Débito" : "Crédito",
-        String(a.medico_id),
-        `$${fmt(a.honorarios)}`,
-        `$${fmt(a.gastos)}`,
-        `$${fmt(a.total)}`,
-        a.observacion ?? "—",
-      ]),
-      styles: { fontSize: 9 },
-      headStyles: { fillColor: [27, 86, 255] },
-    });
+    const logo = await fetchAsDataUrl(CMC_LOGO_SRC);
+    const doc = await generarLoteSinFacturaPdf(lote, logo);
     doc.save(`lote_sf_${loteId}_ajustes.pdf`);
   };
 

@@ -151,6 +151,7 @@ export const TOP_NAV: TopEntry[] = [
         items: [
           { path: `${base}/deducciones`, icon: Wallet, label: "Deducciones", perms: ["deduccion:leer"] },
           { path: `${base}/deducciones/nueva`, icon: Plus, label: "Nueva deducción", perms: ["deduccion:crear"] },
+          { path: `${base}/cobranzas`, icon: Wallet, label: "Cobranzas", perms: ["cobranza:leer"] },
           { path: `${base}/retenciones-ganancias`, icon: Landmark, label: "Retenciones de Ganancias", perms: ["deduccion:leer"] },
         ],
       },
@@ -169,7 +170,6 @@ export const TOP_NAV: TopEntry[] = [
           { path: `${base}/register-socio`, icon: UserPlus, label: "Agregar socio", perms: ["medico:crear"] },
           { path: `${base}/afiliadospadron`, icon: Newspaper, label: "Padrones", perms: ["padron:leer"] },
           { path: `${base}/actualizar-padrones`, icon: ClipboardList, label: "Actualizar padrones", perms: ["padron:editar"] },
-          { path: `${base}/cobranzas`, icon: Wallet, label: "Cobranzas", perms: ["cobranza:leer"] },
           // `solicitud:leer` para verlas; aprobar o rechazar se gatea dentro de la pantalla.
           { path: `${base}/solicitudes-cambio`, icon: Inbox, label: "Solicitudes de cambio", perms: ["solicitud:leer"] },
         ],

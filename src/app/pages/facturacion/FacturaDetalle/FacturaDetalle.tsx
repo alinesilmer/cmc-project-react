@@ -255,7 +255,11 @@ const FacturaDetalle: React.FC = () => {
     if (!detalle) return;
     const nextValue = !p.revisado;
     setDetalle(marcarRevisadoLocal(detalle, [p.id], nextValue));
-    marcarRevisado(nextValue ? { marcados: [p.id] } : { desmarcados: [p.id] }).catch((e) => {
+    marcarRevisado(nextValue ? { marcados: [p.id] } : { desmarcados: [p.id] }).then((filas) => {
+      // Al tildar la cabecera el servidor también tilda a su equipo: se refleja lo que devolvió.
+      const ids = filas.map((f) => f.id).filter((x) => x !== p.id);
+      if (ids.length > 0) setDetalle((cur) => cur ? marcarRevisadoLocal(cur, ids, nextValue) : cur);
+    }).catch((e) => {
       setDetalle((cur) => cur ? marcarRevisadoLocal(cur, [p.id], !nextValue) : cur);
       // El servidor explica por qué (por ejemplo, que la prestación exige documentación y no la tiene).
       notify(e?.response?.status === 409
@@ -353,7 +357,13 @@ const FacturaDetalle: React.FC = () => {
 
   const handleMoverGrupo = (g: VistaGrupo, direccion: "siguiente" | "anterior") => {
     // Las marcadas (auditadas) se quedan en este período: solo se mueven las abiertas sin marcar.
-    const movibles = g.miembros.filter((p) => p.estado === "A" && !p.revisado);
+    // El equipo se mueve entero con su cabecera: si alguien del equipo está marcado, el equipo se queda.
+    const equipoMarcado = new Set(
+      g.miembros.filter((p) => p.estado === "A" && p.revisado).map((p) => p.grupo_equipo_id ?? p.id),
+    );
+    const movibles = g.miembros.filter(
+      (p) => p.estado === "A" && !p.revisado && !equipoMarcado.has(p.grupo_equipo_id ?? p.id),
+    );
     if (movibles.length === 0) {
       notify("No hay prestaciones sin marcar para mover en este grupo.", "error");
       return;

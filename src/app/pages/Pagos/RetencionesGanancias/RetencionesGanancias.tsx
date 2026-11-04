@@ -8,11 +8,13 @@ import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
 import Franja from "@/app/components/layout/Franja/Franja";
 import Caja from "@/app/components/ui/Caja/Caja";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
-import { exportarExcel, exportarPdf, nombreArchivo, type ColumnaExport, type DocumentoReporte } from "@/app/pages/Reportes/exportar";
+import { exportarExcel, nombreArchivo, type ColumnaExport, type DocumentoReporte } from "@/app/pages/Reportes/exportar";
 import lq from "../Liquidacion.module.scss";
 import s from "./RetencionesGanancias.module.scss";
 import { MESES, fmt, mesLabel } from "../types";
 import { construirComprobantes } from "./comprobantesPdf";
+import { generarRetencionesPdf } from "./retencionesPdf";
+import { CMC_LOGO_SRC, fetchAsDataUrl } from "@/app/shared/lib/documentos/institucion";
 import {
   ESCALAS_GANANCIAS_URL,
   RETENCIONES_GANANCIAS_URL,
@@ -112,7 +114,13 @@ const RetencionesGanancias: React.FC = () => {
   const exportar = async (formato: "pdf" | "excel") => {
     setGenerando(formato);
     try {
-      await (formato === "pdf" ? exportarPdf(documento()) : exportarExcel(documento()));
+      if (formato === "pdf") {
+        const logo = await fetchAsDataUrl(CMC_LOGO_SRC);
+        const doc = await generarRetencionesPdf(data!, logo);
+        doc.save(`${nombreArchivo("retenciones-ganancias", `${anio}-${String(mes).padStart(2, "0")}`)}.pdf`);
+      } else {
+        await exportarExcel(documento());
+      }
     } catch (e: any) {
       notify(mensajeDe(e, "No se pudo generar el archivo."), "error");
     } finally {

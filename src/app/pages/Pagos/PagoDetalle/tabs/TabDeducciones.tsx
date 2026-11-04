@@ -9,6 +9,7 @@ import Tabla from "@/app/components/ui/Tabla/Tabla";
 import Dialogo from "@/app/components/ui/Dialogo/Dialogo";
 import paleta from "@/app/styles/paleta.module.scss";
 import { comoErrorApi } from "@/app/shared/lib/httpErrors";
+import { compararPorNroConcepto, etiquetaConcepto } from "@/app/shared/lib/conceptos";
 
 type GenResult = {
   generados: number;
@@ -85,7 +86,9 @@ const TabDeducciones: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
               nro_colegio: d.nro_colegio ?? 0,
               precio: Number(d.precio ?? 0),
               porcentaje: Number(d.porcentaje ?? 0),
-            })),
+            }))
+            // Por número de concepto (el del Colegio), no por el id de la tabla.
+            .sort((a, b) => compararPorNroConcepto(a.nro_colegio, b.nro_colegio)),
         );
       } catch (e) {
         const err = comoErrorApi(e);
@@ -214,9 +217,7 @@ const TabDeducciones: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
             <Tabla className={styles.table}>
               <thead>
                 <tr>
-                  <th>ID</th>
-                  <th>Nombre</th>
-                  <th>Nro. Colegio</th>
+                  <th>Concepto</th>
                   <th className={styles.numCell}>Precio fijo</th>
                   <th className={styles.numCell}>Porcentaje</th>
                   {pago.estado === "A" && <th>Acciones</th>}
@@ -226,7 +227,7 @@ const TabDeducciones: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
                 {descuentos.length === 0 && (
                   <tr>
                     <td
-                      colSpan={pago.estado === "A" ? 6 : 5}
+                      colSpan={pago.estado === "A" ? 4 : 3}
                       className={styles.emptyCell}
                     >
                       Sin descuentos disponibles.
@@ -235,9 +236,7 @@ const TabDeducciones: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
                 )}
                 {descuentos.map((d) => (
                   <tr key={d.id}>
-                    <td>{d.id}</td>
-                    <td>{d.nombre}</td>
-                    <td>{d.nro_colegio}</td>
+                    <td>{etiquetaConcepto(d.nro_colegio, d.nombre)}</td>
                     <td className={styles.numCell}>${fmt(d.precio)}</td>
                     <td className={styles.numCell}>{d.porcentaje}%</td>
                     {pago.estado === "A" && (
@@ -303,7 +302,7 @@ const TabDeducciones: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
         >
               {!generating && (
                 <p>
-                  ¿Generar el descuento <strong>"{genTarget.nombre}"</strong>{" "}
+                  ¿Generar el descuento <strong>"{etiquetaConcepto(genTarget.nro_colegio, genTarget.nombre)}"</strong>{" "}
                   para el pago actual?
                   <br />
                   Se calculará el monto por cada médico.
@@ -342,7 +341,7 @@ const TabDeducciones: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
                 <>
                   <p>
                     ¿Deshacer las deducciones generadas para{" "}
-                    <strong>"{deshacerTarget.nombre}"</strong>?
+                    <strong>"{etiquetaConcepto(deshacerTarget.nro_colegio, deshacerTarget.nombre)}"</strong>?
                   </p>
                   <p
                     style={{
@@ -384,7 +383,7 @@ const TabDeducciones: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
             </>
           }
         >
-              <p style={{ margin: 0, fontWeight: 600 }}>{editTarget.nombre}</p>
+              <p style={{ margin: 0, fontWeight: 600 }}>{etiquetaConcepto(editTarget.nro_colegio, editTarget.nombre)}</p>
               <p
                 style={{
                   fontSize: 12,

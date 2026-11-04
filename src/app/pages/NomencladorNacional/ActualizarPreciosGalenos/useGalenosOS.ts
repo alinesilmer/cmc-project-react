@@ -1,16 +1,37 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { cambiarVisibilidadGaleno, getResumenGalenos, listGalenos } from "../nomenclador.api";
-import type { GalenoOut, GalenoResumenOut } from "../nomenclador.types";
+import {
+  cambiarVisibilidadGaleno, getFamiliaObraSocial, getResumenGalenos, listGalenos, replicarGalenosLoteEnFamilia,
+} from "../nomenclador.api";
+import type { GalenoOut, GalenoResumenOut, ReplicaResultadoItem } from "../nomenclador.types";
 import { agruparGalenos, type Grupo } from "./precios.helpers";
 import { useNotify } from "@/app/hooks/useNotify";
+import { mensajeDeError } from "@/app/shared/lib/httpErrors";
 
-/** Los galenos activos de una obra social agrupados por código, con su resumen y el interruptor de visibilidad en el boletín. */
-export function useGalenosOS(obraNro: number) {
+/** Lo que pasó al replicar la última visibilidad: a qué galeno y en qué obras sociales (o por qué falló entero). */
+export type ReplicaVisibilidad = { nombre: string; resultados: ReplicaResultadoItem[]; error?: string };
+
+/**
+ * Los galenos activos de una obra social agrupados por código, con su resumen y el interruptor de visibilidad en el boletín.
+ * `destinos`: obras sociales vinculadas donde repetir cada cambio de visibilidad ([] = sólo en ésta).
+ */
+export function useGalenosOS(obraNro: number, destinos: number[]) {
   const qc = useQueryClient();
   const notify = useNotify();
   const clave = useMemo(() => ["galenos-os", obraNro] as const, [obraNro]);
+
+  // Los demás planes de la empresa: a donde se puede repetir lo que se cambia acá.
+  const familiaQuery = useQuery({
+    queryKey: ["familia-os", obraNro],
+    queryFn: () => getFamiliaObraSocial(obraNro),
+    staleTime: 5 * 60_000,
+  });
+
+  // El interruptor lee los destinos del momento del clic sin cambiar de identidad (la fila está memoizada).
+  const destinosRef = useRef(destinos);
+  destinosRef.current = destinos;
+  const [replicaVisibilidad, setReplicaVisibilidad] = useState<ReplicaVisibilidad | null>(null);
 
   const galenosQuery = useQuery({ queryKey: clave, queryFn: () => listGalenos({ obra_social_nro: obraNro }) });
 
@@ -38,6 +59,7 @@ export function useGalenosOS(obraNro: number) {
         qc.setQueryData<GalenoOut[]>(clave, (prev) => prev?.map((g) => (g.codigo === grupo.codigo ? { ...g, visible: v } : g)));
       poner(visible);
       setCambiando((prev) => new Set(prev).add(grupo.codigo));
+      setReplicaVisibilidad(null);
       try {
         await cambiarVisibilidadGaleno({ obra_social_nro: obraNro, codigo: grupo.codigo, visible });
         notify.success(
@@ -48,6 +70,28 @@ export function useGalenosOS(obraNro: number) {
       } catch {
         poner(!visible);
         notify.error(`No se pudo cambiar la visibilidad de ${grupo.nombre}.`);
+        setCambiando((prev) => {
+          const sig = new Set(prev);
+          sig.delete(grupo.codigo);
+          return sig;
+        });
+        return;
+      }
+
+      // Ya quedó en esta obra social: se repite en las vinculadas elegidas (si falla, el cambio de acá sigue en pie).
+      const aReplicar = destinosRef.current;
+      try {
+        if (aReplicar.length > 0) {
+          const r = await replicarGalenosLoteEnFamilia({
+            origen_obra_social_nro: obraNro,
+            destinos: aReplicar,
+            operacion: "visibilidad",
+            items: [{ codigo: grupo.codigo, visible }],
+          });
+          setReplicaVisibilidad({ nombre: grupo.nombre, resultados: r.resultados });
+        }
+      } catch (e) {
+        setReplicaVisibilidad({ nombre: grupo.nombre, resultados: [], error: mensajeDeError(e, "Error de red o del servidor.") });
       } finally {
         setCambiando((prev) => {
           const sig = new Set(prev);
@@ -72,6 +116,8 @@ export function useGalenosOS(obraNro: number) {
     fallo: galenosQuery.isError,
     cambiando,
     alternarVisible,
+    familia: familiaQuery.data ?? [],
+    replicaVisibilidad,
     refrescar,
   };
 }

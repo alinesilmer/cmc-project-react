@@ -51,6 +51,8 @@ export default function TabConceptos({ conceptos }: { conceptos: LegajoConceptos
                   <tr>
                     <td>
                       <AppSearchSelect
+                        ordenar
+                        ordenPorCodigo
                         options={conceptOptions}
                         value={newConceptId}
                         onChange={(v) => setNewConceptId(v as number | null)}
@@ -100,6 +102,8 @@ export default function TabConceptos({ conceptos }: { conceptos: LegajoConceptos
                     <tr key={sd.id}>
                       <td style={{ minWidth: 200 }}>
                         <AppSearchSelect
+                          ordenar
+                          ordenPorCodigo
                           options={conceptOptions}
                           value={sd.descuento_id}
                           disabled={patchingId === sd.id}
