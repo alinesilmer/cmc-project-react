@@ -1,5 +1,5 @@
 import {
-  AZUL, CREMA, MARGEN, TW,
+  AZUL, CREMA, MARGEN, TW, TW_VERTICAL,
   fitText, loadPdfLibs, margenTabla, pintarFranja, pintarPies, redondearTabla, rotulo, tableStyles,
 } from "@/app/shared/lib/documentos/pdfColegio";
 import { CMC_LOGO_SRC, CMC_NAME, fetchAsDataUrl } from "@/app/shared/lib/documentos/institucion";
@@ -11,14 +11,14 @@ import type { jsPDF } from "jspdf";
 // PDF de un reporte, con el mismo dibujo que el padrón de prestadores: portada azul a página llena y, después.
 
 /** Columnas angostas para los números, anchas para los textos largos. */
-function anchosDe<T>(columnas: ColumnaExport<T>[], filas: T[]): number[] {
+function anchosDe<T>(columnas: ColumnaExport<T>[], filas: T[], ancho: number): number[] {
   const muestra = filas.slice(0, 200);
   const pesos = columnas.map((c) => {
     const largo = Math.max(c.header.length, ...muestra.map((f) => textoDeCelda(c, f).length));
     return Math.min(46, Math.max(8, largo));
   });
   const suma = pesos.reduce((a, b) => a + b, 0);
-  return pesos.map((p) => (p / suma) * TW);
+  return pesos.map((p) => (p / suma) * ancho);
 }
 
 type Portada = { titulo: string; periodo: string; obraSocial: string; registros: number; facturado: string | null; fecha: string };
@@ -57,19 +57,20 @@ export async function construirPdfReporte<T>(reporte: DocumentoReporte<T>): Prom
   const fecha = fmtFechaVisible(new Date());
   const alcance = `${periodo}  ·  ${obraSocial}`;
   const detalle = `${filas.length.toLocaleString("es-AR")} ${filas.length === 1 ? "registro" : "registros"}  ·  ${fecha}`;
-  const anchos = anchosDe(columnas, filas);
+  const anchoTabla = reporte.vertical ? TW_VERTICAL : TW;
+  const anchos = anchosDe(columnas, filas, anchoTabla);
 
-  const doc = new JsPDF({ orientation: "landscape", compress: true });
+  const doc = new JsPDF({ orientation: reporte.vertical ? "portrait" : "landscape", format: "a4", compress: true });
 
   autoTable(doc, {
     head: [columnas.map((c) => c.header)],
     body: filas.map((f) => columnas.map((c) => textoDeCelda(c, f))),
     startY: margenTabla.top,
     margin: margenTabla,
-    tableWidth: TW,
+    tableWidth: anchoTabla,
     willDrawPage: () => pintarFranja(doc, logo, alcance, encabezadoDe(reporte), detalle),
     didDrawPage: (data: { cursor?: { y: number } | null }) =>
-      redondearTabla(doc, margenTabla.top, data.cursor?.y ?? margenTabla.top),
+      redondearTabla(doc, margenTabla.top, data.cursor?.y ?? margenTabla.top, anchoTabla),
     // Los números van a la derecha, para que las cifras se lean en columna.
     columnStyles: Object.fromEntries(
       columnas.map((c, i) => [i, { cellWidth: anchos[i], halign: c.tipo ? "right" : "left" }]),
@@ -85,11 +86,11 @@ export async function construirPdfReporte<T>(reporte: DocumentoReporte<T>): Prom
   doc.insertPage(1);
   doc.setPage(1);
   pintarPortada(doc, {
-    titulo, periodo, obraSocial, fecha,
+    titulo, periodo: reporte.periodoPortada ?? periodo, obraSocial, fecha,
     registros: filas.length,
     facturado: reporte.sinTotal ? null : totalFacturado(columnas, filas),
   });
-  pintarPies(doc, 2);
+  pintarPies(doc, 2, !reporte.sinMail);
 
   return doc.output("blob") as Blob;
 }

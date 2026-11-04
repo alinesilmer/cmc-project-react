@@ -67,7 +67,7 @@ interface ApiBoletinOut {
   items: ApiBoletinItem[];
 }
 /** Consulta por obra social a una fecha. */
-async function consultaPorOS(
+export async function consultaPorOS(
   codigo: string,
   fecha: string,
   especialidad?: number

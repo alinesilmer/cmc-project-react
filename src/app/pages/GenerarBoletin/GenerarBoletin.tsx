@@ -15,8 +15,7 @@ import { Download, Calendar } from "lucide-react";
 import styles from "./GenerarBoletin.module.scss";
 import Button from "@/website/components/UI/Button/Button";
 import CMCLogoUrl from "../../assets/logoCMC.png";
-// `http` y no `httpBare`: la ruta ahora va detrás de RequireAuth, y /api/valores/boletin exige sesión.
-import { fetchValoresBoletin, type ApiBoletinRow } from "./generarBoletin.api";
+import { fetchValoresBoletin, type FilaBoletin, type ValorBoletin } from "./generarBoletin.api";
 import { axiosErrorMessage, sinControl } from "@/app/shared/lib/utiles";
 import Cargando from "@/app/components/ui/Cargando/Cargando";
 
@@ -26,24 +25,17 @@ registerLocale("es", es);
 type ObraSocialBoletin = {
   id: number;
   nombre: string;
-  nivel: number | null;
-  fechaCambioISO: string | null;
 
   consulta: number;
-  galenoQuirurgico: number;
-  gastosQuirurgicos: number;
-  galenoPractica: number;
-  galenoRadiologico: number;
-  gastosRadiologicos: number;
-  gastosBioquimicos: number;
-  otrosGastos: number;
-  galenoCirugiaAdultos: number;
-  galenoCirugiaInfantil: number;
-  consultaEspecial: number;
-
-  categoriaA: string | null;
-  categoriaB: string | null;
-  categoriaC: string | null;
+  galenoQuirurgico: ValorBoletin;
+  gastosQuirurgicos: ValorBoletin;
+  galenoPractica: ValorBoletin;
+  galenoRadiologico: ValorBoletin;
+  gastosRadiologicos: ValorBoletin;
+  gastosBioquimicos: ValorBoletin;
+  otrosGastos: ValorBoletin;
+  galenoCirugiaAdultos: ValorBoletin;
+  galenoCirugiaInfantil: ValorBoletin;
 
   traumatologiaPP: string;
   clinicaPediatrica: string;
@@ -62,12 +54,6 @@ function parseISODateLocal(s: string | null | undefined): Date | null {
   if (!Number.isFinite(y) || !Number.isFinite(mo) || !Number.isFinite(d))
     return null;
   return new Date(y, mo - 1, d);
-}
-
-function isoKey(s: string | null | undefined): number {
-  const dt = parseISODateLocal(s);
-  if (!dt) return -1;
-  return dt.getFullYear() * 10000 + (dt.getMonth() + 1) * 100 + dt.getDate();
 }
 
 function formatMonthYearFromDate(dt: Date): string {
@@ -128,70 +114,21 @@ function normalizeText(s: unknown, maxLen = 120): string {
   return t.length > maxLen ? `${t.slice(0, maxLen - 1)}…` : t;
 }
 
-function buildPerOS(
-  rows: ApiBoletinRow[]
-): { items: ObraSocialBoletin[]; lastISO: string | null } {
-  const byOS = new Map<number, ApiBoletinRow[]>();
-  let lastISO: string | null = null;
-  let lastKey = -1;
-
-  for (const r of rows) {
-    const arr = byOS.get(r.nro_obrasocial) ?? [];
-    arr.push(r);
-    byOS.set(r.nro_obrasocial, arr);
-
-    const k = isoKey(r.fecha_cambio);
-    if (k > lastKey) {
-      lastKey = k;
-      lastISO = r.fecha_cambio;
-    }
-  }
-
-  const items: ObraSocialBoletin[] = [];
-
-  for (const [nro, arr] of byOS.entries()) {
-    arr.sort((a, b) => {
-      const dk = isoKey(b.fecha_cambio) - isoKey(a.fecha_cambio);
-      if (dk !== 0) return dk;
-      const nk = (b.nivel ?? 0) - (a.nivel ?? 0);
-      if (nk !== 0) return nk;
-      return (b.id ?? 0) - (a.id ?? 0);
-    });
-
-    const top = arr[0];
-
-    items.push({
-      id: nro,
-      nombre: normalizeText(top.obra_social ?? `OS ${nro}`, 140),
-      nivel: Number.isFinite(top.nivel) ? top.nivel : null,
-      fechaCambioISO: top.fecha_cambio ?? null,
-
-      consulta: top.consulta ?? 0,
-      galenoQuirurgico: top.galeno_quirurgico ?? 0,
-      gastosQuirurgicos: top.gastos_quirurgicos ?? 0,
-      galenoPractica: top.galeno_practica ?? 0,
-      galenoRadiologico: top.galeno_radiologico ?? 0,
-      gastosRadiologicos: top.gastos_radiologico ?? 0,
-      gastosBioquimicos: top.gastos_bioquimicos ?? 0,
-      otrosGastos: top.otros_gastos ?? 0,
-      galenoCirugiaAdultos: top.galeno_cirugia_adultos ?? 0,
-      galenoCirugiaInfantil: top.galeno_cirugia_infantil ?? 0,
-      consultaEspecial: top.consulta_especial ?? 0,
-
-      categoriaA: top.categoria_a ?? null,
-      categoriaB: top.categoria_b ?? null,
-      categoriaC: top.categoria_c ?? null,
-
-      traumatologiaPP: "-",
-      clinicaPediatrica: "-",
-      normas: "",
-      autorizaciones: "",
-      anexoIV: "",
-    });
-  }
+function buildPerOS(filas: FilaBoletin[]): ObraSocialBoletin[] {
+  const items = filas.map<ObraSocialBoletin>((f) => ({
+    id: f.nro,
+    nombre: normalizeText(f.nombre, 140),
+    consulta: f.consulta,
+    ...f.valores,
+    traumatologiaPP: "-",
+    clinicaPediatrica: "-",
+    normas: "",
+    autorizaciones: "",
+    anexoIV: "",
+  }));
 
   items.sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
-  return { items, lastISO };
+  return items;
 }
 
 async function urlToDataUrl(url: string): Promise<string> {
@@ -212,6 +149,12 @@ const formatCurrency = (value: number): string => {
     maximumFractionDigits: 2,
   });
 };
+/** Un valor o, si el galeno tiene niveles, el rango entre el menor y el mayor. */
+const formatValor = (v: ValorBoletin): string =>
+  v.minimo === v.maximo
+    ? `$${formatCurrency(v.minimo)}`
+    : `$${formatCurrency(v.minimo)} – $${formatCurrency(v.maximo)}`;
+
 function buildIndexBodyTwoCol(
   items: ObraSocialBoletin[],
   detailsStartPage: number
@@ -346,15 +289,15 @@ const GenerarBoletin = () => {
     setLoadError(null);
 
     try {
-      const rows = await fetchValoresBoletin();
-      const built = buildPerOS(rows);
+      const { filas, ultimaVigencia } = await fetchValoresBoletin();
+      const items = buildPerOS(filas);
       if (!mountedRef.current) return;
 
-      setBoletinData(built.items);
-      setLastUpdateISO(built.lastISO);
+      setBoletinData(items);
+      setLastUpdateISO(ultimaVigencia);
 
       if (!userTouchedVigenciaRef.current) {
-        const dt = parseISODateLocal(built.lastISO);
+        const dt = parseISODateLocal(ultimaVigencia);
         setVigenciaDate(dt);
       }
     } catch (e) {
@@ -740,20 +683,15 @@ const GenerarBoletin = () => {
 
         const valuesData: Array<[string, string]> = [
           ["Consulta", `$${formatCurrency(os.consulta)}`],
-          ...(os.consultaEspecial > 0
-            ? ([["Consulta Especial", `$${formatCurrency(os.consultaEspecial)}`]] as Array<
-                [string, string]
-              >)
-            : []),
-          ["Galeno Quirúrgico", `$${formatCurrency(os.galenoQuirurgico)}`],
-          ["Gastos Quirúrgicos", `$${formatCurrency(os.gastosQuirurgicos)}`],
-          ["Galeno Práctica", `$${formatCurrency(os.galenoPractica)}`],
-          ["Galeno Radiológico", `$${formatCurrency(os.galenoRadiologico)}`],
-          ["Gastos Radiológicos", `$${formatCurrency(os.gastosRadiologicos)}`],
-          ["Gastos Bioquímicos", `$${formatCurrency(os.gastosBioquimicos)}`],
-          ["Otros Gastos", `$${formatCurrency(os.otrosGastos)}`],
-          ["Galeno Cirugía Adultos", `$${formatCurrency(os.galenoCirugiaAdultos)}`],
-          ["Galeno Cirugía Infantil", `$${formatCurrency(os.galenoCirugiaInfantil)}`],
+          ["Galeno Quirúrgico", formatValor(os.galenoQuirurgico)],
+          ["Gastos Quirúrgicos", formatValor(os.gastosQuirurgicos)],
+          ["Galeno Práctica", formatValor(os.galenoPractica)],
+          ["Galeno Radiológico", formatValor(os.galenoRadiologico)],
+          ["Gastos Radiológicos", formatValor(os.gastosRadiologicos)],
+          ["Gastos Bioquímicos", formatValor(os.gastosBioquimicos)],
+          ["Otros Gastos", formatValor(os.otrosGastos)],
+          ["Galeno Cirugía Adultos", formatValor(os.galenoCirugiaAdultos)],
+          ["Galeno Cirugía Infantil", formatValor(os.galenoCirugiaInfantil)],
         ];
 
         // TABLA A ANCHO COMPLETO (ocupa el espacio restante)

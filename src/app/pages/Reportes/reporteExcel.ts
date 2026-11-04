@@ -38,12 +38,13 @@ export async function construirExcelReporte<T>(reporte: DocumentoReporte<T>): Pr
   const ws = wb.addWorksheet(titulo.slice(0, 31), {
     views: [{ state: "frozen", ySplit: F.cabecera, showGridLines: false }],
     pageSetup: {
-      fitToPage: true, fitToWidth: 1, fitToHeight: 0, orientation: "landscape",
+      fitToPage: true, fitToWidth: 1, fitToHeight: 0, orientation: reporte.vertical ? "portrait" : "landscape",
+      ...(reporte.vertical ? { paperSize: 9 } : {}),
       // Al imprimir, la cabecera de la tabla se repite en cada hoja.
       printTitlesRow: `${F.cabecera}:${F.cabecera}`,
     },
     headerFooter: {
-      oddFooter: `&L&8${CMC_NAME}  ·  ${CMC_PHONE}  ·  ${CMC_EMAIL}&R&8Página &P de &N`,
+      oddFooter: `&L&8${CMC_NAME}  ·  ${CMC_PHONE}${reporte.sinMail ? "" : `  ·  ${CMC_EMAIL}`}&R&8Página &P de &N`,
     },
   });
 

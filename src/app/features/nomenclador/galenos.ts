@@ -11,6 +11,7 @@ export interface GalenoItem {
   nivel: number | null;
   valor: number;
   observacion: string;
+  vigenciaDesde?: string | null;
 }
 
 /** Los galenos de cada obra social, por número de obra social. */
@@ -77,6 +78,7 @@ export async function fetchGalenosPorOS(
       nivel: g.nivel,
       valor: aNumero(g.valor_unitario),
       observacion: g.observacion ?? "",
+      vigenciaDesde: g.vigencia_desde,
     });
     porOS.set(g.obra_social_nro, lista);
   }

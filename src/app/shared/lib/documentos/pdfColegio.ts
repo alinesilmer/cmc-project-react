@@ -32,6 +32,8 @@ const FILETE: Rgb = [203, 213, 225];
 const RADIO = 3;
 
 export const TW = 269;
+/** Ancho útil de una hoja A4 vertical: 210 mm menos los dos márgenes. */
+export const TW_VERTICAL = 182;
 export const MARGEN = 14;
 export const HEADER_H = 30;
 
@@ -99,9 +101,9 @@ export function pintarFranja(doc: jsPDF, logo: string | null, osName: string, ti
 }
 
 /** Redondea las esquinas de la tabla. autoTable sólo dibuja rectángulos, así que se tapa cada esquina con una cuña blanca. */
-export function redondearTabla(doc: jsPDF, y0: number, y1: number) {
+export function redondearTabla(doc: jsPDF, y0: number, y1: number, ancho = TW) {
   const x0 = MARGEN;
-  const x1 = MARGEN + TW;
+  const x1 = MARGEN + ancho;
   const r = RADIO;
   // Distancia de los puntos de control de una curva que imita un cuarto de círculo.
   const k = r * 0.5523;
@@ -124,11 +126,11 @@ export function redondearTabla(doc: jsPDF, y0: number, y1: number) {
   }
 
   doc.setDrawColor(...FILETE); doc.setLineWidth(0.2);
-  doc.roundedRect(x0, y0, TW, y1 - y0, r, r, "S");
+  doc.roundedRect(x0, y0, ancho, y1 - y0, r, r, "S");
 }
 
 /** Pie de las hojas de listado: contacto a la izquierda, "\02 de \14" a la derecha. */
-export function pintarPies(doc: jsPDF, desde: number) {
+export function pintarPies(doc: jsPDF, desde: number, conMail = true) {
   const w = doc.internal.pageSize.getWidth();
   const h = doc.internal.pageSize.getHeight();
   const total: number = doc.getNumberOfPages();
@@ -139,7 +141,7 @@ export function pintarPies(doc: jsPDF, desde: number) {
     doc.line(MARGEN, h - 11, w - MARGEN, h - 11);
 
     doc.setFont("helvetica", "normal"); doc.setFontSize(6.5); doc.setTextColor(...GRIS);
-    doc.text(`${CMC_NAME}  ·  ${CMC_PHONE}  ·  ${CMC_EMAIL}`, MARGEN, h - 6.5);
+    doc.text(conMail ? `${CMC_NAME}  ·  ${CMC_PHONE}  ·  ${CMC_EMAIL}` : `${CMC_NAME}  ·  ${CMC_PHONE}`, MARGEN, h - 6.5);
 
     doc.setFont("helvetica", "bold"); doc.setFontSize(8); doc.setTextColor(...AZUL);
     doc.text(`${pagina(n)}  de  ${pagina(total)}`, w - MARGEN, h - 6.5, { align: "right" });

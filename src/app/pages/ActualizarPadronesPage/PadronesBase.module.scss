@@ -9,14 +9,14 @@
   width: 100%;
   max-width: 1536px;
   margin: 0 auto;
-  padding: 0 $spacing-12 $spacing-12;
+  padding: 0 $spacing-5 $spacing-8;
 
   @media (max-width: 1200px) {
-    padding: 0 $spacing-8 $spacing-10;
+    padding: 0 $spacing-4 $spacing-8;
   }
 
   @media (max-width: $breakpoint-md) {
-    padding: 0 $spacing-4 $spacing-8;
+    padding: 0 $spacing-3 $spacing-6;
   }
 }
 

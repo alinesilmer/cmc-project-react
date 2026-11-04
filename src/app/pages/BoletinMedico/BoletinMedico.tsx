@@ -12,7 +12,7 @@ import type { GrupoGaleno } from "@/app/features/nomenclador/galenos";
 import { fetchBoletinMedico } from "./boletinMedico.api";
 import type { ItemBoletin } from "./boletinMedico.api";
 import { esPediatra } from "./boletinPediatria";
-import { descargarBoletin } from "./boletinMedico.pdf";
+import { SECCIONES, descargarSeccion, type IdSeccion } from "./pdf";
 import { moneda, normalizar } from "./boletinMedico.formato";
 import GrillaPediatria from "./GrillaPediatria";
 import s from "./BoletinMedico.module.scss";
@@ -21,7 +21,7 @@ import Tabla from "@/app/components/ui/Tabla/Tabla";
 
 /** Valores del boletín, para el socio. */
 
-type Vista = "consulta" | "pediatria" | "galenos" | "observaciones";
+type Vista = IdSeccion;
 
 const VISTAS: { id: Vista; label: string }[] = [
   { id: "consulta", label: "Valor de consulta" },
@@ -89,12 +89,12 @@ export default function BoletinMedico() {
     );
   }, [base, busqueda]);
 
-  // Se baja el boletín entero, no lo que quedó filtrado en pantalla: el archivo es el boletín.
+  // Cada solapa baja su PDF, completo y no lo que quedó filtrado en pantalla. El de pediatría es sólo del personal.
+  const puedeBajar = vista !== "pediatria" || personal;
   const bajar = async () => {
     setBajando(true);
     try {
-      // El PDF de pediatría reemplaza a la consulta y a los galenos: el personal baja el boletín general.
-      await descargarBoletin(personal ? items.map((i) => ({ ...i, pediatria: [] })) : items);
+      await descargarSeccion(SECCIONES[vista], items);
     } catch (e) {
       console.error("Descarga del boletín:", e);
     } finally {
@@ -157,12 +157,11 @@ export default function BoletinMedico() {
           </p>
         )}
 
-        {/* Se baja el boletín entero, con las tres partes. */}
-        <div className={s.descarga}>
-          <BotonDescarga formato="pdf" onClick={() => void bajar()} cargando={bajando} disabled={items.length === 0}>
-            Boletín
-          </BotonDescarga>
-        </div>
+        {puedeBajar && (
+          <div className={s.descarga}>
+            <BotonDescarga formato="pdf" onClick={() => void bajar()} cargando={bajando} disabled={base.length === 0} />
+          </div>
+        )}
       </div>
 
       <p className={s.nota}>

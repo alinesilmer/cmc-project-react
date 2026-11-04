@@ -69,11 +69,14 @@ function documentoDe(items: RankedEntry[], codigo: string, fecha: string): Docum
     encabezado: "Ranking de obras sociales",
     titulo: "Ranking",
     periodo: `Código ${codigo.trim()}  ·  al ${formatFecha(fecha)}`,
+    periodoPortada: formatFecha(fecha),
     obraSocial: "Todas las obras sociales",
     columnas: COLUMNAS,
     filas: items,
     // Sumar precios unitarios de obras sociales distintas no dice nada.
     sinTotal: true,
+    vertical: true,
+    sinMail: true,
     nombre: `ranking_obras_sociales_${codigo.trim() || "codigo"}`,
   };
 }
