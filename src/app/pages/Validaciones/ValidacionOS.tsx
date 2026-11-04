@@ -26,6 +26,7 @@ import PrestacionesTable from "./components/PrestacionesTable";
 import PrestacionForm from "./components/PrestacionForm";
 import ResultadoCarga from "./components/ResultadoCarga";
 import { getObraSocial } from "./validaciones.config";
+import { motivoResumido } from "./motivoValidacion";
 import {
   agregarDocumentos,
   cargarPrestacion,
@@ -237,14 +238,11 @@ export default function ValidacionOS() {
         },
         documentos,
       );
+      // `pendiente` ya no se emite (quedan filas viejas): para el Colegio es un rechazo, con el motivo resumido.
+      const rechazada = prestacion.estado === "rechazada" || prestacion.estado === "pendiente";
       setResultado({
-        estado: prestacion.estado,
-        mensaje:
-          prestacion.estado === "rechazada"
-            ? prestacion.estadoDetalle || "La obra social rechazó la prestación."
-            : prestacion.estado === "pendiente"
-              ? prestacion.estadoDetalle
-              : "La prestación quedó cargada en el período.",
+        estado: rechazada ? "rechazada" : prestacion.estado,
+        mensaje: rechazada ? motivoResumido(prestacion.estadoDetalle) : "La prestación quedó cargada en el período.",
         prestacion,
       });
       // Sólo se limpia cuando la prestación quedó cargada.

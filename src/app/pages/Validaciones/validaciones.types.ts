@@ -129,15 +129,8 @@ export interface ObraSocialConfig {
 
 // ─── Prestaciones ─────────────────────────────────────────────────────────────
 
-/** Cada obra social contesta texto libre; el backend lo normaliza a estos cuatro casos y lo guarda en `detalle_facturacion.validacion_estado`. */
+/** Cada obra social contesta texto libre; el backend lo normaliza y lo guarda en `detalle_facturacion.validacion_estado`. `pendiente` ya no se emite: sólo quedan filas viejas y en pantalla se muestran como `rechazada`. */
 export type EstadoPrestacion = "autorizada" | "rechazada" | "pendiente" | "cargada";
-
-// Nobis grada el `P-Pendiente` como `rechazada` a propósito —importe 0, fuera de factura, igual que un rechazo real.
-const PREFIJO_PENDIENTE_OBRA_SOCIAL = "Pendiente de autorización de la obra social.";
-
-/** `true` si el detalle es el de una `rechazada` que en realidad quedó pendiente de gestión en la obra social (hoy, sólo Nobis). */
-export const esPendienteDeObraSocial = (detalle?: string | null): boolean =>
-  !!detalle && detalle.startsWith(PREFIJO_PENDIENTE_OBRA_SOCIAL);
 
 export interface Prestacion {
   id: string;

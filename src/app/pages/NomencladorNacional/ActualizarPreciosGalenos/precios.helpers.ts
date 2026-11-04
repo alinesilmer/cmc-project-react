@@ -52,6 +52,15 @@ export function grupoValorActual(g: Grupo): string {
   return min === max ? formatoPesos.format(min) : `${formatoPesos.format(min)} – ${formatoPesos.format(max)}`;
 }
 
+/**
+ * La última vigencia que se cargó para el galeno (la más nueva de sus niveles), aunque todavía no
+ * rija: no es la que está en vigor hoy sino la última que alguien cargó. Fechas ISO (`YYYY-MM-DD`),
+ * que ordenan como texto.
+ */
+export function grupoUltimaVigencia(g: Grupo): string {
+  return g.niveles.reduce((m, n) => (n.vigencia_desde > m ? n.vigencia_desde : m), g.niveles[0].vigencia_desde);
+}
+
 /** Honorario de un nivel: unidades de honorarios × valor unitario del galeno. */
 export function honorarioDe(unidades: string | null, valorUnitario: number): number | null {
   if (unidades == null) return null;

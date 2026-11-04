@@ -214,7 +214,11 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
   };
 
   const columns: ColumnDef<Liquidacion>[] = [
-    { key: "obra_social_id", header: "Obra Social (ID)" },
+    {
+      key: "obra_social_id",
+      header: "Obra social",
+      render: (r) => (r.obra_social_nombre ? `${r.obra_social_id} - ${r.obra_social_nombre}` : String(r.obra_social_id)),
+    },
     {
       key: "periodo",
       header: "Período",

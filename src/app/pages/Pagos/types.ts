@@ -64,6 +64,8 @@ export type Liquidacion = {
   id: number;
   pago_id: number;
   obra_social_id: number;
+  // Sólo en el listado de facturas del pago.
+  obra_social_nombre?: string | null;
   mes_periodo: number;
   anio_periodo: number;
   nro_factura: string;

@@ -17,6 +17,7 @@ export type DeduccionHistorialItem = {
   estado: DeduccionEstado;
   medico_id: number;
   medico_nombre: string;
+  nro_socio?: number | null;
   descuento_id: number | null;
   descuento_nombre: string;
   monto: number;
@@ -95,7 +96,7 @@ export type Pago = {
 export type ResumenPagoAbierto = {
   cantidad: number;
   total: number;
-  conceptos: Array<{ nombre: string; cantidad: number; monto: number }>;
+  conceptos: Array<{ nombre: string; nro_colegio: number | null; cantidad: number; monto: number }>;
 };
 
 export const MESES = [

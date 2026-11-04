@@ -12,6 +12,7 @@ import type { SocioDescuento } from "../api";
 import type { TabKey } from "./legajo.types";
 import type { ImportePropioValor } from "./ImportePropio";
 import { mensajeDe } from "./legajo.helpers";
+import { opcionDeConcepto } from "@/app/shared/lib/conceptos";
 
 /** Pestaña Conceptos: descuentos asignados al socio y quién los paga. */
 export function useLegajoConceptos(medicoId: string, tab: TabKey) {
@@ -44,10 +45,7 @@ export function useLegajoConceptos(medicoId: string, tab: TabKey) {
         if (!alive) return;
         setSociosDescuento(rows);
         setConceptOptions(
-          descuentos.map((d) => ({
-            id: d.id,
-            label: d.nro_colegio ? `${d.nro_colegio} - ${d.nombre}` : d.nombre,
-          }))
+          descuentos.map(opcionDeConcepto)
         );
       } catch (e: unknown) {
         if (alive) setSdError(mensajeDe(e) || "Error al cargar conceptos");

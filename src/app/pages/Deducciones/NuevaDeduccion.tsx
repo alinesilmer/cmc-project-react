@@ -14,6 +14,7 @@ import s from "./NuevaDeduccion.module.scss";
 import lq from "@/app/pages/Pagos/Liquidacion.module.scss";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
 import { getErrorMessage } from "@/app/shared/lib/utiles";
+import { opcionDeConcepto } from "@/app/shared/lib/conceptos";
 
 const currentYear = new Date().getFullYear();
 const YEARS = Array.from({ length: 8 }, (_, i) => currentYear + 2 - i);
@@ -112,7 +113,7 @@ const NuevaDeduccion: React.FC = () => {
     [medicos]
   );
   const descuentoOptions = useMemo<AppSearchSelectOption[]>(
-    () => descuentos.map((d) => ({ id: d.id, label: d.nro_colegio ? `${d.nro_colegio} - ${d.nombre}` : d.nombre })),
+    () => descuentos.map(opcionDeConcepto),
     [descuentos]
   );
 
@@ -216,6 +217,7 @@ const NuevaDeduccion: React.FC = () => {
               <span className={lq.rotulo}>Concepto</span>
               <AppSearchSelect
                 ordenar
+                ordenPorCodigo
                 options={descuentoOptions}
                 value={descuentoId}
                 onChange={(id) => setDescuentoId(id as number | null)}

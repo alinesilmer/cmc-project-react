@@ -42,6 +42,10 @@ import Paginador from "@/app/components/ui/Paginador/Paginador";
 import { comoErrorApi } from "@/app/shared/lib/httpErrors";
 import paleta from "@/app/styles/paleta.module.scss";
 import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
+import { etiquetaConcepto, opcionDeConcepto } from "@/app/shared/lib/conceptos";
+import { CMC_LOGO_SRC, fetchAsDataUrl } from "@/app/shared/lib/documentos/institucion";
+import { periodoLargo } from "@/app/shared/lib/documentos/pdfFormatoA";
+import { generarDeduccionesPdf, type FilaDeduccionPdf } from "./deduccionesPdf";
 
 const CONCEPTO_SALDO_DEUDOR = "Saldo deudor de débitos";
 
@@ -55,11 +59,12 @@ const PAGE_SIZE = 50;
 
 type Pestana = "pendientes" | "en_pago" | "aplicadas";
 
-// «Pendientes» incluye las vencidas (cuotas manuales de períodos anteriores): son las que más importan.
+// «Adeudadas» (estado pendiente) incluye las vencidas (cuotas manuales de períodos anteriores): son las que más importan.
+// «Pagadas» = estado aplicado.
 const PESTANAS: Array<{ key: Pestana; rotulo: string; estados: string[]; param: string }> = [
-  { key: "pendientes", rotulo: "Pendientes", estados: ["pendiente", "vencida"], param: "pendiente,vencida" },
+  { key: "pendientes", rotulo: "Adeudadas", estados: ["pendiente", "vencida"], param: "pendiente,vencida" },
   { key: "en_pago", rotulo: "En el pago", estados: ["en_pago"], param: "en_pago" },
-  { key: "aplicadas", rotulo: "Aplicadas", estados: ["aplicado"], param: "aplicado" },
+  { key: "aplicadas", rotulo: "Pagadas", estados: ["aplicado"], param: "aplicado" },
 ];
 
 type AccionLote = "agregar" | "quitar" | "caja" | "eliminar";
@@ -127,12 +132,14 @@ const DeduccionesList: React.FC = () => {
     () => medicos.map((m) => ({ id: m.id, label: m.nombre, subtitle: m.nro_socio ? `#${m.nro_socio}` : undefined })),
     [medicos],
   );
-  const descuentoOptions = useMemo<AppSearchSelectOption[]>(
-    () =>
-      descuentos.map((d) => ({
-        id: d.id,
-        label: d.nro_colegio ? `${d.nro_colegio} - ${d.nombre}` : d.nombre,
-      })),
+  const descuentoOptions = useMemo<AppSearchSelectOption[]>(() => descuentos.map(opcionDeConcepto), [descuentos]);
+
+  // «300 AFIP»: el número sale del catálogo de conceptos (la lista trae sólo el id y el nombre).
+  const conceptoDe = useCallback(
+    (r: Pick<DeduccionHistorialItem, "descuento_id" | "descuento_nombre">) => {
+      const d = r.descuento_id != null ? descuentos.find((x) => x.id === r.descuento_id) : undefined;
+      return etiquetaConcepto(d?.nro_colegio, d?.nombre ?? r.descuento_nombre);
+    },
     [descuentos],
   );
 
@@ -367,20 +374,42 @@ const DeduccionesList: React.FC = () => {
   // ── Descargas ───────────────────────────────────────────────────────
   const buildExportParams = () => filtrosBase();
 
+  // Las filas que se exportan (PDF y Excel): todas las que cumplen los filtros, no sólo la página.
+  const filasExportadas = (data: DeduccionHistorialItem[]): FilaDeduccionPdf[] =>
+    data.map((row) => ({
+      medico: row.medico_nombre,
+      nroSocio: row.nro_socio,
+      concepto: conceptoDe(row),
+      cuota: row.cuotas_total != null && row.cuotas_total > 1 ? `Cuota ${row.cuota_nro}/${row.cuotas_total}` : undefined,
+      fecha: partesFecha(row.created_at)?.fecha ?? "",
+      periodo: periodoLargo(row.mes_periodo, row.anio_periodo),
+      descontadaEl: partesFecha(row.fecha_aplicacion)?.fecha,
+      monto: Number(row.monto ?? 0),
+    }));
+
   const exportExcel = async () => {
     try {
       const { downloadExcelSheet } = await import("@/app/shared/lib/excelExport");
-      const data = await fetchDeduccionesHistorialExport(buildExportParams());
-      const rows = data.map((row) => ({
-        Medico: row.medico_nombre,
-        Concepto: row.descuento_nombre,
-        Monto: Number(row.monto ?? 0),
-        Periodo: monthLabel(row.mes_periodo, row.anio_periodo),
-        [pestana === "aplicadas" ? "Aplicada" : "Creada"]: fechaDe(row, pestana)?.fecha ?? "",
-        Cuota: row.origen === "manual" ? etiquetaCuota(row) : "",
-        Estado: row.estado,
-        Origen: row.origen,
+      const filas = filasExportadas(await fetchDeduccionesHistorialExport(buildExportParams()));
+      const aplicadas = pestana === "aplicadas";
+      // Mismo contenido que el PDF: el nº de socio y la cuota (segunda línea) van en columnas propias.
+      const rows: Record<string, unknown>[] = filas.map((f) => ({
+        "Médico": f.medico,
+        "Nº socio": f.nroSocio ?? "",
+        Concepto: f.concepto,
+        Cuota: f.cuota?.replace("Cuota ", "") ?? "",
+        Fecha: f.fecha,
+        "Período": f.periodo,
+        ...(aplicadas ? { "Descontada el": f.descontadaEl ?? "" } : {}),
+        Monto: f.monto,
       }));
+      if (filas.length > 0) {
+        rows.push({
+          "Médico": "TOTAL", "Nº socio": "", Concepto: "", Cuota: "", Fecha: "", "Período": "",
+          ...(aplicadas ? { "Descontada el": "" } : {}),
+          Monto: filas.reduce((s, f) => s + f.monto, 0),
+        });
+      }
       await downloadExcelSheet("deducciones.xlsx", "Deducciones", rows);
     } catch (e) {
       notify(getErrorMessage(e, "No se pudo exportar a Excel."), "error");
@@ -389,28 +418,11 @@ const DeduccionesList: React.FC = () => {
 
   const exportPdf = async () => {
     try {
-      const { jsPDF } = await import("jspdf");
-      const { default: autoTable } = await import("jspdf-autotable");
-      const data = await fetchDeduccionesHistorialExport(buildExportParams());
-      const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
-      doc.setFontSize(14);
-      doc.text("Deducciones", 40, 32);
-      autoTable(doc, {
-        startY: 48,
-        head: [["Médico", "Concepto", "Monto", "Período", pestana === "aplicadas" ? "Aplicada" : "Creada", "Cuota", "Estado", "Origen"]],
-        body: data.map((row) => [
-          row.medico_nombre,
-          row.descuento_nombre,
-          formatMoney(row.monto),
-          monthLabel(row.mes_periodo, row.anio_periodo),
-          fechaDe(row, pestana)?.fecha ?? "",
-          row.origen === "manual" ? etiquetaCuota(row) : "",
-          row.estado,
-          row.origen,
-        ]),
-        styles: { fontSize: 9, cellPadding: 4 },
-        headStyles: { fillColor: [27, 86, 255], textColor: 255 },
-      });
+      const [data, logo] = await Promise.all([
+        fetchDeduccionesHistorialExport(buildExportParams()),
+        fetchAsDataUrl(CMC_LOGO_SRC),
+      ]);
+      const doc = await generarDeduccionesPdf(filasExportadas(data), pestanaDef.rotulo, logo);
       doc.save("deducciones.pdf");
     } catch (e) {
       notify(getErrorMessage(e, "No se pudo exportar a PDF."), "error");
@@ -502,6 +514,7 @@ const DeduccionesList: React.FC = () => {
           <span className={lq.rotulo}>Concepto</span>
           <AppSearchSelect
             ordenar
+            ordenPorCodigo
             options={descuentoOptions}
             value={conceptoId}
             onChange={(id) => cambiarFiltro(setConceptoId)(id as number | null)}
@@ -599,7 +612,7 @@ const DeduccionesList: React.FC = () => {
                         <td>{r.medico_nombre}</td>
                         <td>
                           <span className={s.celdaDoble}>
-                            {r.descuento_nombre}
+                            {conceptoDe(r)}
                             <small>{detalle}</small>
                           </span>
                         </td>
@@ -678,8 +691,8 @@ const DeduccionesList: React.FC = () => {
                 {conceptosVisibles.length > 0 && (
                   <ul className={s.conceptos}>
                     {conceptosVisibles.map((c) => (
-                      <li key={c.nombre}>
-                        <span>{c.nombre} <em>· {c.cantidad.toLocaleString("es-AR")}</em></span>
+                      <li key={`${c.nro_colegio ?? ""}-${c.nombre}`}>
+                        <span>{etiquetaConcepto(c.nro_colegio, c.nombre)} <em>· {c.cantidad.toLocaleString("es-AR")}</em></span>
                         <b>{formatMoney(c.monto)}</b>
                       </li>
                     ))}
@@ -782,7 +795,7 @@ const DeduccionesList: React.FC = () => {
             filas={[
               { rotulo: "Deducción", valor: `#${editTarget.id}` },
               { rotulo: "Médico", valor: editTarget.medico_nombre },
-              { rotulo: "Concepto", valor: editTarget.descuento_nombre },
+              { rotulo: "Concepto", valor: conceptoDe(editTarget) },
             ]}
           />
           <DialogoCampo rotulo="Monto" htmlFor="ded-monto">
@@ -834,7 +847,7 @@ const DeduccionesList: React.FC = () => {
           <DialogoDatos
             filas={[
               { rotulo: "Médico", valor: cancelTarget.medico_nombre },
-              { rotulo: "Concepto", valor: cancelTarget.descuento_nombre },
+              { rotulo: "Concepto", valor: conceptoDe(cancelTarget) },
               { rotulo: "Monto", valor: formatMoney(cancelTarget.monto) },
               { rotulo: "Período", valor: monthLabel(cancelTarget.mes_periodo, cancelTarget.anio_periodo) },
             ]}

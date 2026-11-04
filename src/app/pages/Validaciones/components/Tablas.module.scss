@@ -121,9 +121,21 @@
   color: $danger-red;
 }
 
-.chip_pendiente {
-  background: rgba($warning-orange, 0.15);
-  color: $tono-naranja-450;
+/* Estado + motivo resumido debajo (sólo en rechazadas). */
+.estadoCelda {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+}
+
+.motivoChico {
+  max-width: 220px;
+  font-size: 11px;
+  line-height: 1.35;
+  color: $gray-600;
+  overflow-wrap: anywhere;
 }
 
 // Carga manual: el Colegio no autorizó nada, sólo registró la prestación.
@@ -251,16 +263,6 @@
     font-size: $font-size-sm;
     color: $gray-800;
   }
-}
-
-.cardMotivo {
-  margin: 0;
-  padding: $spacing-2 $spacing-3;
-  background: rgba($danger-red, 0.07);
-  border-radius: $border-radius-sm;
-  font-size: $font-size-xs;
-  color: $danger-red;
-  line-height: 1.45;
 }
 
 .cardActions {

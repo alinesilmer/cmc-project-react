@@ -1,6 +1,7 @@
 import { FileText, Inbox, Paperclip, Trash2 } from "lucide-react";
 
-import { esPendienteDeObraSocial, formatFecha, formatMoneda } from "../validaciones.types";
+import { motivoResumido } from "../motivoValidacion";
+import { formatFecha, formatMoneda } from "../validaciones.types";
 import type { EstadoPrestacion, Prestacion } from "../validaciones.types";
 import s from "./Tablas.module.scss";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
@@ -28,29 +29,35 @@ function textoDocumentos(p: Prestacion): string {
   return p.documentos.length > 0 ? `Documentos (${p.documentos.length})` : "Adjuntar";
 }
 
-const ETIQUETA_ESTADO: Record<EstadoPrestacion, string> = {
+const ETIQUETA_ESTADO: Record<Exclude<EstadoPrestacion, "pendiente">, string> = {
   autorizada: "Autorizada",
   rechazada: "Rechazada",
-  pendiente: "Pendiente",
   cargada: "Cargada",
 };
 
-function EstadoChip({
-  estado,
-  detalle,
-}: {
-  estado: EstadoPrestacion;
-  detalle?: string;
-}) {
-  // Nobis grada el `P-Pendiente` como `rechazada` en la base (importe 0, fuera de factura — ver `validaciones.types.ts::esPendienteDeObraSocial`), pero mostrarlo como un rechazo liso confunde.
-  // dato: el resto del panel sigue filtrando por `estado === "rechazada"`.
-  const pendienteDeGestion = estado === "rechazada" && esPendienteDeObraSocial(detalle);
-  const claseEstado = pendienteDeGestion ? "pendiente" : estado;
+/** `pendiente` ya no se emite (queda en filas viejas): para el Colegio es un rechazo y así se muestra. */
+const estadoVisible = (estado: EstadoPrestacion): Exclude<EstadoPrestacion, "pendiente"> =>
+  estado === "pendiente" ? "rechazada" : estado;
+
+/** El número de validación sólo vale si la prestación se cargó: en una rechazada es la referencia interna de la obra social y se confunde con una autorización. */
+const nroValidacionVisible = (p: Prestacion): string =>
+  estadoVisible(p.estado) === "rechazada" ? "—" : (p.nroValidacion ?? "—");
+
+/** El estado y, si no se cargó, el motivo resumido en letra chica (el texto completo de la obra social queda en el tooltip). */
+function EstadoChip({ estado, detalle }: { estado: EstadoPrestacion; detalle?: string }) {
+  const visible = estadoVisible(estado);
 
   return (
-    <span className={`${s.chip} ${s[`chip_${claseEstado}`]}`} title={detalle}>
-      {pendienteDeGestion ? "Pendiente" : ETIQUETA_ESTADO[estado]}
-    </span>
+    <div className={s.estadoCelda}>
+      <span className={`${s.chip} ${s[`chip_${visible}`]}`} title={detalle}>
+        {ETIQUETA_ESTADO[visible]}
+      </span>
+      {visible === "rechazada" && (
+        <span className={s.motivoChico} title={detalle}>
+          {motivoResumido(detalle)}
+        </span>
+      )}
+    </div>
   );
 }
 
@@ -113,7 +120,7 @@ export default function PrestacionesTable({
                 <td>
                   <span className={s.afiliadoNombre}>{p.nombreAfiliado}</span>
                 </td>
-                <td className={s.mono}>{p.nroValidacion ?? "—"}</td>
+                <td className={s.mono}>{nroValidacionVisible(p)}</td>
                 <td>
                   <EstadoChip estado={p.estado} detalle={p.estadoDetalle} />
                 </td>
@@ -189,17 +196,13 @@ export default function PrestacionesTable({
               </div>
               <div>
                 <dt>Validación</dt>
-                <dd className={s.mono}>{p.nroValidacion ?? "—"}</dd>
+                <dd className={s.mono}>{nroValidacionVisible(p)}</dd>
               </div>
               <div>
                 <dt>Total</dt>
                 <dd className={`${s.mono} ${s.total}`}>{formatMoneda(p.total)}</dd>
               </div>
             </dl>
-
-            {p.estado === "rechazada" && (
-              <p className={s.cardMotivo}>{p.estadoDetalle}</p>
-            )}
 
             <div className={s.cardActions}>
               {onDocumentos && conDocumentos(p, permiteAdjuntarOrden) && (!soloLectura || p.documentos.length > 0) && (

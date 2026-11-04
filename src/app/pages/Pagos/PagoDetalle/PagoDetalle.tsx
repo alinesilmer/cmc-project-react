@@ -12,7 +12,6 @@ import { type Pago, fmt, mesLabel } from "../types";
 import TabFacturas from "./tabs/TabFacturas";
 import TabDeducciones from "./tabs/TabDeducciones";
 import TabResumen from "./tabs/TabResumen";
-import TabVistaPreviaPago from "./tabs/TabVistaPreviaPago";
 import TabRecibos from "./tabs/TabRecibos";
 import TabExportables from "./tabs/TabExportables";
 import { BadgeCheck, DollarSign, Lock, LockOpen, Pencil } from "lucide-react";
@@ -20,10 +19,9 @@ import { comoErrorApi, detalleDeError, detalleObjeto } from "@/app/shared/lib/ht
 import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 type Tab =
+  | "preview"
   | "facturas"
   | "deducciones"
-  | "preview"
-  | "medico"
   | "recibos"
   | "exportables";
 const TABS: {
@@ -31,10 +29,9 @@ const TABS: {
   label: string;
   disabledWhen?: (p: import("../types").Pago | null) => boolean;
 }[] = [
-  { key: "facturas", label: "Contenido del pago" },
-  { key: "deducciones", label: "Deducciones" },
   { key: "preview", label: "Vista previa" },
-  { key: "medico", label: "Por médico" },
+  { key: "facturas", label: "Facturas" },
+  { key: "deducciones", label: "Deducciones" },
   { key: "recibos", label: "Recibos" },
   {
     key: "exportables",
@@ -43,13 +40,24 @@ const TABS: {
   },
 ];
 
+/** Un renglón de la cuenta del encabezado: el signo (+ o −) queda en la misma línea que el importe y lo colorea. */
+const CuentaItem: React.FC<{ rotulo: string; valor: string; signo?: "+" | "−" }> = ({ rotulo, valor, signo }) => (
+  <div className={lq.cabPagoItem}>
+    {signo && <i className={lq.cabPagoOp} aria-hidden="true">{signo}</i>}
+    <span>{rotulo}</span>
+    <b className={signo === "−" ? lq.menos : signo === "+" ? lq.mas : undefined}>{valor}</b>
+  </div>
+);
+
 const PagoDetalle: React.FC = () => {
   const { pagoId } = useParams<{ pagoId: string }>();
   const navigate = useNavigate();
   const notify = useAppSnackbar();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const activeTab = (searchParams.get("tab") as Tab) ?? "facturas";
+  // Los enlaces viejos a «Por médico» caen en «Recibos»: ahora es una sola solapa.
+  const tabParam = searchParams.get("tab");
+  const activeTab = ((tabParam === "medico" ? "recibos" : tabParam) as Tab | null) ?? "preview";
   const setTab = (tab: Tab) => setSearchParams({ tab });
 
   const [pago, setPago] = useState<Pago | null>(null);
@@ -149,6 +157,8 @@ const PagoDetalle: React.FC = () => {
   };
 
   const periodTitle = pago ? `${mesLabel(pago.mes)} ${pago.anio}` : "—";
+  // Con signo: a favor de los socios (+) o en contra (−).
+  const compensaciones = Number(pago?.total_compensaciones ?? 0);
 
   const renderActionButton = () => {
     if (!pago) return null;
@@ -213,50 +223,52 @@ const PagoDetalle: React.FC = () => {
         ))}
       </Franja>
 
-      <BackButton label="Volver" to="/panel/liquidation" />
+      <BackButton label="Volver al listado" to="/panel/liquidation" />
 
       {pago && (
-        <div className={lq.tira}>
-          <span className={`${lq.estado} ${pago.estado === "A" ? lq.abierto : pago.estado === "P" ? lq.aplicado : lq.cerrado}`}>
-            {pago.estado === "A" ? "Abierto" : pago.estado === "P" ? "Pagado" : "Cerrado"}
-          </span>
-          {(pago.descripcion || pago.estado === "A") && (
-            <span className={lq.tiraTexto}>
-              {pago.descripcion ?? <span className={lq.tenue}>Sin descripción</span>}
-              {pago.estado === "A" && (
-                <BotonPlano
-                  type="button"
-                  className={lq.botonIcono}
-                  onClick={openEditDesc}
-                  title="Editar descripción"
-                  aria-label="Editar descripción"
-                >
-                  <Pencil size={15} aria-hidden="true" />
-                </BotonPlano>
-              )}
+        <div className={lq.cabPago}>
+          {/* Arriba, lo que se hace: estado, descripción y botones. */}
+          <div className={lq.cabPagoArriba}>
+            <span className={`${lq.estado} ${pago.estado === "A" ? lq.abierto : pago.estado === "P" ? lq.aplicado : lq.cerrado}`}>
+              {pago.estado === "A" ? "Abierto" : pago.estado === "P" ? "Pagado" : "Cerrado"}
             </span>
-          )}
-          <div className={lq.tiraDato}>
-            <span>Bruto</span>
-            <b>${fmt(pago.total_bruto)}</b>
+            {(pago.descripcion || pago.estado === "A") && (
+              <span className={lq.tiraTexto}>
+                {pago.descripcion ?? <span className={lq.tenue}>Sin descripción</span>}
+                {pago.estado === "A" && (
+                  <BotonPlano
+                    type="button"
+                    className={lq.botonIcono}
+                    onClick={openEditDesc}
+                    title="Editar descripción"
+                    aria-label="Editar descripción"
+                  >
+                    <Pencil size={15} aria-hidden="true" />
+                  </BotonPlano>
+                )}
+              </span>
+            )}
+            <div className={lq.cabPagoAcciones}>
+              {pago.estado === "P" ? <span className={lq.tiraTexto}>Recibos emitidos</span> : renderActionButton()}
+            </div>
           </div>
-          <div className={lq.tiraDato}>
-            <span>Débitos de obras sociales</span>
-            <b className={lq.menos}>-${fmt(pago.total_debitos_os ?? pago.total_debitos)}</b>
+
+          {/* Abajo, lo que se ve: la cuenta de izquierda a derecha, con el total al final. */}
+          <div className={lq.cabPagoCuenta}>
+            <CuentaItem rotulo="Bruto" valor={`$${fmt(pago.total_bruto)}`} />
+            <CuentaItem rotulo="Débitos de obras sociales" valor={`$${fmt(pago.total_debitos_os ?? pago.total_debitos)}`} signo="−" />
+            <CuentaItem rotulo="Créditos" valor={`$${fmt(pago.total_creditos)}`} signo="+" />
+            <CuentaItem
+              rotulo="Compensaciones"
+              valor={`$${fmt(Math.abs(compensaciones))}`}
+              signo={compensaciones < 0 ? "−" : "+"}
+            />
+            <CuentaItem rotulo="Deducciones" valor={`$${fmt(pago.total_deduccion)}`} signo="−" />
+            <div className={lq.cabPagoTotal}>
+              <span>= Total a pagar</span>
+              <b>${fmt(pago.total_a_pagar ?? pago.total_neto)}</b>
+            </div>
           </div>
-          <div className={lq.tiraDato}>
-            <span>Créditos</span>
-            <b className={lq.mas}>+${fmt(pago.total_creditos)}</b>
-          </div>
-          <div className={lq.tiraDato}>
-            <span>Deducciones</span>
-            <b className={lq.menos}>-${fmt(pago.total_deduccion)}</b>
-          </div>
-          <div className={`${lq.tiraDato} ${lq.tiraNeto}`}>
-            <span>Total a pagar</span>
-            <b>${fmt(pago.total_a_pagar ?? pago.total_neto)}</b>
-          </div>
-          <div className={lq.tiraAccion}>{renderActionButton()}</div>
         </div>
       )}
 
@@ -281,9 +293,6 @@ const PagoDetalle: React.FC = () => {
           )}
           {activeTab === "preview" && (
             <TabResumen pagoId={Number(pagoId)} />
-          )}
-          {activeTab === "medico" && (
-            <TabVistaPreviaPago pago={pago} pagoId={Number(pagoId)} />
           )}
           {activeTab === "recibos" && (
             <TabRecibos pago={pago} pagoId={Number(pagoId)} />

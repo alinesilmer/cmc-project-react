@@ -87,7 +87,7 @@ export function ResultadoReplica({ resultados }: ResultadoProps) {
             <span className={`${styles.badge} ${styles[`badge_${r.estado}`]}`}>{etiquetaEstado(r)}</span>
             <span>
               {r.obra_social_nro} · {r.nombre}
-              {(r.estado === "omitido" || r.estado === "error") && r.motivo ? `: ${r.motivo}` : ""}
+              {(r.estado === "omitido" || r.estado === "error" || r.estado === "replicado") && r.motivo ? `: ${r.motivo}` : ""}
             </span>
           </li>
         ))}

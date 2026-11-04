@@ -7,6 +7,7 @@ import {
   putJSON,
   postForm,
 } from "@/app/shared/lib/http";
+import { compararPorNroConcepto } from "@/app/shared/lib/conceptos";
 
 /* ===== Tipos mínimos (podés ampliar) ===== */
 export type DoctorDocument = {
@@ -447,7 +448,8 @@ export const fetchDescuentosConceptos = async (): Promise<DescuentoConcept[]> =>
       nro_colegio: d?.nro_colegio != null ? String(d.nro_colegio).trim() : null,
     }))
     .filter((d) => d.id > 0 && d.nombre.length > 0)
-    .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
+    // Por número de concepto (el del Colegio) ascendente; a igual número, por nombre.
+    .sort((a, b) => compararPorNroConcepto(a.nro_colegio, b.nro_colegio) || a.nombre.localeCompare(b.nombre, "es"));
 };
 
 export const searchMedicosForPagador = async (query: string): Promise<MedicoSearchOption[]> => {

@@ -38,6 +38,19 @@ import Cargando from "@/app/components/ui/Cargando/Cargando";
 import Paginador from "@/app/components/ui/Paginador/Paginador";
 import paleta from "@/app/styles/paleta.module.scss";
 import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
+import { etiquetaConcepto, nombreConcepto } from "@/app/shared/lib/conceptos";
+import { CMC_LOGO_SRC, fetchAsDataUrl } from "@/app/shared/lib/documentos/institucion";
+import { periodoLargo } from "@/app/shared/lib/documentos/pdfFormatoA";
+import { generarCobranzasPdf, type FilaCobranzaPdf } from "./cobranzasPdf";
+
+/** «Octubre 2026», «Julio 2026 a septiembre 2026» o, sin filtro de período, «Todos los períodos». */
+const periodoDelFiltro = (desde: Date | null, hasta: Date | null) => {
+  const l = (d: Date) => periodoLargo(d.getMonth() + 1, d.getFullYear());
+  if (desde && hasta) return l(desde) === l(hasta) ? l(desde) : `${l(desde)} a ${l(hasta)}`;
+  if (desde) return `Desde ${l(desde)}`;
+  if (hasta) return `Hasta ${l(hasta)}`;
+  return "Todos los períodos";
+};
 
 const PAGE_SIZE = 25;
 
@@ -247,17 +260,25 @@ const CobranzasPage: React.FC = () => {
     try {
       const XLSX = await import("xlsx");
       const rows = await fetchExport(filtrosExport);
-      const data = rows.map((r) => ({
+      const data: Record<string, string | number>[] = rows.map((r) => ({
         Socio: r.medico_nombre,
         "Nro Socio": r.nro_socio,
-        Concepto: `${r.nro_colegio} - ${r.descuento_nombre}`,
-        Periodo: monthLabel(r.mes_aplicar, r.anio_aplicar),
+        Concepto: etiquetaConcepto(r.nro_colegio, r.descuento_nombre),
+        Periodo: periodoLargo(r.mes_aplicar, r.anio_aplicar),
         Monto: Number(r.calculado_total),
         Aplicado: Number(r.monto_aplicado),
         Saldo: Number(r.saldo),
         Origen: r.paga_por_caja ? "Caja" : "Liquidación",
         Estado: r.estado,
       }));
+      // Igual que el PDF, cierra con el total.
+      if (data.length > 0) {
+        const suma = (k: "Monto" | "Aplicado" | "Saldo") => data.reduce((s, d) => s + Number(d[k]), 0);
+        data.push({
+          Socio: "TOTAL", "Nro Socio": "", Concepto: "", Periodo: "",
+          Monto: suma("Monto"), Aplicado: suma("Aplicado"), Saldo: suma("Saldo"), Origen: "", Estado: "",
+        });
+      }
       const ws = XLSX.utils.json_to_sheet(data);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Cobranzas");
@@ -267,29 +288,30 @@ const CobranzasPage: React.FC = () => {
     }
   };
 
+  // Lo que se eligió en pantalla, para la cabecera del PDF.
+  const filtroDescrito = () =>
+    [
+      "con saldo",
+      origen === "caja" ? "origen caja" : origen === "liquidacion" ? "origen liquidación" : null,
+      incluirFuturos ? "con períodos futuros" : null,
+      qActivo.trim() ? `búsqueda «${qActivo.trim()}»` : null,
+    ]
+      .filter(Boolean)
+      .join(" · ");
+
   const exportPdf = async () => {
     try {
-      const { jsPDF } = await import("jspdf");
-      const { default: autoTable } = await import("jspdf-autotable");
-      const rows = await fetchExport(filtrosExport);
-      const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
-      doc.setFontSize(14);
-      doc.text("Cobranzas", 40, 32);
-      autoTable(doc, {
-        startY: 48,
-        head: [["Socio", "Nro Socio", "Concepto", "Período", "Saldo", "Origen", "Estado"]],
-        body: rows.map((r) => [
-          r.medico_nombre,
-          String(r.nro_socio),
-          `${r.nro_colegio} - ${r.descuento_nombre}`,
-          monthLabel(r.mes_aplicar, r.anio_aplicar),
-          formatMoney(r.saldo),
-          r.paga_por_caja ? "Caja" : "Liquidación",
-          r.estado,
-        ]),
-        styles: { fontSize: 9, cellPadding: 4 },
-        headStyles: { fillColor: [27, 86, 255], textColor: 255 },
-      });
+      const [rows, logo] = await Promise.all([fetchExport(filtrosExport), fetchAsDataUrl(CMC_LOGO_SRC)]);
+      const filas: FilaCobranzaPdf[] = rows.map((r) => ({
+        socio: r.medico_nombre,
+        nroSocio: r.nro_socio,
+        concepto: etiquetaConcepto(r.nro_colegio, r.descuento_nombre),
+        periodo: periodoLargo(r.mes_aplicar, r.anio_aplicar),
+        origen: r.paga_por_caja ? "Caja" : "Liquidación",
+        estado: r.estado,
+        saldo: Number(r.saldo),
+      }));
+      const doc = await generarCobranzasPdf(filas, { periodo: periodoDelFiltro(desde, hasta), filtro: filtroDescrito() }, logo);
       doc.save("cobranzas.pdf");
     } catch (e) {
       notify(getErrorMessage(e, "No se pudo exportar a PDF."), "error");
@@ -346,11 +368,11 @@ const CobranzasPage: React.FC = () => {
               <span>/</span>
               {nivelConcepto === "socios" ? (
                 <span className={styles.current}>
-                  {conceptoSel.nro_colegio} · {conceptoSel.nombre}
+                  {etiquetaConcepto(conceptoSel.nro_colegio, conceptoSel.nombre)}
                 </span>
               ) : (
                 <BotonPlano onClick={() => setNivelConcepto("socios")}>
-                  {conceptoSel.nro_colegio} · {conceptoSel.nombre}
+                  {etiquetaConcepto(conceptoSel.nro_colegio, conceptoSel.nombre)}
                 </BotonPlano>
               )}
             </>
@@ -449,7 +471,7 @@ const CobranzasPage: React.FC = () => {
                       <tr key={item.descuento_id} onClick={() => abrirConcepto(item)}>
                         <td>
                           <span className={styles.conceptCode}>{item.nro_colegio}</span>
-                          {item.nombre}
+                          {nombreConcepto(item.nro_colegio, item.nombre)}
                         </td>
                         <td className={styles.numCell}>{item.medicos_con_deuda}</td>
                         <td className={styles.numCell}>
@@ -721,7 +743,7 @@ const CobranzasPage: React.FC = () => {
                       <tr key={c.deduccion_id} style={{ cursor: "default" }}>
                         <td>
                           <span className={styles.conceptCode}>{c.nro_colegio}</span>
-                          {c.descuento_nombre}
+                          {nombreConcepto(c.nro_colegio, c.descuento_nombre)}
                         </td>
                         <td>{monthLabel(c.mes_aplicar, c.anio_aplicar)}</td>
                         <td className={styles.numCell}>{formatMoney(c.calculado_total)}</td>

@@ -1,6 +1,5 @@
-import { BadgeCheck, CircleAlert, Info, X } from "lucide-react";
+import { BadgeCheck, CircleAlert, X } from "lucide-react";
 
-import { esPendienteDeObraSocial } from "../validaciones.types";
 import type { ResultadoValidacion } from "../validaciones.types";
 import s from "./ResultadoCarga.module.scss";
 import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
@@ -14,25 +13,13 @@ interface Props {
 export default function ResultadoCarga({ resultado, onCerrar }: Props) {
   const { estado, mensaje, prestacion, mostrarAyuda = true } = resultado;
 
-  // Nobis grada el `P-Pendiente` como `rechazada` en la base (importe 0, fuera de factura), pero acá corresponde el mismo aviso que un `pendiente` real.
-  const pendienteDeGestion = estado === "rechazada" && esPendienteDeObraSocial(mensaje);
-  const estadoVisual = pendienteDeGestion ? "pendiente" : estado;
+  // `pendiente` ya no se emite; si llegara, para el Colegio es un rechazo.
+  const estadoVisual = estado === "pendiente" ? "rechazada" : estado;
 
-  const Icono =
-    estadoVisual === "autorizada" || estadoVisual === "cargada"
-      ? BadgeCheck
-      : estadoVisual === "pendiente"
-        ? Info
-        : CircleAlert;
+  const Icono = estadoVisual === "autorizada" || estadoVisual === "cargada" ? BadgeCheck : CircleAlert;
 
   const titulo =
-    estadoVisual === "autorizada"
-      ? "Autorizada"
-      : estadoVisual === "cargada"
-        ? "Cargada"
-        : estadoVisual === "pendiente"
-          ? "Falta gestión del afiliado"
-          : "No se cargó";
+    estadoVisual === "autorizada" ? "Autorizada" : estadoVisual === "cargada" ? "Cargada" : "No se cargó";
 
   return (
     <div className={`${s.resultado} ${s[`resultado_${estadoVisual}`]}`} role="status">
@@ -46,10 +33,12 @@ export default function ResultadoCarga({ resultado, onCerrar }: Props) {
 
         {prestacion && (
           <dl className={s.datos}>
-            <div>
-              <dt>N° de validación</dt>
-              <dd>{prestacion.nroValidacion}</dd>
-            </div>
+            {estadoVisual !== "rechazada" && (
+              <div>
+                <dt>N° de validación</dt>
+                <dd>{prestacion.nroValidacion}</dd>
+              </div>
+            )}
             <div>
               <dt>Práctica</dt>
               <dd>
@@ -59,7 +48,7 @@ export default function ResultadoCarga({ resultado, onCerrar }: Props) {
           </dl>
         )}
 
-        {!prestacion && estado === "rechazada" && mostrarAyuda && (
+        {!prestacion && estadoVisual === "rechazada" && mostrarAyuda && (
           <p className={s.ayuda}>
             Revisá los datos del afiliado y el código. Si el problema sigue, consultá en el Colegio.
           </p>

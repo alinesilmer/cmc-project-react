@@ -7,6 +7,7 @@ import CampoFecha from "@/app/components/ui/CampoFecha/CampoFecha";
 import Dialogo, { DialogoAviso, DialogoDatos } from "@/app/components/ui/Dialogo/Dialogo";
 import ListaCambios from "@/app/components/ui/ListaCambios/ListaCambios";
 import c from "@/app/components/ui/Paso/Campos.module.scss";
+import { ErrorReplica, ResultadoReplica } from "../../components/ReplicarFamilia/ReplicarFamiliaBlock";
 import type { EdicionPrecios } from "../useEdicionPrecios";
 import { formatFecha } from "@/app/shared/lib/fechas";
 
@@ -59,6 +60,9 @@ export default function PasoGuardar({ ed, obraNombre, alDescartar }: Props) {
         />
       )}
 
+      {ed.replicaError && <ErrorReplica mensaje={ed.replicaError} />}
+      <ResultadoReplica resultados={ed.replicaResultados} />
+
       {ed.confirmando && (
         <Dialogo
           titulo="Confirmar actualización"
@@ -80,6 +84,9 @@ export default function PasoGuardar({ ed, obraNombre, alDescartar }: Props) {
               { rotulo: "Obra social", valor: obraNombre },
               { rotulo: "Galenos", valor: ed.pendientes },
               { rotulo: "Vigencia", valor: formatFecha(ed.vigencia) },
+              ...(ed.destinos.length > 0
+                ? [{ rotulo: "Replicar en", valor: `${ed.destinos.length} obra${ed.destinos.length === 1 ? "" : "s"} social${ed.destinos.length === 1 ? "" : "es"} vinculada${ed.destinos.length === 1 ? "" : "s"}` }]
+                : []),
             ]}
           />
           <DialogoAviso>

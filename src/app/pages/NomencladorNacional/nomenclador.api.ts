@@ -75,6 +75,7 @@ import type {
   ReplicarFamiliaResult,
   ReplicarValoresFamiliaPayload,
   ReplicarGalenoFamiliaPayload,
+  ReplicarGalenosLotePayload,
   GalenosPrecioLotePayload,
   GalenosPrecioLoteResult,
   AplicarNiveladoPayload,
@@ -489,6 +490,14 @@ export const replicarGalenoEnFamilia = (
   payload: ReplicarGalenoFamiliaPayload,
 ): Promise<ReplicarFamiliaResult> =>
   postJSON<ReplicarFamiliaResult>("/api/galenos/replicar_en_familia", payload, {
+    timeout: TIMEOUT_MASIVO_MS,
+  });
+
+/** «Actualizar galenos»: replica en los otros planes el precio de varios galenos o su visibilidad. */
+export const replicarGalenosLoteEnFamilia = (
+  payload: ReplicarGalenosLotePayload,
+): Promise<ReplicarFamiliaResult> =>
+  postJSON<ReplicarFamiliaResult>("/api/galenos/replicar_lote_en_familia", payload, {
     timeout: TIMEOUT_MASIVO_MS,
   });
 
