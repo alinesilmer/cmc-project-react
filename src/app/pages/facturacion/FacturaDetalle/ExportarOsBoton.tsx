@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import { FileSpreadsheet, FileText } from "lucide-react";
 
+import { conDescarga } from "@/app/hooks/descargas";
 import { useNotify } from "@/app/hooks/useNotify";
 import { saveAs } from "@/app/shared/lib/fileSaver";
 import { mensajeDeError } from "@/app/shared/lib/httpErrors";
@@ -113,7 +114,7 @@ export default function ExportarOsBoton({ detalle }: { detalle: FacturaDetalleRe
         </>
       )}
       <BotonPlano
-        type="button" className={styles.btn} onClick={generar}
+        type="button" className={styles.btn} onClick={() => void conDescarga(generar)}
         disabled={generando || (pedirNumero && (tipo.trim() === "" || nro.trim() === ""))}
       >
         {generando ? <Cargando size={15} /> : <Icono size={15} />} {exportable.texto}

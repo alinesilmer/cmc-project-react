@@ -1,0 +1,40 @@
+@use "@/app/styles/all.scss" as *;
+
+// Ver ModalDescarga.tsx.
+
+.panel {
+  width: 22rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-3;
+  padding: $spacing-6 $spacing-6 $spacing-5;
+  text-align: center;
+  outline: none;
+}
+
+.icono {
+  display: flex;
+  color: $primary-blue;
+
+  &[data-fase="listo"] {
+    color: $success-green;
+  }
+
+  &[data-fase="error"] {
+    color: $danger-red;
+  }
+}
+
+.titulo {
+  margin: 0;
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-bold;
+  color: $primary-blue;
+}
+
+.detalle {
+  margin: 0 0 $spacing-2;
+  font-size: $font-size-lg;
+  color: $gray-600;
+}

@@ -7,6 +7,8 @@ type Props = Omit<ComponentPropsWithoutRef<"div">, "onSubmit"> & {
   onClose?: () => void;
   /** El panel es un formulario: se dibuja como <form>. */
   como?: "div" | "form";
+  /** Se dibuja por encima de los demás modales (los de MUI incluidos), para avisos que bloquean todo. */
+  alto?: boolean;
   onSubmit?: ComponentPropsWithoutRef<"form">["onSubmit"];
 };
 
@@ -15,7 +17,7 @@ type Props = Omit<ComponentPropsWithoutRef<"div">, "onSubmit"> & {
  * pantalla pone el contenido y, con `className`, el tamaño de su panel.
  */
 const MarcoModal = forwardRef<HTMLDivElement, Props>(function MarcoModal(
-  { onClose, como = "div", className, children, onSubmit, ...resto },
+  { onClose, como = "div", alto = false, className, children, onSubmit, ...resto },
   ref,
 ) {
   useEffect(() => {
@@ -36,7 +38,7 @@ const MarcoModal = forwardRef<HTMLDivElement, Props>(function MarcoModal(
   } as const;
 
   return (
-    <div className={s.fondo} onMouseDown={onClose} role="presentation">
+    <div className={`${s.fondo} ${alto ? s.alto : ""}`} onMouseDown={onClose} role="presentation">
       {como === "form" ? (
         <form
           {...(comunes as ComponentPropsWithoutRef<"form">)}

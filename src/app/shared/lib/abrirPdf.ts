@@ -4,6 +4,7 @@
 // llega después de un pedido que puede tardar. Por eso la pestaña se abre vacía en el clic
 // (`abrirVentanaPdf`) y cuando llega el archivo se le carga el PDF (`mostrarPdf`). Si el navegador
 // no deja abrir la pestaña, se descarga como antes.
+import { avisarArchivo } from "@/app/hooks/descargas";
 import { saveAs } from "./fileSaver";
 
 export function abrirVentanaPdf(): Window | null {
@@ -27,6 +28,7 @@ export async function mostrarPdf(blob: Blob, ventana: Window | null, nombreArchi
   }
   const url = URL.createObjectURL(new Blob([blob], { type: "application/pdf" }));
   ventana.location.href = url;
+  avisarArchivo();
   // La pestaña ya tiene el archivo: se libera después de darle tiempo a cargar.
   setTimeout(() => URL.revokeObjectURL(url), 5 * 60_000);
 }

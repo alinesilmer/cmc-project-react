@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { conDescarga } from "@/app/hooks/descargas";
 import { getInforme } from "@/app/pages/Pagos/pagos.api";
 import { useAppSnackbar } from "@/app/hooks/useAppSnackbar";
 import Button from "@/app/components/ui/Button/Button";
@@ -95,7 +96,7 @@ const TabExportables: React.FC<Props> = ({ pagoId }) => {
           <Button
             key={tipo}
             variant="secondary"
-            onClick={() => handleExport(tipo, filename)}
+            onClick={() => void conDescarga(() => handleExport(tipo, filename))}
             disabled={busy !== null}
           >
             {busy === tipo ? "Generando…" : label}

@@ -100,8 +100,8 @@ export default function BoletinConsultaComun() {
 
       <Cajas>
         <Caja titulo="Descargas">
-          <BotonDescarga formato="pdf" onClick={() => void handleDownloadPdf()} disabled={sinDatos || isFetching} cargando={isGeneratingPdf} />
-          <BotonDescarga formato="excel" onClick={() => void handleDownloadExcel()} disabled={sinDatos || isFetching} cargando={isGeneratingExcel} />
+          <BotonDescarga formato="pdf" onClick={() => handleDownloadPdf()} disabled={sinDatos || isFetching} cargando={isGeneratingPdf} />
+          <BotonDescarga formato="excel" onClick={() => handleDownloadExcel()} disabled={sinDatos || isFetching} cargando={isGeneratingExcel} />
         </Caja>
       </Cajas>
 

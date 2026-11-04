@@ -579,7 +579,7 @@ export default function HistorialValores({ obraNro, obraNombre }: Props) {
                 </div>
                 <BotonDescarga
                   formato="excel"
-                  onClick={() => void handleExport()}
+                  onClick={() => handleExport()}
                   disabled={displayRows.length === 0}
                   cargando={exporting}
                 />

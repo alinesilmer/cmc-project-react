@@ -2,12 +2,14 @@ import type { MouseEvent, ReactNode } from "react";
 import { Download, FileSpreadsheet, FileText } from "lucide-react";
 
 import Button from "@/app/components/ui/Button/Button";
+import { conDescarga } from "@/app/hooks/descargas";
 
 type Formato = "pdf" | "excel" | "csv";
 
 interface Props {
   formato: Formato;
-  onClick: (e: MouseEvent<HTMLButtonElement>) => void;
+  /** Si arma el archivo en segundo plano, que devuelva la promesa: el modal espera hasta que termine. */
+  onClick: (e: MouseEvent<HTMLButtonElement>) => unknown;
   disabled?: boolean;
   /** Mientras se arma el archivo: bloquea el botón y dice «Generando…». */
   cargando?: boolean;
@@ -22,7 +24,7 @@ const FORMATOS = {
   csv: { rotulo: "CSV", variante: "ghost", Icono: Download },
 } as const;
 
-/** EL botón de descarga del panel. */
+/** EL botón de descarga del panel: al apretarlo, un modal bloquea la pantalla hasta que el archivo se descargó. */
 export default function BotonDescarga({ formato, onClick, disabled = false, cargando = false, children }: Props) {
   const { rotulo, variante, Icono } = FORMATOS[formato];
   return (
@@ -31,7 +33,7 @@ export default function BotonDescarga({ formato, onClick, disabled = false, carg
       size="md"
       variant={variante}
       leftIcon={<Icono size={18} aria-hidden="true" />}
-      onClick={onClick}
+      onClick={(e) => void conDescarga(() => onClick(e))}
       disabled={disabled || cargando}
     >
       {cargando ? "Generando…" : (children ?? rotulo)}

@@ -14,6 +14,7 @@ import {
   Upload,
 } from "lucide-react";
 
+import { conDescarga } from "@/app/hooks/descargas";
 import Button from "@/app/components/ui/Button/Button";
 import { moneda, periodoLegible } from "@/app/pages/Importaciones/formato";
 import r from "@/app/pages/Validaciones/components/reporte/reporte.module.scss";
@@ -473,7 +474,7 @@ export default function ImportarPrestaciones() {
         >
           Subir planilla
         </Button>
-        <Button type="button" variant="ghost" onClick={() => void bajarPlantilla()} leftIcon={<Download size={18} />}>
+        <Button type="button" variant="ghost" onClick={() => void conDescarga(bajarPlantilla)} leftIcon={<Download size={18} />}>
           Descargar plantilla
         </Button>
         <span className={s.formato}>.xlsx · hoja «Prestaciones», una fila por prestación</span>

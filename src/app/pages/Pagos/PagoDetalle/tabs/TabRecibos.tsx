@@ -536,7 +536,7 @@ const TabRecibos: React.FC<Props> = ({ pagoId }) => {
               Eliminar
             </Button>
           )}
-          <BotonDescarga formato="pdf" onClick={(e) => { e.stopPropagation(); generatePDF(r); }} />
+          <BotonDescarga formato="pdf" onClick={(e) => { e.stopPropagation(); return generatePDF(r); }} />
         </div>
       ),
     },

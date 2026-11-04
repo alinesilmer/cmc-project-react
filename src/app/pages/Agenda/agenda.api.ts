@@ -1,6 +1,7 @@
 import { delJSON, getJSON, postJSON, putJSON } from "@/app/shared/lib/http";
 import type {
   EventoAgenda,
+  AvisoAgenda,
   EventoInput,
   OcurrenciaAgenda,
   Responsable,
@@ -34,3 +35,8 @@ export const updateEvento = (id: number, body: EventoInput): Promise<EventoAgend
   putJSON<EventoAgenda>(`${BASE}/${id}`, body);
 
 export const deleteEvento = (id: number): Promise<void> => delJSON<void>(`${BASE}/${id}`);
+
+/** Los eventos de hoy que el usuario todavía no vio; solo los administradores tienen. */
+export const listAvisos = (): Promise<AvisoAgenda[]> => getJSON<AvisoAgenda[]>(`${BASE}/avisos`);
+
+export const marcarAvisosLeidos = (): Promise<void> => postJSON<void>(`${BASE}/avisos/leer`);

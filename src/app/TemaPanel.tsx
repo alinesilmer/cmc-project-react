@@ -3,6 +3,7 @@ import { Outlet } from "react-router-dom";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 
 import Avisos from "@/app/components/layout/Avisos/Avisos";
+import ModalDescarga from "@/app/components/ui/ModalDescarga/ModalDescarga";
 import { TEMA_OSCURO_DISPONIBLE, useTema } from "@/app/hooks/tema";
 import "@/app/styles/tema.scss";
 
@@ -40,6 +41,7 @@ export default function TemaPanel() {
   return (
     <ThemeProvider theme={tema}>
       <Outlet />
+      <ModalDescarga />
       <Avisos />
     </ThemeProvider>
   );

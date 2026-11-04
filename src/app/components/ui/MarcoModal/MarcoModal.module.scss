@@ -19,6 +19,11 @@
   }
 }
 
+// Por encima de MUI (1300) y por debajo de los avisos (1400).
+.alto {
+  z-index: 1350;
+}
+
 @keyframes aparecer {
   from {
     opacity: 0;
