@@ -4,10 +4,12 @@ import styles from "../DoctorProfilePage.module.scss";
 import Copiable from "./Copiable";
 import { fmt, soloDigitos } from "./legajo.helpers";
 import type { SeccionProps } from "./SeccionProps";
+import { esCbuValido, etiquetaMedioCobro } from "@/app/shared/lib/cbu";
 
 export default function SeccionImpositivos({ data, readOnly, isEditing, campos, tituloSeccion, seccionAbierta }: SeccionProps) {
   const { can } = usePermisos();
-  const { RText, RNumber, RCondicion_impositiva, RDate } = campos;
+  const { RText, RNumber, RCondicion_impositiva, RDate, RCbu, RMedioCobro } = campos;
+  const editaCobro = isEditing && can("medico:editar_bancario");
   return (
     <>
             {tituloSeccion(
@@ -87,15 +89,35 @@ export default function SeccionImpositivos({ data, readOnly, isEditing, campos, 
                   </span>
                 )}
               </div>
+              {/* Cobro: es lo contra lo que se pagan las liquidaciones. Gate propio, independiente de medico:editar. */}
               <div>
-                <span className={styles.label}>CBU</span>
-                {/* Es el campo contra el que se pagan las liquidaciones: gate propio, independiente de medico:editar. */}
-                {isEditing && can("medico:editar_bancario") ? (
-                  RText("cbu")
+                <span className={styles.label}>Cobra por</span>
+                {editaCobro ? RMedioCobro() : <span>{etiquetaMedioCobro(data.medio_cobro)}</span>}
+              </div>
+              <div>
+                <span className={styles.label}>CBU Santander</span>
+                {editaCobro ? (
+                  RCbu("cbu_santander", "santander")
                 ) : (
-                  <Copiable label="CBU" value={data.cbu} copy={soloDigitos(data.cbu)} enabled={!readOnly}>
-                    {fmt(data.cbu)}
+                  <Copiable label="CBU Santander" value={data.cbu_santander} copy={soloDigitos(data.cbu_santander)} enabled={!readOnly}>
+                    {fmt(data.cbu_santander)}
                   </Copiable>
+                )}
+              </div>
+              <div>
+                <span className={styles.label}>CBU otro banco</span>
+                {editaCobro ? (
+                  RCbu("cbu_otro_banco", "otro")
+                ) : (
+                  <>
+                    <Copiable label="CBU otro banco" value={data.cbu_otro_banco} copy={soloDigitos(data.cbu_otro_banco)} enabled={!readOnly}>
+                      {fmt(data.cbu_otro_banco)}
+                    </Copiable>
+                    {/* Valores del sistema anterior que no son un CBU (cuenta de 10 dígitos, etc.): se conservan, pero no se pueden usar para pagar. */}
+                    {data.cbu_otro_banco && !esCbuValido(data.cbu_otro_banco) && !readOnly && (
+                      <small className={styles.errorInline}>No es un CBU válido: no se puede usar para transferir.</small>
+                    )}
+                  </>
                 )}
               </div>
               {/* Apunte interno del Colegio sobre el médico: no le corresponde verlo a él, sólo al personal que lo carga. */}

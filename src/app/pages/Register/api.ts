@@ -17,7 +17,9 @@ export type RegisterPayload = {
   officeAddress?: string | null;
   officePhone?: string | null;
   cuit?: string | null;
-  cbu?: string | null;
+  medioCobro?: "santander" | "otros_bancos" | "cheque";
+  cbuSantander?: string | null;
+  cbuOtroBanco?: string | null;
   condicionImpositiva?: string | null;
   observations?: string | null;
 
@@ -64,7 +66,9 @@ function buildRegisterPayload(form: RegisterFormData): RegisterPayload {
     officeAddress: form.officeAddress || null,
     officePhone: form.officePhone || null,
     cuit: form.cuit || null,
-    cbu: form.cbu || null,
+    medioCobro: form.medioCobro,
+    cbuSantander: form.medioCobro === "santander" ? form.cbuSantander || null : null,
+    cbuOtroBanco: form.medioCobro === "otros_bancos" ? form.cbuOtroBanco || null : null,
     condicionImpositiva: form.taxCondition || null,
     observations: form.observations || null,
 

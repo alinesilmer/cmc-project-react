@@ -88,7 +88,9 @@ export type DoctorProfile = {
   vencimiento_malapraxis?: string | null;
   cobertura?: number | null;
   vencimiento_cobertura?: string | null;
-  cbu?: string | null;
+  cbu_santander?: string | null;
+  cbu_otro_banco?: string | null;
+  medio_cobro?: "santander" | "otros_bancos" | "cheque" | null;
   observacion?: string | null;
 
   // del legajo, usados para decidir qué mostrar
@@ -176,7 +178,9 @@ export const UPDATE_WHITELIST = [
   "malapraxis",
   "vencimiento_malapraxis",
   "vencimiento_cobertura",
-  "cbu",
+  "cbu_santander",
+  "cbu_otro_banco",
+  "medio_cobro",
   "observacion",
 ] as const;
 
