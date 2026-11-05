@@ -282,6 +282,15 @@ const FacturaDetalle: React.FC = () => {
 
   const handleEliminar = (p: PrestacionConSocio) => setPendingAction({ type: "eliminar", p });
 
+  // Eliminar al médico (la cabecera) se lleva a todo su equipo; eliminar a un ayudante o al pediatra anula solo esa fila.
+  // Mismo criterio que la tabla de la carga (MedicoPrestacionesTable); el servidor solo expande si la fila es cabeza.
+  const esIntegrante = (p: PrestacionConSocio) => p.tipo_prestador === "Ayudante" || p.tipo_prestador === "Pediatra";
+  // Integrantes abiertos del equipo que se llevaría la cabecera `p` (los que apuntan a ella por `grupo_equipo_id`).
+  const equipoQueSeVa = (p: PrestacionConSocio): number[] =>
+    esIntegrante(p)
+      ? []
+      : todasFlat.filter((x) => x.id !== p.id && x.grupo_equipo_id === p.id && x.estado === "A").map((x) => x.id);
+
   const handleMoverPeriodo = (p: PrestacionConSocio, direccion: "siguiente" | "anterior") =>
     setPendingAction({ type: "mover", p, direccion });
 
@@ -290,9 +299,11 @@ const FacturaDetalle: React.FC = () => {
   ) =>
     withBusy(p.id, async () => {
       try {
-        await anularPrestacion(p.id, { motivo, detalle });
-        notify("Prestación anulada.");
-        setDetalle((cur) => cur ? quitarPrestaciones(cur, [p.id]) : cur);
+        const conEquipo = !esIntegrante(p);
+        const delEquipo = equipoQueSeVa(p);
+        await anularPrestacion(p.id, { conEquipo, motivo, detalle });
+        notify(delEquipo.length > 0 ? "Prestación y equipo anulados." : "Prestación anulada.");
+        setDetalle((cur) => cur ? quitarPrestaciones(cur, [p.id, ...delEquipo]) : cur);
         onSuccess();
       } catch (e) {
         const err = comoErrorApi(e);
@@ -776,7 +787,9 @@ const FacturaDetalle: React.FC = () => {
           isOpen
           prestacionId={pendingAction.p.id}
           descripcion={<>{pendingAction.p.nombreSocio ?? `Socio ${pendingAction.p.cod_medico}`} · código {pendingAction.p.codigo ?? "—"}</>}
-          aviso="No se puede deshacer. El médico deja de verla en su panel."
+          aviso={equipoQueSeVa(pendingAction.p).length > 0
+            ? "Se eliminan también los integrantes de su equipo. No se puede deshacer. El médico deja de verla en su panel."
+            : "No se puede deshacer. El médico deja de verla en su panel."}
           onClose={() => setPendingAction(null)}
           onConfirm={(motivo, detalle) =>
             executeEliminar(pendingAction.p, motivo, detalle, () => setPendingAction(null))}

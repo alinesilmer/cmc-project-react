@@ -4,7 +4,8 @@ import { getJSON, patchJSON, postJSON } from "@/app/shared/lib/http";
 import { useAppSnackbar } from "../../../hooks/useAppSnackbar";
 import Button from "@/app/components/ui/Button/Button";
 import Franja from "@/app/components/layout/Franja/Franja";
-import Caja from "@/app/components/ui/Caja/Caja";
+import Caja, { Filtros } from "@/app/components/ui/Caja/Caja";
+import { filtroAncho } from "@/app/components/ui/Caja/filtroAncho";
 import Dialogo, { DialogoAviso, DialogoCampo } from "@/app/components/ui/Dialogo/Dialogo";
 import SelectableTable from "@/app/components/ui/SelectableTable/SelectableTable";
 import type { ActionDef, ColumnDef } from "@/app/components/ui/SelectableTable/types";
@@ -447,8 +448,8 @@ const Compensaciones: React.FC = () => {
       </p>
 
       <Caja titulo="Configuración">
-        <div className={lq.filtros}>
-          <div className={`${lq.campo} ${lq.campoAncho}`}>
+        <Filtros>
+          <div className={`${lq.campo} ${filtroAncho}`}>
             <span className={lq.rotulo}>Socio</span>
             <AppSearchSelect
               options={opcionesMedico}
@@ -486,7 +487,7 @@ const Compensaciones: React.FC = () => {
             <span className={lq.rotulo}>Hasta</span>
             <input className={lq.input} type="date" value={filterHasta} onChange={(e) => setFilterHasta(e.target.value)} />
           </label>
-        </div>
+        </Filtros>
       </Caja>
 
       <div className={lq.barra}>

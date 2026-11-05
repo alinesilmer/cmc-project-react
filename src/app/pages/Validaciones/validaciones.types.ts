@@ -224,6 +224,29 @@ export const nombreMes = (mes: number) => MESES[mes - 1] ?? String(mes);
 
 export const formatMoneda = (valor: number) => formatoPesos.format(valor ?? 0);
 
+/**
+ * Lee un importe tipeado a la argentina: la coma es el decimal y el punto separa miles
+ * ("1.500" = 1500, "1.500,50" = 1500,5). Un único punto con 1 o 2 dígitos detrás
+ * ("12.5") se toma como decimal. Vacío o ilegible → 0.
+ */
+export function parseMonto(texto?: string): number {
+  const t = (texto ?? "").replace(/[^\d.,]/g, "");
+  if (!t) return 0;
+  const coma = t.lastIndexOf(",");
+  const punto = t.lastIndexOf(".");
+  let entero = t;
+  let decimal = "";
+  if (coma >= 0) {
+    entero = t.slice(0, coma);
+    decimal = t.slice(coma + 1);
+  } else if (punto >= 0 && t.indexOf(".") === punto && t.length - punto - 1 <= 2) {
+    entero = t.slice(0, punto);
+    decimal = t.slice(punto + 1);
+  }
+  const n = Number(entero.replace(/[.,]/g, "") + (decimal ? `.${decimal}` : ""));
+  return Number.isFinite(n) && n > 0 ? Math.round(n * 100) / 100 : 0;
+}
+
 export const formatFecha = (iso: string) => {
   const [anio, mes, dia] = iso.split("-");
   return `${dia}/${mes}/${anio}`;

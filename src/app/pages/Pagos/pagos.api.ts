@@ -3,6 +3,7 @@
 import { delJSON, delJSONBody, getJSON, patchJSON, postJSON, putJSON } from "@/app/shared/lib/http";
 import type { Parametros } from "@/app/shared/lib/http";
 import type {
+  Ajuste,
   AtencionSearchRow,
   FacturaDisp,
   FacturaPagoDisp,
@@ -97,8 +98,16 @@ export type ItemLote = {
   honorarios: number;
   gastos: number;
   observacion: string | null;
+  /** Sólo en lotes sin factura: % de este ítem que se paga (100 = todo). */
+  porcentaje_pago?: number;
 } & ({ id_atencion: number } | { medico_id: number });
-export type ItemLoteEditado = { tipo: string; honorarios: number; gastos: number; observacion: string | null };
+export type ItemLoteEditado = {
+  tipo: string;
+  honorarios: number;
+  gastos: number;
+  observacion: string | null;
+  porcentaje_pago?: number;
+};
 
 export const listarLotes = (params: Record<string, string>) =>
   getJSON<LoteListItem[]>(`${LISTA_LOTES_URL}?${new URLSearchParams(params)}`);
@@ -115,11 +124,14 @@ export const crearRefacturacion = (body: RefacturacionNueva) =>
 export const getLote = (id: Id) => getJSON<LoteAjuste>(LOTE_URL(id));
 export const buscarAtenciones = (qs: URLSearchParams | string) =>
   getJSON<AtencionSearchRow[]>(`/api/lotes/snaps/buscar_atenciones?${qs}`);
+// El mismo buscador de socios que usan Deducciones, Adelantos y Compensaciones: sólo números = N° de socio, nombre y
+// matrícula; con letras = nombre y matrícula; primero lo exacto (ver /api/medicos/selector).
 export const buscarMedicos = (q: string) =>
-  getJSON<MedicoResult[]>(`/api/medicos?q=${encodeURIComponent(q)}&limit=20&skip=0`);
-export const agregarItem = (loteId: Id, body: ItemLote) => postJSON(ITEMS_URL(loteId), body);
+  getJSON<MedicoResult[]>("/api/medicos/selector", { q, limit: 20 });
+// Los dos devuelven el ajuste ya guardado, con sus datos enriquecidos: la pantalla lo inserta o reemplaza sin recargar el lote.
+export const agregarItem = (loteId: Id, body: ItemLote) => postJSON<Ajuste>(ITEMS_URL(loteId), body);
 export const editarItem = (loteId: Id, ajusteId: number, body: ItemLoteEditado) =>
-  putJSON(ITEM_URL(loteId, ajusteId), body);
+  putJSON<Ajuste>(ITEM_URL(loteId, ajusteId), body);
 export const borrarItem = (loteId: Id, ajusteId: number) => delJSON(ITEM_URL(loteId, ajusteId));
 export const cambiarEstadoLote = (loteId: Id, estado: string) => patchJSON<LoteAjuste>(ESTADO_URL(loteId), { estado });
 

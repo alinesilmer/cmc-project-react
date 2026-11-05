@@ -34,6 +34,12 @@ export type ActionDef<T> = {
 
   /** (Opcional) Callback ejecutado tras completar TODAS las peticiones. */
   onSuccess?: (succeeded: number, failed: number) => void;
+
+  /**
+   * (Opcional) Igual que `onSuccess` pero con las filas: las que salieron bien y las que fallaron. Sirve para
+   * actualizar la lista en pantalla sacando sólo esas filas, sin volver a pedir todo (y sin `onActionComplete`).
+   */
+  onRowsDone?: (succeeded: T[], failed: T[]) => void;
 };
 
 /** Define una columna de la tabla. */

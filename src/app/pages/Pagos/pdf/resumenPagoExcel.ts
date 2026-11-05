@@ -2,7 +2,7 @@
 // refacturaciones (los lotes con signo), más compensaciones, deducciones por concepto y totales.
 import type ExcelJS from "exceljs";
 import { mesLabel } from "../types";
-import { ESTADO_PAGO, armarResumen, type VistaPrevia } from "./resumenPagoPdf";
+import { ESTADO_PAGO, armarResumen, verPorcentaje, type VistaPrevia } from "./resumenPagoPdf";
 
 const AZUL = "FF1B56FF";
 const MONEDA = "#,##0.00";
@@ -12,7 +12,8 @@ export async function generarResumenExcel(data: VistaPrevia, totalAPagar: number
   const { default: ExcelJSLib } = await import("exceljs");
   const res = armarResumen(data, totalAPagar);
   const wb = new ExcelJSLib.Workbook();
-  const ws = wb.addWorksheet("Resumen de pago");
+  // La hoja en la que se está escribiendo: las deducciones van en una segunda hoja (ver más abajo).
+  let ws = wb.addWorksheet("Resumen de pago");
 
   const relleno = (argb: string): ExcelJS.Fill => ({ type: "pattern", pattern: "solid", fgColor: { argb } });
   const encabezado = (fila: ExcelJS.Row) => {
@@ -60,15 +61,16 @@ export async function generarResumenExcel(data: VistaPrevia, totalAPagar: number
 
   // ── Una sola tabla ──
   seccion("Facturas, adelantos, lotes y refacturaciones");
-  encabezado(ws.addRow(["Obra social", "Período", "Honorarios", "Gastos", "Concepto", "ID"]));
+  encabezado(ws.addRow(["Obra social", "Período", "%", "Honorarios", "Gastos", "Concepto", "ID"]));
   res.filas.forEach((f) => {
-    const r = ws.addRow([f.os, f.periodo, f.h, f.g, f.concepto, f.id]);
-    importes(r, [3, 4], f.conSigno ? MONEDA_CON_SIGNO : MONEDA);
+    const r = ws.addRow([f.os, f.periodo, verPorcentaje(f.porcentaje), f.h, f.g, f.concepto, f.id]);
+    importes(r, [3, 4, 5], f.conSigno ? MONEDA_CON_SIGNO : MONEDA);
+    r.getCell(3).numFmt = "General";
   });
   if (res.filas.length > 0) {
-    const r = ws.addRow(["TOTAL", "", res.sumaH, res.sumaG, "", ""]);
+    const r = ws.addRow(["TOTAL", "", "", res.sumaH, res.sumaG, "", ""]);
     total(r);
-    importes(r, [3, 4]);
+    importes(r, [4, 5]);
   }
 
   // ── Compensaciones ──
@@ -84,8 +86,11 @@ export async function generarResumenExcel(data: VistaPrevia, totalAPagar: number
     importes(r, [4], MONEDA_CON_SIGNO);
   }
 
-  // ── Deducciones por concepto ──
-  seccion("Deducciones por concepto");
+  [34, 18, 10, 30, 16, 16, 24].forEach((w, i) => { ws.getColumn(i + 1).width = w; });
+
+  // ── Deducciones por concepto: en otra hoja, como en el PDF (que las pone en una hoja aparte) ──
+  ws = wb.addWorksheet("Deducciones");
+  [40, 12, 20].forEach((w, i) => { ws.getColumn(i + 1).width = w; });
   encabezado(ws.addRow(["Concepto", "Socios", "Total aplicado"]));
   res.deducciones.forEach((d) => {
     const r = ws.addRow([d.concepto, d.socios, -d.total]);
@@ -106,19 +111,18 @@ export async function generarResumenExcel(data: VistaPrevia, totalAPagar: number
   ];
   if (res.arrastreCobrado !== 0) cierre.push(["Saldo arrastrado", -res.arrastreCobrado, MONEDA_CON_SIGNO]);
   for (const [rotulo, valor, formato] of cierre) {
-    const r = ws.addRow(["", "", rotulo, valor]);
-    r.getCell(3).font = { bold: true };
-    r.getCell(4).numFmt = formato;
+    const r = ws.addRow([rotulo, "", valor]);
+    r.getCell(1).font = { bold: true };
+    r.getCell(3).numFmt = formato;
   }
-  const fin = ws.addRow(["", "", "TOTAL A PAGAR", res.total]);
+  const fin = ws.addRow(["TOTAL A PAGAR", "", res.total]);
+  fin.getCell(1).font = { bold: true, size: 13, color: { argb: "FFFFFFFF" } };
   fin.getCell(3).font = { bold: true, size: 13, color: { argb: "FFFFFFFF" } };
-  fin.getCell(4).font = { bold: true, size: 13, color: { argb: "FFFFFFFF" } };
+  fin.getCell(1).fill = relleno(AZUL);
+  fin.getCell(2).fill = relleno(AZUL);
   fin.getCell(3).fill = relleno(AZUL);
-  fin.getCell(4).fill = relleno(AZUL);
-  fin.getCell(4).numFmt = MONEDA;
+  fin.getCell(3).numFmt = MONEDA;
   fin.height = 26;
-
-  [34, 18, 30, 16, 16, 24].forEach((w, i) => { ws.getColumn(i + 1).width = w; });
 
   const buf = await wb.xlsx.writeBuffer();
   return new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });

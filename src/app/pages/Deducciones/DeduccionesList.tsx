@@ -34,6 +34,8 @@ import type {
   ResumenPagoAbierto,
 } from "./types";
 import { formatMoney, monthLabel } from "./types";
+import { Filtros } from "@/app/components/ui/Caja/Caja";
+import { filtroAncho } from "@/app/components/ui/Caja/filtroAncho";
 import lq from "@/app/pages/Pagos/Liquidacion.module.scss";
 import s from "./Deducciones.module.scss";
 import { getErrorMessage } from "@/app/shared/lib/utiles";
@@ -499,8 +501,8 @@ const DeduccionesList: React.FC = () => {
         </div>
       </div>
 
-      <div className={s.filtros}>
-        <div className={`${lq.campo} ${lq.campoAncho}`}>
+      <Filtros className={s.filtros}>
+        <div className={`${lq.campo} ${filtroAncho}`}>
           <span className={lq.rotulo}>Médico</span>
           <AppSearchSelect
             options={medicoOptions}
@@ -510,7 +512,7 @@ const DeduccionesList: React.FC = () => {
             loading={medicosLoading}
           />
         </div>
-        <div className={`${lq.campo} ${lq.campoAncho}`}>
+        <div className={`${lq.campo} ${filtroAncho}`}>
           <span className={lq.rotulo}>Concepto</span>
           <AppSearchSelect
             ordenar
@@ -531,7 +533,7 @@ const DeduccionesList: React.FC = () => {
         {hayFiltros && (
           <BotonPlano type="button" className={s.limpiar} onClick={limpiarFiltros}>Limpiar</BotonPlano>
         )}
-      </div>
+      </Filtros>
 
       {error && <div className={lq.error} role="alert">{error}</div>}
 

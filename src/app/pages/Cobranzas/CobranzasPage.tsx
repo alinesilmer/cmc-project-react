@@ -12,7 +12,7 @@ import SelectorMes from "@/app/components/ui/SelectorMes/SelectorMes";
 
 import Card from "@/app/components/ui/Card/Card";
 import SearchField from "@/app/components/ui/SearchField/SearchField";
-import Caja, { Cajas } from "@/app/components/ui/Caja/Caja";
+import Caja, { Cajas, Filtros } from "@/app/components/ui/Caja/Caja";
 import Franja, { Solapa } from "@/app/components/layout/Franja/Franja";
 import { useAppSnackbar } from "../../hooks/useAppSnackbar";
 import {
@@ -391,6 +391,7 @@ const CobranzasPage: React.FC = () => {
         <>
           <Cajas>
             <Caja titulo="Configuración">
+              <Filtros>
               <label className={styles.filtro}>
                 <span>Origen</span>
                 <select value={origen} onChange={(e) => setOrigen(e.target.value as typeof origen)}>
@@ -415,6 +416,7 @@ const CobranzasPage: React.FC = () => {
                 />
                 Futuros
               </label>
+              </Filtros>
             </Caja>
             {enLista && (
               <Caja titulo="Descargas">

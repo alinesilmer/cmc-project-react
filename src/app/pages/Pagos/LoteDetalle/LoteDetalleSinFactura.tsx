@@ -12,6 +12,7 @@ import styles from "./LoteDetalle.module.scss";
 import {
   type LoteAjuste,
   type Ajuste,
+  fechaDMA,
   fmt,
   mesLabel,
   type MedicoResult,
@@ -19,7 +20,14 @@ import {
 import { saveAs } from "@/app/shared/lib/fileSaver";
 import { Check, ArrowLeftRight } from "lucide-react";
 import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
-import { ESTADO_TONO, ITEM_URL, estadoLabel } from "@/app/pages/Pagos/LoteDetalle/utiles";
+import {
+  ESTADO_TONO,
+  ITEM_URL,
+  conAjusteAgregado,
+  conAjusteReemplazado,
+  estadoLabel,
+  sinAjustes,
+} from "@/app/pages/Pagos/LoteDetalle/utiles";
 import Dialogo from "@/app/components/ui/Dialogo/Dialogo";
 import paleta from "@/app/styles/paleta.module.scss";
 import { comoErrorApi } from "@/app/shared/lib/httpErrors";
@@ -27,7 +35,13 @@ import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 import { CMC_LOGO_SRC, fetchAsDataUrl } from "@/app/shared/lib/documentos/institucion";
 import { generarLoteSinFacturaPdf } from "../pdf/loteAjustesPdf";
 import { generarLoteExcel } from "../pdf/loteAjustesExcel";
-type EditForm = { tipo: "d" | "c"; honorarios: string; gastos: string; observacion: string };
+type EditForm = { tipo: "d" | "c"; honorarios: string; gastos: string; observacion: string; porcentaje: string };
+
+// «98,4» o «98.4» -> 98.4; NaN si no es un número. Vacío = sin porcentaje (null). Mismo rango que el % de una factura.
+const aPorcentaje = (t: string): number | null => (t.trim() === "" ? null : Number(t.trim().replace(",", ".")));
+const porcentajeValido = (n: number | null) => n === null || (Number.isFinite(n) && n > 0 && n <= 200);
+const verPorcentaje = (v: string | number | null | undefined) =>
+  `${Number(v ?? 100).toLocaleString("es-AR", { maximumFractionDigits: 2 })} %`;
 const transitionLabels: Record<string, string> = {
   cerrar: "Cerrar Lote",
   reabrir: "Reabrir Lote",
@@ -60,13 +74,15 @@ const LoteDetalleSinFactura: React.FC = () => {
   const [newHonorarios, setNewHonorarios] = useState("");
   const [newGastos, setNewGastos] = useState("");
   const [newObservacion, setNewObservacion] = useState("");
+  // % del ítem que se paga: arranca siempre en 100 (vuelve a 100 después de cada carga).
+  const [newPorcentaje, setNewPorcentaje] = useState("100");
   const [confirming, setConfirming] = useState(false);
   const medicoDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const medicoInputRef = useRef<HTMLInputElement>(null);
 
   // Edit modal
   const [editTarget, setEditTarget] = useState<Ajuste | null>(null);
-  const [editForm, setEditForm] = useState<EditForm>({ tipo: "d", honorarios: "", gastos: "", observacion: "" });
+  const [editForm, setEditForm] = useState<EditForm>({ tipo: "d", honorarios: "", gastos: "", observacion: "", porcentaje: "" });
   const [editSaving, setEditSaving] = useState(false);
 
   // State transition
@@ -96,7 +112,9 @@ const LoteDetalleSinFactura: React.FC = () => {
 
   // Debounced medico search
   useEffect(() => {
-    if (!medicoQuery.trim() || medicoQuery.length < 2) {
+    // Un solo dígito alcanza (buscar «3» trae primero al socio Nº 3). Con un socio ya elegido el campo muestra su
+    // etiqueta, y esa no se vuelve a buscar.
+    if (!medicoQuery.trim() || selectedMedico) {
       setMedicoResults([]);
       setShowMedicoDropdown(false);
       return;
@@ -117,7 +135,7 @@ const LoteDetalleSinFactura: React.FC = () => {
     return () => {
       if (medicoDebounceRef.current) clearTimeout(medicoDebounceRef.current);
     };
-  }, [medicoQuery]);
+  }, [medicoQuery, selectedMedico]);
 
   const handleSelectMedico = (m: MedicoResult) => {
     setSelectedMedico(m);
@@ -143,24 +161,32 @@ const LoteDetalleSinFactura: React.FC = () => {
       notify("Honorarios y gastos no pueden ser ambos 0.", "error");
       return;
     }
+    const porcentaje = aPorcentaje(newPorcentaje);
+    if (!porcentajeValido(porcentaje)) {
+      notify("El % de pago tiene que ser un número entre 0,01 y 200.", "error");
+      return;
+    }
     setConfirming(true);
     try {
-      await agregarItem(loteId, {
+      const nuevo = await agregarItem(loteId, {
         tipo: newTipo,
         medico_id: selectedMedico.id,
         honorarios: Number(newHonorarios),
         gastos: Number(newGastos),
         observacion: newObservacion.trim() || null,
+        ...(porcentaje !== null ? { porcentaje_pago: porcentaje } : {}),
       });
-      await loadLote();
+      // Sólo se suma la fila nueva (y se recalculan los totales): no se vuelve a pedir el lote.
+      setLote((prev) => (prev ? conAjusteAgregado(prev, nuevo) : prev));
+      // Se limpia el socio y los importes; el tipo y la observación quedan para cargar varios seguidos.
       setSelectedMedico(null);
       setMedicoQuery("");
       setMedicoResults([]);
       setNewHonorarios("");
       setNewGastos("");
-      setNewObservacion("");
-      setNewTipo("d");
+      setNewPorcentaje("100");
       notify("Ajuste agregado correctamente.");
+      medicoInputRef.current?.focus();
     } catch (e) {
       const err = comoErrorApi(e);
       const detail = err?.response?.data?.detail;
@@ -175,7 +201,13 @@ const LoteDetalleSinFactura: React.FC = () => {
 
   const openEdit = (a: Ajuste) => {
     setEditTarget(a);
-    setEditForm({ tipo: a.tipo as "d" | "c", honorarios: String(a.honorarios), gastos: String(a.gastos), observacion: a.observacion ?? "" });
+    setEditForm({
+      tipo: a.tipo as "d" | "c",
+      honorarios: String(a.honorarios),
+      gastos: String(a.gastos),
+      observacion: a.observacion ?? "",
+      porcentaje: String(Number(a.porcentaje_pago ?? 100)),
+    });
   };
 
   const handleEditSave = async () => {
@@ -192,16 +224,22 @@ const LoteDetalleSinFactura: React.FC = () => {
       notify("Honorarios y gastos no pueden ser ambos 0.", "error");
       return;
     }
+    const porcentaje = aPorcentaje(editForm.porcentaje);
+    if (!porcentajeValido(porcentaje)) {
+      notify("El % de pago tiene que ser un número entre 0,01 y 200.", "error");
+      return;
+    }
     setEditSaving(true);
     try {
-      await editarItem(loteId, editTarget.id, {
+      const editado = await editarItem(loteId, editTarget.id, {
         tipo: editForm.tipo,
         honorarios: Number(editForm.honorarios),
         gastos: Number(editForm.gastos),
         observacion: editForm.observacion.trim() || null,
+        ...(porcentaje !== null ? { porcentaje_pago: porcentaje } : {}),
       });
       setEditTarget(null);
-      await loadLote();
+      setLote((prev) => (prev ? conAjusteReemplazado(prev, editado) : prev));
       notify("Ajuste actualizado.");
     } catch (e) {
       const err = comoErrorApi(e);
@@ -297,6 +335,12 @@ const LoteDetalleSinFactura: React.FC = () => {
       render: (a) => <span>${fmt(a.gastos)}</span>,
     },
     {
+      key: "porcentaje_pago",
+      header: "% de pago",
+      alignRight: true,
+      render: (a) => <span style={{ whiteSpace: "nowrap" }}>{verPorcentaje(a.porcentaje_pago)}</span>,
+    },
+    {
       key: "total",
       header: "Total",
       alignRight: true,
@@ -314,6 +358,11 @@ const LoteDetalleSinFactura: React.FC = () => {
           {a.observacion ?? <span style={{ color: paleta.gray400 }}>—</span>}
         </span>
       ),
+    },
+    {
+      key: "created_at",
+      header: "Cargado",
+      render: (a) => <span>{fechaDMA(a.created_at)}</span>,
     },
     ...(isOpen && !isApplied ? [{
       key: "acciones",
@@ -339,6 +388,10 @@ const LoteDetalleSinFactura: React.FC = () => {
       onSuccess: (ok: number, fail: number) => {
         if (ok) notify(`${ok} ajuste${ok !== 1 ? "s eliminados" : " eliminado"}.`);
         if (fail) notify(`${fail} no pudo${fail !== 1 ? "ron" : ""} eliminarse.`, "error");
+      },
+      // Se sacan de la lista sólo las filas eliminadas; no se recarga el lote.
+      onRowsDone: (eliminadas: Ajuste[]) => {
+        if (eliminadas.length) setLote((prev) => (prev ? sinAjustes(prev, eliminadas.map((a) => a.id)) : prev));
       },
     },
   ] : [];
@@ -414,7 +467,7 @@ const LoteDetalleSinFactura: React.FC = () => {
                     ref={medicoInputRef}
                     className={styles.formInput}
                     type="text"
-                    placeholder="Buscar por nro. socio o nombre…"
+                    placeholder="Buscar por nro. socio, nombre o matrícula…"
                     value={medicoQuery}
                     onChange={(e) => {
                       setMedicoQuery(e.target.value);
@@ -446,6 +499,7 @@ const LoteDetalleSinFactura: React.FC = () => {
                               {m.nro_socio != null ? `#${m.nro_socio}` : `ID ${m.id}`}
                             </span>{" "}
                             — {m.nombre}
+                            {m.matricula_prov != null && <span style={{ color: paleta.gray500 }}> · Mat. {m.matricula_prov}</span>}
                           </div>
                         ))}
                     </div>
@@ -510,6 +564,21 @@ const LoteDetalleSinFactura: React.FC = () => {
                   />
                 </div>
 
+                {/* % de pago del ítem */}
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>% de pago</label>
+                  <input
+                    className={styles.formInput}
+                    type="text"
+                    inputMode="decimal"
+                    placeholder="100"
+                    value={newPorcentaje}
+                    onChange={(e) => setNewPorcentaje(e.target.value)}
+                    disabled={confirming}
+                    aria-invalid={!porcentajeValido(aPorcentaje(newPorcentaje))}
+                  />
+                </div>
+
                 {/* Observacion */}
                 <div className={`${styles.formGroup} ${styles.formGroupGrow}`}>
                   <label className={styles.formLabel}>Observación</label>
@@ -557,7 +626,6 @@ const LoteDetalleSinFactura: React.FC = () => {
               isSelectable={() => isOpen && !isApplied}
               emptyMessage="Sin ajustes en este lote."
               loading={loading}
-              onActionComplete={loadLote}
             />
             {ajustes.length > 0 && lote && (
               <div className={styles.totalsRow}>
@@ -629,6 +697,18 @@ const LoteDetalleSinFactura: React.FC = () => {
                   step="0.01"
                   value={editForm.gastos}
                   onChange={(e) => setEditForm((f) => ({ ...f, gastos: e.target.value }))}
+                  disabled={editSaving}
+                />
+              </div>
+              <div className={styles.formRow}>
+                <label className={styles.formLabel}>% de pago</label>
+                <input
+                  className={styles.formInput}
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="100"
+                  value={editForm.porcentaje}
+                  onChange={(e) => setEditForm((f) => ({ ...f, porcentaje: e.target.value }))}
                   disabled={editSaving}
                 />
               </div>

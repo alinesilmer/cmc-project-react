@@ -33,18 +33,9 @@
 
 // ── Consulta ────────────────────────────────────────────────────────────────
 
-.consulta {
-  display: flex;
-  flex: 1 1 100%;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: $spacing-3 $spacing-4;
-}
-
 .campo {
   display: grid;
   gap: $spacing-1;
-  min-width: 11rem;
 
   > span {
     font-size: $font-size-sm;

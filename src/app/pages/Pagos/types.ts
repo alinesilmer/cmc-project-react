@@ -102,6 +102,10 @@ export type Ajuste = {
   valor_cirujia: string | null;
   codigo_prestacion: string | null;
   fecha_prestacion: string | null;
+  // Sólo ítems de lotes sin factura: % del ítem que se paga. null = sin porcentaje cargado (importados del legacy).
+  porcentaje_pago?: string | number | null;
+  // Cuándo se cargó el ajuste (ISO).
+  created_at?: string | null;
 };
 
 // Fila de GET /api/lotes/snaps/buscar_atenciones (PrestacionCMCSearchRow).
@@ -162,8 +166,11 @@ export type LoteAjuste = {
   factura_id?: number | null;
   nro_factura?: string | null;
   factura_version?: number | null;
-  // false = la factura del lote todavía no está en el pago. Sólo informativo.
+  // La factura del lote está en el pago al que va (o está) el lote. null = no aplica.
   factura_en_pago?: boolean | null;
+  // La factura ya fue pagada (está en un pago cerrado o pagado). Un lote con factura sólo pasa al pago si
+  // factura_en_pago o factura_pagada. null = lote sin factura.
+  factura_pagada?: boolean | null;
   mes_periodo: number;
   anio_periodo: number;
   tipo: "normal" | "refacturacion" | "sin_factura";
@@ -172,6 +179,8 @@ export type LoteAjuste = {
   pago_id: number | null;
   total_debitos: string;
   total_creditos: string;
+  // Cuándo se creó el lote (ISO).
+  created_at?: string | null;
   ajustes: Ajuste[];
 };
 
@@ -217,6 +226,24 @@ export const mesLabel = (m: number) => MESES[(m - 1) % 12] ?? String(m);
 export const fmt = (n: number | string | null | undefined) =>
   formatoImporte.format(Number(n ?? 0));
 
+/** «27/08/2026» desde una fecha ISO (con o sin hora); «—» si no hay. Toma la fecha tal cual viene, sin pasar por zona horaria. */
+export const fechaDMA = (iso: string | null | undefined): string => {
+  if (!iso) return "—";
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : iso;
+};
+
+/** % de pago de un ítem (ajuste) de un lote: arranca siempre en 100 y es propio del ítem, no se toma de la factura. */
+export const PORCENTAJE_ITEM_DEFECTO = "100";
+/** «98,4» o «98.4» -> 98.4; NaN si no es un número. */
+export const aNumeroPorcentaje = (t: string | number) => Number(String(t).trim().replace(",", "."));
+export const porcentajeItemValido = (t: string | number) => {
+  const n = aNumeroPorcentaje(t);
+  return Number.isFinite(n) && n >= 0.01 && n <= 200;
+};
+export const verPorcentajeItem = (v: string | number | null | undefined) =>
+  `${Number(v ?? 100).toLocaleString("es-AR", { maximumFractionDigits: 2 })} %`;
+
 export type LoteListItem = {
   id: number;
   tipo: "normal" | "refacturacion" | "sin_factura";
@@ -229,6 +256,8 @@ export type LoteListItem = {
   nro_factura: string | null;
   total_debitos: string;
   total_creditos: string;
+  // Cuándo se creó el lote (ISO).
+  created_at?: string | null;
 };
 
 export type RefacturacionListItem = {
@@ -250,4 +279,5 @@ export type MedicoResult = {
   id: number;
   nro_socio: number | null;
   nombre: string;
+  matricula_prov?: number | null;
 };

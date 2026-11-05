@@ -58,7 +58,8 @@ import {
 import { exportarCsv, exportarExcel, exportarPdf, nombreArchivo } from "./exportar";
 import type { ColumnaExport, DocumentoReporte } from "./exportar";
 import { useObrasSociales } from "@/app/pages/ObrasSociales/useObrasSociales";
-import Caja, { Cajas } from "@/app/components/ui/Caja/Caja";
+import Caja, { Cajas, Filtros } from "@/app/components/ui/Caja/Caja";
+import { filtroAncho } from "@/app/components/ui/Caja/filtroAncho";
 import { useCatalogoEspecialidades } from "@/app/pages/Especialidades/useCatalogoEspecialidades";
 import ReporteEspecialidad from "./ReporteEspecialidad";
 import ReporteCierres from "./ReporteCierres";
@@ -502,18 +503,19 @@ const ReportesPage: React.FC = () => {
 
         <Cajas>
           <Caja titulo="Configuración">
+              <Filtros>
               <SelectorMesAnio
                 periodo={periodo}
                 onChange={(v) => cambiarFiltro(() => setPeriodo(v))}
                 anios={anios}
               />
-              <div className={styles.field}>
+              <div className={`${styles.field} ${filtroAncho}`}>
                 <label className={styles.label} htmlFor="os">
                   Obra social
                 </label>
                 <select
                   id="os"
-                  className={styles.select}
+                  className={`${styles.select} ${styles.selectFiltro}`}
                   value={obraSocial}
                   onChange={(e) => cambiarFiltro(() => setObraSocial(e.target.value))}
                 >
@@ -525,6 +527,7 @@ const ReportesPage: React.FC = () => {
                   ))}
                 </select>
               </div>
+              </Filtros>
           </Caja>
           <Caja titulo="Descargas">
             <BotonDescarga

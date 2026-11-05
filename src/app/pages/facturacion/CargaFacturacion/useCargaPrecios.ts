@@ -228,9 +228,12 @@ export function useCargaPrecios(previo: useCargaContextoCtx) {
   useEffect(() => {
     if (!precio) return;
     if (precio.por_presupuesto) {
+      // Si ya estaba en Manual el coseguro puede ser lo que cargó el operador (o lo que trae la prestación al editar/replicar): un cambio de precio no lo pisa.
+      const yaManual = tipoCalculo === "M";
       setTipoCalculo("M");
-      // Honorarios/gastos los informa la OS a mano (por eso Manual), pero el coseguro sí tiene un valor propio del código — se precarga igual.
-      setCoseguro(tipoPrestador === "ayudante" ? "0" : precio.coseguro ?? "0");
+      // Honorarios/gastos los informa la OS a mano (por eso Manual), pero el coseguro sí tiene un valor propio del código — se precarga al pasar a Manual.
+      if (tipoPrestador === "ayudante") setCoseguro("0");
+      else if (!yaManual) setCoseguro(precio.coseguro ?? "0");
       return;
     }
     if (tipoCalculo === "A") {

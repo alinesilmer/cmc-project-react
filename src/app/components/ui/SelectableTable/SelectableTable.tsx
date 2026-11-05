@@ -103,16 +103,19 @@ function SelectableTable<T extends { id: number | string }>({
     setConfirmOpen(false);
     let succeeded = 0;
     let failed = 0;
+    const filasOk: T[] = [];
+    const filasFallidas: T[] = [];
     await Promise.allSettled(
       selectedRows.map((row) =>
         executeRequest(currentAction, row)
-          .then(() => succeeded++)
-          .catch(() => failed++)
+          .then(() => { succeeded++; filasOk.push(row); })
+          .catch(() => { failed++; filasFallidas.push(row); })
       )
     );
     setExecuting(false);
     setSelected(new Set());
     currentAction.onSuccess?.(succeeded, failed);
+    currentAction.onRowsDone?.(filasOk, filasFallidas);
     onActionComplete?.();
   };
 

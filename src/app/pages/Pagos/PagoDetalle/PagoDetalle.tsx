@@ -196,7 +196,7 @@ const PagoDetalle: React.FC = () => {
           onClick={() => setConfirmAction("pagar")}
           disabled={actionBusy}
         >
-          Marcar como pagado
+          Emitir recibos y marcar como pagado
         </Button>
       </>
     );
@@ -309,7 +309,7 @@ const PagoDetalle: React.FC = () => {
             confirmAction === "cerrar"
               ? "Cerrar pago"
               : confirmAction === "pagar"
-                ? "Marcar como pagado"
+                ? "Emitir recibos y marcar como pagado"
                 : "Reabrir pago"
           }
           icono={confirmAction === "cerrar" ? Lock : confirmAction === "pagar" ? BadgeCheck : LockOpen}
@@ -325,7 +325,7 @@ const PagoDetalle: React.FC = () => {
                   : confirmAction === "cerrar"
                     ? "Sí, cerrar"
                     : confirmAction === "pagar"
-                      ? "Sí, marcar como pagado"
+                      ? "Sí, emitir y marcar como pagado"
                       : "Sí, reabrir"}
               </Button>
             </>
@@ -335,7 +335,7 @@ const PagoDetalle: React.FC = () => {
             {confirmAction === "cerrar"
               ? `¿Cerrar el pago de ${periodTitle}?`
               : confirmAction === "pagar"
-                ? `¿Marcar como pagado el pago de ${periodTitle}? Se emiten los recibos de todos los médicos y el pago ya no se puede reabrir.`
+                ? `¿Emitir los recibos y marcar como pagado el pago de ${periodTitle}? Se emiten los recibos de todos los médicos con la fecha de hoy, el pago pasa a «Pagado» y ya no se puede reabrir.`
                 : `¿Reabrir el pago de ${periodTitle}?`}
           </p>
         </Dialogo>

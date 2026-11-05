@@ -15,6 +15,16 @@ export type AjusteItem = {
   gastos: number;
   total: number;
   observacion?: string | null;
+  /** % de pago del ítem (los importes ya vienen multiplicados por él). Recibos anteriores no lo traen. */
+  porcentaje_pago?: number | null;
+};
+
+/** Texto chico bajo cada débito/crédito: la observación y, si el ítem se pagó a menos (o más) del 100 %, el porcentaje. */
+const subAjuste = (aj: AjusteItem): string | undefined => {
+  const pct = aj.porcentaje_pago != null && aj.porcentaje_pago !== 100
+    ? `al ${aj.porcentaje_pago.toLocaleString("es-AR", { maximumFractionDigits: 2 })} %`
+    : null;
+  return [aj.observacion || null, pct].filter(Boolean).join(" · ") || undefined;
 };
 
 export type LiquidacionDetalle = {
@@ -87,6 +97,8 @@ export type ReciboParaPdf = {
   medico_id: number;
   total_neto: string | number;
   emision_timestamp: string | null;
+  /** Estado del recibo: la fecha de emisión sólo vale si ya está emitido (o pagado). */
+  estado?: string;
   detalle_json?: DetalleJson;
 };
 
@@ -101,11 +113,17 @@ const periodoLargo = (p: string | null | undefined) => {
   return m ? `${mesLabel(Number(m[1]))} ${m[2]}` : (p ?? "—");
 };
 
-type TotalesOS = { h: number; g: number; b: number; d: number; c: number };
+type TotalesOS = { nombre: string; periodo: string | null; h: number; g: number; b: number; d: number; c: number };
+
+/** «11/2026» → 202611, para ordenar los períodos de una misma obra social; sin período va al final. */
+const claveFecha = (p: string | null) => {
+  const m = /^(\d{1,2})\/(\d{4})$/.exec(p ?? "");
+  return m ? Number(m[2]) * 100 + Number(m[1]) : 999999;
+};
 
 export async function generarReciboPdf(
   recibo: ReciboParaPdf,
-  pago: { mes: number; anio: number },
+  pago: { id: number; mes: number; anio: number },
   logo: string | null,
 ): Promise<jsPDF> {
   const dj = recibo.detalle_json;
@@ -114,7 +132,8 @@ export async function generarReciboPdf(
   const neto = Number(recibo.total_neto);
 
   const pdf = await PdfFormatoA.crear();
-  const nroPago = `${String(pago.mes).padStart(2, "0")}/${pago.anio}`;
+  // La fecha del recibo es la de su emisión (cuando se marca el pago como pagado), no la de cuando se generó o recalculó.
+  const emitido = recibo.estado === "emitido" || recibo.estado === "pagado";
   const socio = [info?.nro_socio, info?.nombre ?? `Médico #${recibo.medico_id}`, info?.matricula]
     .filter((x) => x != null && x !== "")
     .join(" - ");
@@ -123,49 +142,50 @@ export async function generarReciboPdf(
     titulo: "Recibo de liquidación",
     logo,
     meta: [
-      { t: "Pago ", b: `Nº ${nroPago}` },
-      { t: `Emitido el ${fechaCorta(recibo.emision_timestamp)}` },
+      { t: "Liquidación ", b: `Nº ${pago.id}` },
+      { t: emitido && recibo.emision_timestamp ? `Emitido el ${fechaCorta(recibo.emision_timestamp)}` : "Recibo sin emitir" },
     ],
     fila: { izquierda: socio, derecha: `Pago de ${mesLabel(pago.mes).toLowerCase()} ${pago.anio}` },
   });
 
   if (detalle) {
-    // ── Detalle por obra social: sin números de factura ──
+    // ── Detalle por obra social y período de sus facturas: sin números de factura ──
     const porOS = new Map<string, TotalesOS>();
-    const os = (nombre: string) => {
-      const k = nombre || "—";
-      if (!porOS.has(k)) porOS.set(k, { h: 0, g: 0, b: 0, d: 0, c: 0 });
+    const os = (nombre: string, periodo: string | null | undefined) => {
+      const k = `${nombre || "—"}|${periodo ?? ""}`;
+      if (!porOS.has(k)) porOS.set(k, { nombre: nombre || "—", periodo: periodo || null, h: 0, g: 0, b: 0, d: 0, c: 0 });
       return porOS.get(k)!;
     };
     for (const liq of Object.values(detalle.liquidaciones)) {
-      const t = os(liq.obra_social);
+      const t = os(liq.obra_social, liq.periodo);
       t.h += liq.total_honorarios; t.g += liq.total_gastos; t.b += liq.total_bruto;
       t.d += liq.debitos.total; t.c += liq.creditos.total;
     }
     for (const a of detalle.adelantos?.detalle ?? []) {
-      const t = os(a.obra_social);
+      const t = os(a.obra_social, a.periodo);
       t.h += a.total_honorarios; t.g += a.total_gastos; t.b += a.total;
     }
     for (const aj of detalle.otros_ajustes?.detalle ?? []) {
-      const t = os(aj.obra_social);
+      const t = os(aj.obra_social, aj.periodo);
       if (aj.tipo === "debito") t.d += aj.total; else t.c += aj.total;
     }
     if (porOS.size > 0) {
-      const filas: Fila[] = [...porOS.entries()]
-        .sort(([a], [b]) => a.localeCompare(b, "es"))
-        .map(([nombre, t]) => [nombre, importe(t.h), importe(t.g), importe(t.b), t.d ? conSigno(-t.d) : "", t.c ? conSigno(t.c) : ""]);
+      const filas: Fila[] = [...porOS.values()]
+        .sort((a, b) => a.nombre.localeCompare(b.nombre, "es") || claveFecha(a.periodo) - claveFecha(b.periodo))
+        .map((t) => [t.nombre, t.periodo ?? "—", importe(t.h), importe(t.g), importe(t.b), t.d ? conSigno(-t.d) : "", t.c ? conSigno(t.c) : ""]);
       const suma = [...porOS.values()].reduce(
         (s, t) => ({ h: s.h + t.h, g: s.g + t.g, b: s.b + t.b, d: s.d + t.d, c: s.c + t.c }),
         { h: 0, g: 0, b: 0, d: 0, c: 0 },
       );
       filas.push({
         total: true,
-        celdas: ["Total", importe(suma.h), importe(suma.g), importe(suma.b), suma.d ? conSigno(-suma.d) : "", suma.c ? conSigno(suma.c) : ""],
+        celdas: [{ t: "Total", cols: 2 }, importe(suma.h), importe(suma.g), importe(suma.b), suma.d ? conSigno(-suma.d) : "", suma.c ? conSigno(suma.c) : ""],
       });
       pdf.seccion("Detalle por obra social");
       pdf.tabla(
         [
-          { titulo: "Obra social", ancho: 30 },
+          { titulo: "Obra social", ancho: 31 },
+          { titulo: "Período", ancho: 10 },
           { titulo: "Honorarios", der: true },
           { titulo: "Gastos", der: true },
           { titulo: "Bruto", der: true },
@@ -180,13 +200,13 @@ export async function generarReciboPdf(
     const debitos: Fila[] = [];
     const creditos: Fila[] = [];
     for (const liq of Object.values(detalle.liquidaciones)) {
-      for (const aj of liq.debitos.detalle) debitos.push(["Débito", { t: liq.obra_social, sub: aj.observacion || undefined }, conSigno(-aj.total)]);
-      for (const aj of liq.creditos.detalle) creditos.push(["Crédito", { t: liq.obra_social, sub: aj.observacion || undefined }, conSigno(aj.total)]);
+      for (const aj of liq.debitos.detalle) debitos.push(["Débito", { t: liq.obra_social, sub: subAjuste(aj) }, conSigno(-aj.total)]);
+      for (const aj of liq.creditos.detalle) creditos.push(["Crédito", { t: liq.obra_social, sub: subAjuste(aj) }, conSigno(aj.total)]);
     }
     for (const aj of detalle.otros_ajustes?.detalle ?? []) {
       const fila: Fila = [
         aj.tipo === "debito" ? "Débito" : "Crédito",
-        { t: aj.obra_social, sub: aj.observacion || undefined },
+        { t: aj.obra_social, sub: subAjuste(aj) },
         conSigno(aj.tipo === "debito" ? -aj.total : aj.total),
       ];
       (aj.tipo === "debito" ? debitos : creditos).push(fila);
