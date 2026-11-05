@@ -9,6 +9,7 @@ import { esOrganizacion, isMedico } from "@/app/auth/roles";
 import { usePermisos } from "@/app/auth/usePermisos";
 import { hasScope } from "@/app/auth/scopes";
 import BotonTema from "@/app/components/layout/BotonTema/BotonTema";
+import CampanaAgenda from "@/app/components/layout/CampanaAgenda/CampanaAgenda";
 import BotonTexto from "@/app/components/layout/BotonTexto/BotonTexto";
 import BuscadorPantallas from "./BuscadorPantallas";
 import { ColumnasMenu } from "./ItemMenu";
@@ -256,6 +257,7 @@ export default function Topbar() {
 
         <div className={styles.right}>
           <BotonTexto />
+          <CampanaAgenda />
           <BotonTema />
 
           {isAuthenticated && (
