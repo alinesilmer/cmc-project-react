@@ -4,7 +4,8 @@ import { borrarLote, crearLoteSinFactura, listarLotes, listarFacturasParaLotes, 
 import { useAppSnackbar } from "@/app/hooks/useAppSnackbar";
 import Button from "@/app/components/ui/Button/Button";
 import Franja from "@/app/components/layout/Franja/Franja";
-import Caja from "@/app/components/ui/Caja/Caja";
+import Caja, { Filtros } from "@/app/components/ui/Caja/Caja";
+import { filtroAncho } from "@/app/components/ui/Caja/filtroAncho";
 import Dialogo, { DialogoAviso, DialogoCampo, DialogoDatos } from "@/app/components/ui/Dialogo/Dialogo";
 import SelectableTable from "@/app/components/ui/SelectableTable/SelectableTable";
 import type {
@@ -19,6 +20,7 @@ import {
   mesLabel,
   MESES,
   fmt,
+  fechaDMA,
   type LoteListItem,
 } from "../types";
 import AppSearchSelect from "@/app/components/ui/AppSearchSelect/AppSearchSelect";
@@ -266,6 +268,11 @@ const DebitosCreditos: React.FC = () => {
       ),
     },
     {
+      key: "created_at",
+      header: "Creado",
+      render: (l) => <span className={lq.monto}>{fechaDMA(l.created_at)}</span>,
+    },
+    {
       key: "estado",
       header: "Estado",
       render: (l) => (
@@ -380,8 +387,8 @@ const DebitosCreditos: React.FC = () => {
       <Franja titulo="Débitos y créditos" icono={ArrowLeftRight} />
 
       <Caja titulo="Configuración">
-        <div className={lq.filtros}>
-          <div className={`${lq.campo} ${lq.campoAncho}`}>
+        <Filtros>
+          <div className={`${lq.campo} ${filtroAncho}`}>
             <span className={lq.rotulo}>Obra social</span>
             <AppSearchSelect
               ordenar
@@ -426,7 +433,7 @@ const DebitosCreditos: React.FC = () => {
               <option value="sin_factura">Sin factura</option>
             </select>
           </label>
-        </div>
+        </Filtros>
       </Caja>
 
       <div className={lq.barra}>

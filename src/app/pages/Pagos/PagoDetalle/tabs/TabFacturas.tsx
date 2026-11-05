@@ -314,7 +314,7 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
         },
       ],
       confirmMessage: (n) =>
-        `¿Quitar ${n} factura${n !== 1 ? "s" : ""} del pago?`,
+        `¿Quitar ${n} factura${n !== 1 ? "s" : ""} del pago? Los lotes de débitos y créditos de ${n !== 1 ? "esas facturas" : "esa factura"} también salen del pago y vuelven a Cerrado, salvo los de facturas ya pagadas en un pago anterior.`,
       onSuccess: (ok, fail) => {
         if (ok) {
           notify(
@@ -498,7 +498,7 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
             <span style={{ fontSize: 12, color: paleta.gray500 }}>Poné un número entre 0,01 y 200.</span>
           ) : (
             <span style={{ fontSize: 12, color: paleta.gray500 }}>
-              Se paga el {verPorcentaje(porcentajeNum)} de lo facturado (honorarios, gastos, créditos y débitos de la factura).
+              Se paga el {verPorcentaje(porcentajeNum)} de lo facturado (honorarios y gastos de las prestaciones). Los créditos y débitos llevan su propio % de pago.
               {facturaElegida && porcentajeNum !== 100 && (
                 <> Aproximadamente ${fmt((Number(facturaElegida.IMPORTE) * porcentajeNum) / 100)} en lugar de ${fmt(facturaElegida.IMPORTE)}.</>
               )}
@@ -542,7 +542,7 @@ const TabFacturas: React.FC<Props> = ({ pago, pagoId, onRefresh }) => {
         >
           <span style={{ fontSize: 13, color: paleta.gray500 }}>
             Factura {nroFacturaMarcado(editRow.nro_factura, editRow.factura_version)} — {mesLabel(editRow.mes_periodo)} {editRow.anio_periodo}.
-            Se recalculan los renglones, créditos y débitos de la factura sobre lo facturado.
+            Se recalculan los renglones de la factura sobre lo facturado (los créditos y débitos no cambian: llevan su propio %).
           </span>
           <DialogoCampo rotulo="% de pago de la factura" htmlFor="pago-porcentaje-edit">
             <input

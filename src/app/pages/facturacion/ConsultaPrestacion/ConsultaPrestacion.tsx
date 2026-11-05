@@ -1,25 +1,32 @@
-import React, { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import React, { useCallback, useEffect, useState } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   Search,
   AlertTriangle,
   Users,
   History,
   FileSearch,
+  ArrowLeftCircle,
+  ArrowRightCircle,
 } from "lucide-react";
 
 import { useAppSnackbar } from "@/app/hooks/useAppSnackbar";
-import { fetchPrestacionFicha, listarPrestaciones } from "../api";
+import { usePermisos } from "@/app/auth/usePermisos";
+import { anularPrestacion, fetchPrestacionFicha, listarPrestaciones, marcarRevisado, moverPeriodo } from "../api";
 import { detailMessage } from "../types";
-import type { PrestacionFicha, PrestacionRead } from "../types";
+import type { MotivoEliminacion, PrestacionFicha, PrestacionRead } from "../types";
 import { formatMoney } from "../money";
 import { FranjaEstado, LineaDeTiempo } from "./HistorialFicha";
 import styles from "./ConsultaPrestacion.module.scss";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
 import BotonVer from "@/app/components/ui/BotonVer/BotonVer";
 import BackButton from "@/app/components/ui/BackButton/BackButton";
-import { comoErrorApi } from "@/app/shared/lib/httpErrors";
+import { comoErrorApi, detalleObjeto } from "@/app/shared/lib/httpErrors";
 import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
+import AccionesPrestacion, { type DireccionMover } from "../FacturaDetalle/AccionesPrestacion";
+import ConfirmActionModal from "../components/ConfirmActionModal";
+import EliminarPrestacionModal from "../components/EliminarPrestacionModal";
+import { EVENTO_PRESTACION_EDITADA } from "../CargaFacturacion/capaCargaContexto";
 
 // Igual que en MedicoPrestacionesTable: las fechas DATE de la API vienen "YYYY-MM-DD" .
 const fmtFecha = (iso: string | null | undefined): string => {
@@ -43,9 +50,13 @@ const fmtFechaHora = (iso: string | null | undefined): string => {
 
 const ORIGEN_LABEL: Record<string, string> = { colegio: "Colegio", medico: "Médico (portal)" };
 
+type AccionPendiente = { tipo: "eliminar" } | { tipo: "mover"; direccion: DireccionMover };
+
 const ConsultaPrestacion: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const notify = useAppSnackbar();
+  const { can } = usePermisos();
   const { id: idParam } = useParams<{ id: string }>();
 
   const [idInput, setIdInput] = useState("");
@@ -89,6 +100,116 @@ const ConsultaPrestacion: React.FC = () => {
     })();
     return () => { active = false; };
   }, [idParam, notify]);
+
+  // Recarga la ficha sin pasar por «Buscando…»: la pantalla no parpadea y se ve el efecto de la acción (estado, período, equipo, historial).
+  const recargarFicha = useCallback(async () => {
+    if (!idParam) return;
+    try {
+      setFicha(await fetchPrestacionFicha(idParam));
+    } catch {
+      notify("No se pudo actualizar la ficha. Recargá la página para ver los cambios.", "warning");
+    }
+  }, [idParam, notify]);
+
+  // Se guardó una edición en la capa (que se abre encima de la ficha): la ficha se actualiza por debajo.
+  useEffect(() => {
+    const alEditar = () => { void recargarFicha(); };
+    window.addEventListener(EVENTO_PRESTACION_EDITADA, alEditar);
+    return () => window.removeEventListener(EVENTO_PRESTACION_EDITADA, alEditar);
+  }, [recargarFicha]);
+
+  // ── Acciones sobre la prestación de la ficha: las mismas de las filas de los listados (ver AccionesPrestacion) ──
+  // El equipo lo resuelve el servidor igual que en las filas: tildar o mover la cabecera arrastra a su equipo, un integrante va solo.
+  const [accionEnCurso, setAccionEnCurso] = useState(false);
+  const [pendiente, setPendiente] = useState<AccionPendiente | null>(null);
+
+  const conBusy = async (fn: () => Promise<void>) => {
+    setAccionEnCurso(true);
+    try {
+      await fn();
+    } finally {
+      setAccionEnCurso(false);
+    }
+  };
+
+  const toggleRevisado = () => {
+    if (!ficha) return;
+    const id = ficha.prestacion.id_detalle_prestaciones;
+    const antes = ficha.prestacion.revisado;
+    const marcar = !antes;
+    const fijar = (valor: boolean) => setFicha((cur) => cur ? { ...cur, prestacion: { ...cur.prestacion, revisado: valor } } : cur);
+    fijar(marcar);
+    marcarRevisado(marcar ? { marcados: [id] } : { desmarcados: [id] })
+      .then(() => recargarFicha())
+      .catch((e) => {
+        fijar(antes);
+        const err = comoErrorApi(e);
+        // El servidor explica por qué (por ejemplo, que la prestación exige documentación y no la tiene).
+        notify(err?.response?.status === 409
+          ? detailMessage(err?.response?.data?.detail)
+          : "No se pudo actualizar el estado de auditoría.", "error");
+      });
+  };
+
+  const editar = () => {
+    if (!ficha) return;
+    const id = ficha.prestacion.id_detalle_prestaciones;
+    const factura = ficha.factura?.id_prestaciones;
+    // `fondo`: el formulario se abre encima de la ficha, que queda montada (CapaCarga) y se actualiza al guardar.
+    navigate(`/panel/facturacion/carga/${id}${factura != null ? `?from=${factura}` : ""}`, { state: { fondo: location } });
+  };
+
+  // Precarga el formulario de carga con los datos de esta prestación, pero como una prestación nueva (POST): la original no se toca.
+  const replicar = () => {
+    if (!ficha) return;
+    navigate(`/panel/facturacion/carga?replicar=${ficha.prestacion.id_detalle_prestaciones}`);
+  };
+
+  // Eliminar al médico (la cabecera) se lleva a todo su equipo; eliminar a un ayudante o al pediatra anula solo esa fila.
+  const esIntegrante = ficha?.prestacion.tipo_prestador === "Ayudante" || ficha?.prestacion.tipo_prestador === "Pediatra";
+  const esCabeceraConEquipo = !!ficha && !esIntegrante && ficha.prestacion.grupo_equipo_id != null
+    && ficha.prestacion.grupo_equipo_id === ficha.prestacion.id_detalle_prestaciones && ficha.equipo.length > 1;
+
+  const ejecutarEliminar = (motivo: MotivoEliminacion, detalle: string | null) => {
+    if (!ficha) return;
+    const id = ficha.prestacion.id_detalle_prestaciones;
+    return conBusy(async () => {
+      try {
+        await anularPrestacion(id, { conEquipo: !esIntegrante, motivo, detalle });
+        notify(esCabeceraConEquipo ? "Prestación y equipo anulados." : "Prestación anulada.");
+        setPendiente(null);
+        await recargarFicha();
+      } catch (e) {
+        const err = comoErrorApi(e);
+        if (err?.response?.status === 403) {
+          notify("Solo podés anular tus propias prestaciones.", "error");
+        } else {
+          notify(detailMessage(err?.response?.data?.detail) || "No se pudo anular.", "error");
+        }
+      }
+    });
+  };
+
+  const ejecutarMover = (direccion: DireccionMover) => {
+    if (!ficha) return;
+    const { id_detalle_prestaciones: id, cod_obr, periodo } = ficha.prestacion;
+    return conBusy(async () => {
+      try {
+        if (!cod_obr) {
+          notify("La prestación no tiene obra social — no se puede mover.", "error");
+          return;
+        }
+        const result = await moverPeriodo({ cod_obra: cod_obr, periodo_origen: periodo, ids: [id], direccion });
+        notify(`Prestación movida al período ${result.periodo_destino}.`);
+        setPendiente(null);
+        await recargarFicha();
+      } catch (e) {
+        const err = comoErrorApi(e);
+        const detail = err.response?.data?.detail;
+        notify(typeof detail === "string" ? detail : detalleObjeto(e)?.mensaje ?? "No se pudo mover la prestación.", "error");
+      }
+    });
+  };
 
   const buscarPorId = () => {
     const v = idInput.trim();
@@ -135,6 +256,9 @@ const ConsultaPrestacion: React.FC = () => {
   const mostrandoFicha = enModoFicha && !loadingFicha && !!ficha;
   const mostrandoNoEncontrada = enModoFicha && !loadingFicha && !ficha && !!notFoundId;
   const mostrandoLista = !enModoFicha && lista !== null;
+  // Como `conAcciones` del listado de una factura: con la factura cerrada no se toca nada. Además hace falta poder cargar (el tilde, editar, replicar y eliminar lo exigen en el servidor).
+  const facturaAbierta = !ficha?.factura || ficha.factura.estado == null || ficha.factura.estado === "A";
+  const puedeAccionar = mostrandoFicha && facturaAbierta && can("facturacion:cargar");
 
   return (
     <div className={styles.container}>
@@ -291,15 +415,33 @@ const ConsultaPrestacion: React.FC = () => {
             <BackButton onClick={volver} />
 
             <div className={styles.fichaHero}>
-              <div className={styles.fichaEncabezado}>
-                <h2 className={styles.fichaTitulo}>
-                  Registro <span className={styles.fichaId}>{ficha.prestacion.id_detalle_prestaciones}</span>
-                </h2>
-                {(ficha.nomenclador || ficha.prestacion.cod_nom) && (
-                  <span className={styles.fichaCodigo}>
-                    {ficha.nomenclador?.codigo ?? ficha.prestacion.cod_nom}
-                    {ficha.nomenclador?.descripcion && ` · ${ficha.nomenclador.descripcion}`}
-                  </span>
+              <div className={styles.fichaFilaTitulo}>
+                <div className={styles.fichaEncabezado}>
+                  <h2 className={styles.fichaTitulo}>
+                    Registro <span className={styles.fichaId}>{ficha.prestacion.id_detalle_prestaciones}</span>
+                  </h2>
+                  {(ficha.nomenclador || ficha.prestacion.cod_nom) && (
+                    <span className={styles.fichaCodigo}>
+                      {ficha.nomenclador?.codigo ?? ficha.prestacion.cod_nom}
+                      {ficha.nomenclador?.descripcion && ` · ${ficha.nomenclador.descripcion}`}
+                    </span>
+                  )}
+                </div>
+                {/* Mismas reglas que la columna de acciones de las filas: sin ella si la factura está cerrada. */}
+                {puedeAccionar && (
+                  <AccionesPrestacion
+                    className={styles.fichaAcciones}
+                    revisado={ficha.prestacion.revisado}
+                    editable={ficha.prestacion.estado === "A"}
+                    busy={accionEnCurso}
+                    esComplemento={ficha.prestacion.version > 1}
+                    puedeMover={can("facturacion:periodo")}
+                    onToggleRevisado={toggleRevisado}
+                    onEditar={editar}
+                    onReplicar={replicar}
+                    onMover={(direccion) => setPendiente({ tipo: "mover", direccion })}
+                    onEliminar={() => setPendiente({ tipo: "eliminar" })}
+                  />
                 )}
               </div>
               <p className={styles.fichaMeta}>
@@ -576,6 +718,38 @@ const ConsultaPrestacion: React.FC = () => {
           </div>
         )}
       </div>
+
+      {mostrandoFicha && ficha && pendiente?.tipo === "eliminar" && (
+        <EliminarPrestacionModal
+          isOpen
+          prestacionId={ficha.prestacion.id_detalle_prestaciones}
+          descripcion={<>{ficha.medico?.nombre ?? `Socio ${ficha.prestacion.cod_med ?? "—"}`} · código {ficha.prestacion.cod_nom ?? "—"}</>}
+          aviso={esCabeceraConEquipo
+            ? "Se eliminan también los integrantes de su equipo. No se puede deshacer. El médico deja de verla en su panel."
+            : "No se puede deshacer. El médico deja de verla en su panel."}
+          onClose={() => setPendiente(null)}
+          onConfirm={ejecutarEliminar}
+          loading={accionEnCurso}
+        />
+      )}
+
+      {mostrandoFicha && ficha && pendiente?.tipo === "mover" && (
+        <ConfirmActionModal
+          isOpen
+          icon={pendiente.direccion === "siguiente" ? ArrowRightCircle : ArrowLeftCircle}
+          variant="primary"
+          title={pendiente.direccion === "siguiente" ? "Mover al período siguiente" : "Mover al período anterior"}
+          message={
+            <>El ID Nº <strong>{ficha.prestacion.id_detalle_prestaciones}</strong> — ¿confirmás moverla al{" "}
+              <strong>{pendiente.direccion === "siguiente" ? "período siguiente" : "período anterior"}</strong>?</>
+          }
+          warning={esCabeceraConEquipo ? "Es la cabecera de un equipo: el equipo se mueve con ella." : undefined}
+          confirmLabel="Mover"
+          onClose={() => setPendiente(null)}
+          onConfirm={() => ejecutarMover(pendiente.direccion)}
+          loading={accionEnCurso}
+        />
+      )}
     </div>
   );
 };

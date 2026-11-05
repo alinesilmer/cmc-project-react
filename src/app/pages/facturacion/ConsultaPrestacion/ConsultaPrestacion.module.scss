@@ -302,6 +302,19 @@
   gap: 0.5rem;
 }
 
+// Título a la izquierda y botones de acción a la derecha; en pantallas angostas los botones pasan a la línea de abajo.
+.fichaFilaTitulo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.375rem 1rem;
+}
+
+.fichaAcciones {
+  margin-left: auto;
+}
+
 .fichaEncabezado {
   display: flex;
   flex-wrap: wrap;

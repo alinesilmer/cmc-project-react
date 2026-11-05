@@ -15,6 +15,8 @@ export type LiquidacionItem = {
   factura_version?: number | null;
   mes_periodo: number;
   anio_periodo: number;
+  /** Porcentaje de lo facturado que se paga (100 = todo). */
+  porcentaje_pago?: string | number | null;
   total_bruto: string;
   total_honorarios: string;
   total_gastos: string;
@@ -72,6 +74,7 @@ export type AdelantoItem = {
   nro_factura: string | null;
   mes_periodo: number;
   anio_periodo: number;
+  porcentaje_pago?: string | number | null;
   prestaciones: number;
   medicos: number;
   total_honorarios: string;
@@ -124,12 +127,24 @@ export type FilaFactura = {
   periodo: string;
   /** El mismo período en números («04/2026»), para el PDF. */
   periodoNum: string;
+  /** Porcentaje de pago de la fila. null: no aplica (los lotes, que lo tienen por ítem; un adelanto cuya factura no está liquidada en este pago). */
+  porcentaje: number | null;
   h: number;
   g: number;
   concepto: string;
   id: string;
   /** Los lotes llevan signo: «-» si restan y «+» si suman. */
   conSigno: boolean;
+};
+
+/** «98,4 %»; «—» si la fila no tiene porcentaje (no aplica). */
+export const verPorcentaje = (p: number | null): string =>
+  p == null || !Number.isFinite(p) ? "—" : `${p.toLocaleString("es-AR", { maximumFractionDigits: 2 })} %`;
+
+const aPorcentaje = (v: string | number | null | undefined): number | null => {
+  if (v == null || v === "") return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
 };
 
 /** El período que más se repite entre las facturas (el que se está liquidando). */
@@ -180,7 +195,7 @@ export function armarResumen(data: VistaPrevia, totalAPagar: number): ResumenArm
   for (const l of liquidaciones.items) {
     filas.push({
       os: etiquetaOS(l.obra_social_id, l.obra_social_nombre), orden: 0, periodo: periodo(l.mes_periodo, l.anio_periodo),
-      periodoNum: periodoNum(l.mes_periodo, l.anio_periodo),
+      periodoNum: periodoNum(l.mes_periodo, l.anio_periodo), porcentaje: aPorcentaje(l.porcentaje_pago) ?? 100,
       h: Number(l.total_honorarios), g: Number(l.total_gastos), concepto: "Factura",
       id: nroFacturaMarcado(l.nro_factura, l.factura_version), conSigno: false,
     });
@@ -188,7 +203,7 @@ export function armarResumen(data: VistaPrevia, totalAPagar: number): ResumenArm
   for (const a of adelantos.items) {
     filas.push({
       os: etiquetaOS(a.obra_social_id, a.obra_social_nombre), orden: 1, periodo: periodo(a.mes_periodo, a.anio_periodo),
-      periodoNum: periodoNum(a.mes_periodo, a.anio_periodo),
+      periodoNum: periodoNum(a.mes_periodo, a.anio_periodo), porcentaje: aPorcentaje(a.porcentaje_pago),
       h: Number(a.total_honorarios), g: Number(a.total_gastos), concepto: "Adelanto",
       id: nroFacturaMarcado(a.nro_factura, null), conSigno: false,
     });
@@ -203,8 +218,11 @@ export function armarResumen(data: VistaPrevia, totalAPagar: number): ResumenArm
     filas.push({
       os: etiquetaOS(lote.obra_social_id, lote.obra_social_nombre),
       orden: sinFactura ? 3 : refac ? 4 : 2,
-      periodo: sinFactura ? "" : periodo(lote.mes_periodo, lote.anio_periodo),
-      periodoNum: sinFactura ? "" : periodoNum(lote.mes_periodo, lote.anio_periodo),
+      // El lote sin factura también tiene período (el de la factura que adelanta o ajusta): se muestra igual que el resto.
+      periodo: periodo(lote.mes_periodo, lote.anio_periodo),
+      periodoNum: periodoNum(lote.mes_periodo, lote.anio_periodo),
+      // El porcentaje es de cada ítem, no del lote: la fila del lote no lo muestra.
+      porcentaje: null,
       h: desglosado ? Number(lote.total_honorarios) : neto,
       g: desglosado ? Number(lote.total_gastos) : 0,
       concepto: sinFactura ? "Lote s/fact" : refac ? "Refacturación" : "Lote",
@@ -214,8 +232,10 @@ export function armarResumen(data: VistaPrevia, totalAPagar: number): ResumenArm
   }
   filas.sort((a, b) => a.os.localeCompare(b.os, "es", { numeric: true }) || a.orden - b.orden);
 
-  const sumaH = filas.reduce((s, f) => s + f.h, 0);
-  const sumaG = filas.reduce((s, f) => s + f.g, 0);
+  // Los totales se redondean al centavo: sumar importes con decimales deja ruido de punto flotante (484774568.03999996).
+  const centavos = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
+  const sumaH = centavos(filas.reduce((s, f) => s + f.h, 0));
+  const sumaG = centavos(filas.reduce((s, f) => s + f.g, 0));
 
   // Totales: los de la API, para que coincidan con el encabezado del pago.
   const r = data.resumen;
@@ -228,18 +248,18 @@ export function armarResumen(data: VistaPrevia, totalAPagar: number): ResumenArm
     sumaG,
     cantidadObrasSociales: new Set(filas.map((f) => f.os)).size,
     compensaciones: compensaciones.items,
-    compensacionesNeto: Number(compensaciones.totales.neto),
+    compensacionesNeto: centavos(Number(compensaciones.totales.neto)),
     deducciones: deducciones.items.map((d) => ({
       concepto: etiquetaConcepto(d.nro_colegio, d.descuento_nombre),
       socios: d.cantidad_socios,
       total: Number(d.total_monto),
     })),
-    deduccionesTotal: Number(deducciones.totales.total_monto),
-    brutosYDebitos: r ? Number(r.total_bruto) - Number(r.total_debitos_os) + Number(r.total_creditos) : sumaH + sumaG,
-    compensacionesTotal: r ? Number(r.total_compensaciones) : Number(compensaciones.totales.neto),
-    deduccionesAplicadas: r ? Number(r.total_deduccion) : Number(deducciones.totales.total_monto),
-    arrastreCobrado: r ? Number(r.total_arrastres_cobrado) : 0,
-    total: totalAPagar,
+    deduccionesTotal: centavos(Number(deducciones.totales.total_monto)),
+    brutosYDebitos: centavos(r ? Number(r.total_bruto) - Number(r.total_debitos_os) + Number(r.total_creditos) : sumaH + sumaG),
+    compensacionesTotal: centavos(r ? Number(r.total_compensaciones) : Number(compensaciones.totales.neto)),
+    deduccionesAplicadas: centavos(r ? Number(r.total_deduccion) : Number(deducciones.totales.total_monto)),
+    arrastreCobrado: centavos(r ? Number(r.total_arrastres_cobrado) : 0),
+    total: centavos(totalAPagar),
   };
 }
 
@@ -252,9 +272,9 @@ export async function generarResumenPdf(
 
   // ── Una sola tabla ──
   const tabla: Fila[] = res.filas.map((f) => [
-    f.os, f.periodoNum, f.conSigno ? conSigno(f.h) : importe(f.h), f.conSigno ? conSigno(f.g) : importe(f.g), f.concepto, f.id,
+    f.os, f.periodoNum, verPorcentaje(f.porcentaje), f.conSigno ? conSigno(f.h) : importe(f.h), f.conSigno ? conSigno(f.g) : importe(f.g), f.concepto, f.id,
   ]);
-  if (res.filas.length > 0) tabla.push({ total: true, celdas: [{ t: "Total", cols: 2 }, importe(res.sumaH), importe(res.sumaG), "", ""] });
+  if (res.filas.length > 0) tabla.push({ total: true, celdas: [{ t: "Total", cols: 3 }, importe(res.sumaH), importe(res.sumaG), "", ""] });
 
   // ── Cabecera ──
   const pdf = await PdfFormatoA.crear();
@@ -272,12 +292,13 @@ export async function generarResumenPdf(
   pdf.seccion("Facturas, adelantos, lotes y refacturaciones");
   pdf.tabla(
     [
-      { titulo: "Obra social", ancho: 32 },
+      { titulo: "Obra social", ancho: 28 },
       { titulo: "Período", ancho: 10 },
+      { titulo: "%", ancho: 8, der: true },
       { titulo: "Honorarios", ancho: 16, der: true },
       { titulo: "Gastos", ancho: 13, der: true },
-      { titulo: "Concepto", ancho: 13 },
-      { titulo: "ID", ancho: 16 },
+      { titulo: "Concepto", ancho: 12 },
+      { titulo: "ID", ancho: 13 },
     ],
     tabla,
   );
@@ -293,6 +314,8 @@ export async function generarResumenPdf(
     );
   }
 
+  // Las deducciones van siempre en una hoja aparte.
+  pdf.hojaNueva();
   pdf.seccion("Deducciones por concepto");
   pdf.tabla(
     [{ titulo: "Concepto" }, { titulo: "Socios", ancho: 14, der: true }, { titulo: "Total aplicado", ancho: 24, der: true }],

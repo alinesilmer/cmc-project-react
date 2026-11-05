@@ -10,7 +10,7 @@ import { formatFecha, hoyISO } from "@/app/shared/lib/fechas";
 import CampoFecha from "@/app/components/ui/CampoFecha/CampoFecha";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
 import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
-import Caja, { Cajas } from "@/app/components/ui/Caja/Caja";
+import Caja, { Cajas, Filtros } from "@/app/components/ui/Caja/Caja";
 import Franja from "@/app/components/layout/Franja/Franja";
 import SearchField from "@/app/components/ui/SearchField/SearchField";
 import { exportarExcel, exportarPdf } from "@/app/pages/Reportes/exportar";
@@ -173,8 +173,7 @@ export default function Boletin() {
       <Cajas>
         <Caja titulo="Configuración">
           {/* Enter en cualquiera de los dos campos consulta, como el botón. */}
-          <form
-            className={styles.consulta}
+          <Filtros
             onSubmit={(e) => {
               e.preventDefault();
               if (!loading && !codigoVacio) void handleConsultar();
@@ -209,7 +208,7 @@ export default function Boletin() {
             >
               Buscar
             </Button>
-          </form>
+          </Filtros>
         </Caja>
 
         <Caja titulo="Descargas">

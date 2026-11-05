@@ -31,11 +31,8 @@ $aire: 1rem;
 }
 
 // ── Filtros: una sola tarjeta ─────────────────────────────────────────────────
+// La fila (flex, wrap, gap) la pone <Filtros>; acá sólo la barra con borde.
 .filtros {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: $spacing-3 $spacing-4;
   padding: $spacing-3 $spacing-4;
   background: $white;
   border: 1px solid $gray-200;

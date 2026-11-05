@@ -17,11 +17,14 @@
 .tableCard {
   display: flex;
   flex-direction: column;
-  overflow: hidden;
   background: $white;
   border: 1px solid $gray-200;
   border-radius: $radio-lg;
 }
+
+// La tabla recorta sus esquinas redondeadas. El panel de carga NO: lleva adentro el desplegable de socios
+// (.autocompleteDropdown, posición absoluta), y un overflow: hidden lo cortaba a la altura del panel.
+.tableCard { overflow: hidden; }
 
 .panelHeader,
 .panelToolbar {
@@ -197,7 +200,8 @@
   right: 0;
   left: 0;
   z-index: 100;
-  max-height: 12.5rem;
+  // Con 20 resultados se ve casi entera; en pantallas bajas no pasa de la mitad del alto y se desplaza adentro.
+  max-height: min(20rem, 50vh);
   overflow-y: auto;
   background: $white;
   border: 1px solid $gray-200;

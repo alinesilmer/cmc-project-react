@@ -1,5 +1,4 @@
 import React from "react";
-import { Pencil, Copy, ArrowRightCircle, ArrowLeftCircle, Trash2 } from "lucide-react";
 
 import type { PrestacionFacturaDetalle, Tipo } from "../types";
 import { TIPO_ABREV, TIPO_LABEL, TIPO_PRESTADOR_ABREV } from "../constants";
@@ -9,7 +8,7 @@ import comun from "./Comun.module.scss";
 import styles from "./FilaPrestacion.module.scss";;
 import { viaLabel } from "@/app/pages/facturacion/utiles";
 import { fmtFecha } from "@/app/pages/facturacion/utiles";
-import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
+import AccionesPrestacion from "./AccionesPrestacion";
 
 // La prestación "aplanada" con los datos de su socio ya resueltos .
 export interface PrestacionConSocio extends PrestacionFacturaDetalle {
@@ -174,7 +173,6 @@ function FilaPrestacion({
   p, columnas, acciones, busy, esComplemento, conAcciones, indent, ultimoDelEquipo, equipoHead, clinicaInline, className,
 }: Props) {
   const editable = p.estado === "A";
-  const tituloMover = (txt: string) => (p.revisado ? "Está marcada: desmarcala para moverla" : txt);
   return (
     <tr
       data-prestacion-id={p.id}
@@ -203,68 +201,17 @@ function FilaPrestacion({
       </td>
       {columnas.map((c) => renderCelda(p, c))}
       {conAcciones && <td>
-        {(
-          <div className={styles.actionsCell}>
-            <span className={`${styles.auditCheckboxWrap} ${p.revisado ? styles.auditCheckboxOn : ""}`}>
-              <input
-                type="checkbox"
-                className={styles.auditCheckbox}
-                checked={p.revisado}
-                onChange={() => acciones.onToggleRevisado(p)}
-                title="Marcar como auditado"
-              />
-            </span>
-            <BotonPlano
-              type="button"
-              className={`${styles.iconBtn} ${styles.iconBtnEdit}`}
-              title="Editar"
-              disabled={!editable || busy}
-              onClick={() => acciones.onEditar(p)}
-            >
-              <Pencil size={14} />
-            </BotonPlano>
-            <BotonPlano
-              type="button"
-              className={styles.iconBtn}
-              title="Replicar carga"
-              disabled={busy}
-              onClick={() => acciones.onReplicar(p)}
-            >
-              <Copy size={14} />
-            </BotonPlano>
-            {!esComplemento && (
-              <>
-                <BotonPlano
-                  type="button"
-                  className={`${styles.iconBtn} ${styles.iconBtnMove}`}
-                  title={tituloMover("Mover al período anterior")}
-                  disabled={!editable || busy || p.revisado}
-                  onClick={() => acciones.onMover(p, "anterior")}
-                >
-                  <ArrowLeftCircle size={15} />
-                </BotonPlano>
-                <BotonPlano
-                  type="button"
-                  className={`${styles.iconBtn} ${styles.iconBtnMove}`}
-                  title={tituloMover("Mover al período siguiente")}
-                  disabled={!editable || busy || p.revisado}
-                  onClick={() => acciones.onMover(p, "siguiente")}
-                >
-                  <ArrowRightCircle size={15} />
-                </BotonPlano>
-              </>
-            )}
-            <BotonPlano
-              type="button"
-              className={`${styles.iconBtn} ${styles.iconBtnDelete}`}
-              title="Eliminar"
-              disabled={!editable || busy}
-              onClick={() => acciones.onEliminar(p)}
-            >
-              <Trash2 size={14} />
-            </BotonPlano>
-          </div>
-        )}
+        <AccionesPrestacion
+          revisado={p.revisado}
+          editable={editable}
+          busy={busy}
+          esComplemento={esComplemento}
+          onToggleRevisado={() => acciones.onToggleRevisado(p)}
+          onEditar={() => acciones.onEditar(p)}
+          onReplicar={() => acciones.onReplicar(p)}
+          onMover={(direccion) => acciones.onMover(p, direccion)}
+          onEliminar={() => acciones.onEliminar(p)}
+        />
       </td>}
     </tr>
   );

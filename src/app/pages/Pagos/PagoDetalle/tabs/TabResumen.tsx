@@ -9,7 +9,7 @@ import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
 import paleta from "@/app/styles/paleta.module.scss";
 import { comoErrorApi } from "@/app/shared/lib/httpErrors";
 import { CMC_LOGO_SRC, fetchAsDataUrl } from "@/app/shared/lib/documentos/institucion";
-import { armarResumen, generarResumenPdf, type VistaPrevia } from "../../pdf/resumenPagoPdf";
+import { armarResumen, generarResumenPdf, verPorcentaje, type VistaPrevia } from "../../pdf/resumenPagoPdf";
 import { generarResumenExcel } from "../../pdf/resumenPagoExcel";
 
 type Props = { pagoId: number };
@@ -104,6 +104,7 @@ const TabResumen: React.FC<Props> = ({ pagoId }) => {
               <tr>
                 <th>Obra social</th>
                 <th>Período</th>
+                <th className={styles.numCell}>%</th>
                 <th className={styles.numCell}>Honorarios</th>
                 <th className={styles.numCell}>Gastos</th>
                 <th>Concepto</th>
@@ -113,7 +114,7 @@ const TabResumen: React.FC<Props> = ({ pagoId }) => {
             <tbody>
               {res.filas.length === 0 && (
                 <tr>
-                  <td colSpan={6} className={styles.emptyCell}>
+                  <td colSpan={7} className={styles.emptyCell}>
                     Sin facturas, adelantos ni lotes en este pago.
                   </td>
                 </tr>
@@ -122,6 +123,7 @@ const TabResumen: React.FC<Props> = ({ pagoId }) => {
                 <tr key={i}>
                   <td style={{ fontWeight: 500 }}>{f.os}</td>
                   <td style={{ whiteSpace: "nowrap" }}>{f.periodo}</td>
+                  <td className={styles.numCell} style={{ whiteSpace: "nowrap" }}>{verPorcentaje(f.porcentaje)}</td>
                   <td className={styles.numCell}>{monto(f.h, f.conSigno)}</td>
                   <td className={styles.numCell}>{monto(f.g, f.conSigno)}</td>
                   <td>{f.concepto}</td>
@@ -132,7 +134,7 @@ const TabResumen: React.FC<Props> = ({ pagoId }) => {
             {res.filas.length > 0 && (
               <tfoot>
                 <tr className={styles.totalsRow}>
-                  <td colSpan={2}>TOTAL</td>
+                  <td colSpan={3}>TOTAL</td>
                   <td className={styles.numCell}>${fmt(res.sumaH)}</td>
                   <td className={styles.numCell}>${fmt(res.sumaG)}</td>
                   <td colSpan={2} />

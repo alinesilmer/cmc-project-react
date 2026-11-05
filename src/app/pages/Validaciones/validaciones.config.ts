@@ -257,15 +257,15 @@ export const OBRAS_SOCIALES: ObraSocialConfig[] = [
         placeholder: "12345678901234",
         sufijo: { name: "barraAfiliado", maxLength: 2, placeholder: "00" },
       },
+      campoCodigo,
       {
         name: "coseguro",
         label: "Coseguro",
         tipo: "moneda",
         required: false,
         placeholder: "0,00",
-        hint: "Dejalo en 0 si la prestación no tiene coseguro",
+        hint: "Opcional: si lo dejás vacío se carga sin coseguro",
       },
-      campoCodigo,
     ],
   },
 

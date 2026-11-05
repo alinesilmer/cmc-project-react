@@ -36,22 +36,12 @@
   }
 }
 
-// ── Filtros (dentro de la Caja «Configuración») ───────────────────────────────
-.filtros {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: $spacing-4;
-}
-
+// ── Filtros (dentro de la Caja «Configuración», en un <Filtros>: ver components/ui/Caja) ──
 .campo {
   display: flex;
   flex-direction: column;
   gap: $spacing-1;
-  min-width: 10rem;
 }
-
-.campoAncho { min-width: min(22rem, 100%); flex: 1; }
 
 .rotulo {
   font-size: $font-size-sm;

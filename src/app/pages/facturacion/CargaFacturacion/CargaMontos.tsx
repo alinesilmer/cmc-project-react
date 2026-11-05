@@ -74,7 +74,7 @@ export default function CargaMontos({ ctx }: { ctx: CargaCtx }) {
                 decimals min={0}
                 value={coseguro}
                 onChange={setCoseguro}
-                disabled={formDisabled}
+                disabled={formDisabled || tipoCalculo === "A"}
               />
             </div>
           </div>

@@ -181,6 +181,11 @@
   }
 }
 
+// El mismo alto que el selector de período con el que comparte fila (ver <Filtros> en Caja.tsx).
+.selectFiltro {
+  height: 2.75rem;
+}
+
 // ─── KPIs ─────────────────────────────────────────────────────────────────────
 
 .kpis {

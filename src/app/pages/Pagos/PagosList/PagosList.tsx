@@ -5,7 +5,7 @@ import { borrarPago, crearPago, listarPagos, type PagoNuevo } from "@/app/pages/
 import { useAppSnackbar } from "@/app/hooks/useAppSnackbar";
 import Button from "@/app/components/ui/Button/Button";
 import Franja from "@/app/components/layout/Franja/Franja";
-import Caja from "@/app/components/ui/Caja/Caja";
+import Caja, { Filtros } from "@/app/components/ui/Caja/Caja";
 import BotonVer from "@/app/components/ui/BotonVer/BotonVer";
 import Dialogo, { DialogoAviso, DialogoCampo } from "@/app/components/ui/Dialogo/Dialogo";
 import l from "../Liquidacion.module.scss";
@@ -129,7 +129,7 @@ const PagosList: React.FC = () => {
       <Franja titulo="Pagos" icono={DollarSign} />
 
       <Caja titulo="Configuración">
-        <div className={l.filtros}>
+        <Filtros>
           <label className={l.campo}>
             <span className={l.rotulo}>Año</span>
             <select className={l.select} value={filterAnio} onChange={(e) => setFilterAnio(e.target.value)}>
@@ -153,7 +153,7 @@ const PagosList: React.FC = () => {
               <option value="P">Pagado</option>
             </select>
           </label>
-        </div>
+        </Filtros>
       </Caja>
 
       <div className={l.barra}>

@@ -2,7 +2,7 @@
 import type { jsPDF } from "jspdf";
 import { PdfFormatoA, conSigno, fechaCorta, importe, type Fila } from "@/app/shared/lib/documentos/pdfFormatoA";
 import { estadoLabel } from "../LoteDetalle/utiles";
-import { mesLabel, type Ajuste, type LoteAjuste } from "../types";
+import { fechaDMA, mesLabel, verPorcentajeItem, type Ajuste, type LoteAjuste } from "../types";
 
 /** «2026-09-03» → «03/09/2026»; si viene de otra forma, tal cual. */
 export const fechaPrestacion = (f: string | null) => {
@@ -12,13 +12,20 @@ export const fechaPrestacion = (f: string | null) => {
 
 const esDebito = (a: Ajuste) => a.tipo === "d";
 
+/** Datos del lote que van arriba del PDF y del Excel (aparte de la obra social, el período y el estado). El % de pago es de cada ítem, no del lote. */
+export function datosExtraDelLote(lote: LoteAjuste): [string, string][] {
+  return [["Creado", fechaDMA(lote.created_at)]];
+}
+
 /** Cuenta de débitos y créditos del lote: lo que muestra la tabla es lo que suma el neto. */
 export function totalesDe(ajustes: Ajuste[]) {
   let deb = 0, cre = 0, nd = 0, nc = 0;
   for (const a of ajustes) {
     if (esDebito(a)) { deb += Number(a.total); nd += 1; } else { cre += Number(a.total); nc += 1; }
   }
-  return { deb, cre, nd, nc, neto: cre - deb };
+  // Al centavo: sumar importes con decimales deja ruido de punto flotante (81536.65000000001).
+  const centavos = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
+  return { deb: centavos(deb), cre: centavos(cre), nd, nc, neto: centavos(cre - deb) };
 }
 
 function cierre(pdf: PdfFormatoA, t: ReturnType<typeof totalesDe>) {
@@ -52,30 +59,35 @@ export async function generarLotePdf(lote: LoteAjuste, logo: string | null): Pro
       { t: socio, sub: detalle || undefined },
       a.codigo_prestacion ?? "—",
       fechaPrestacion(a.fecha_prestacion),
+      fechaDMA(a.created_at),
+      verPorcentajeItem(a.porcentaje_pago),
       importe(a.honorarios),
       importe(a.gastos),
       conSigno(esDebito(a) ? -Number(a.total) : Number(a.total)),
     ];
   });
 
-  const pdf = await PdfFormatoA.crear();
+  // Apaisado: con el % y la fecha de carga son nueve columnas.
+  const pdf = await PdfFormatoA.crear({ horizontal: true });
   pdf.cabecera({
     titulo: "Lote de ajustes",
     subtitulo: "Débitos y créditos de una obra social en un período",
     logo,
     meta: [{ t: "Lote ", b: `Nº ${lote.id}` }, { t: periodo }, { t: `Emitido el ${fechaCorta()}` }],
   });
-  pdf.datos([["Obra social", obraSocialDe(lote), 2], ["Período", periodo], ["Estado", estadoLabel(lote.estado)]]);
+  pdf.datos([["Obra social", obraSocialDe(lote), 2], ["Período", periodo], ["Estado", estadoLabel(lote.estado)], ...datosExtraDelLote(lote)]);
   pdf.seccion("Ajustes", cantidad(ajustes.length));
   pdf.tabla(
     [
-      { titulo: "Tipo", ancho: 11 },
+      { titulo: "Tipo", ancho: 8 },
       { titulo: "Socio" },
-      { titulo: "Código", ancho: 10 },
-      { titulo: "Fecha", ancho: 12 },
-      { titulo: "Honorarios", ancho: 13, der: true },
-      { titulo: "Gastos", ancho: 11, der: true },
-      { titulo: "Total", ancho: 13, der: true },
+      { titulo: "Código", ancho: 8 },
+      { titulo: "Fecha prest.", ancho: 9 },
+      { titulo: "Cargado", ancho: 9 },
+      { titulo: "% pago", ancho: 7, der: true },
+      { titulo: "Honorarios", ancho: 11, der: true },
+      { titulo: "Gastos", ancho: 9, der: true },
+      { titulo: "Total", ancho: 11, der: true },
     ],
     filas,
   );
@@ -91,9 +103,11 @@ export async function generarLoteSinFacturaPdf(lote: LoteAjuste, logo: string | 
   const filas: Fila[] = ajustes.map((a) => [
     esDebito(a) ? "Débito" : "Crédito",
     String(a.medico_id),
+    verPorcentajeItem(a.porcentaje_pago),
     importe(a.honorarios),
     importe(a.gastos),
     conSigno(esDebito(a) ? -Number(a.total) : Number(a.total)),
+    fechaDMA(a.created_at),
     a.observacion || "—",
   ]);
 
@@ -104,15 +118,17 @@ export async function generarLoteSinFacturaPdf(lote: LoteAjuste, logo: string | 
     logo,
     meta: [{ t: "Lote sin factura ", b: `Nº ${lote.id}` }, { t: periodo }, { t: `Emitido el ${fechaCorta()}` }],
   });
-  pdf.datos([["Obra social", obraSocialDe(lote), 2], ["Período", periodo], ["Estado", estadoLabel(lote.estado)]]);
+  pdf.datos([["Obra social", obraSocialDe(lote), 2], ["Período", periodo], ["Estado", estadoLabel(lote.estado)], ...datosExtraDelLote(lote)]);
   pdf.seccion("Ajustes", cantidad(ajustes.length));
   pdf.tabla(
     [
-      { titulo: "Tipo", ancho: 11 },
-      { titulo: "Médico (ID)", ancho: 14 },
-      { titulo: "Honorarios", ancho: 15, der: true },
-      { titulo: "Gastos", ancho: 12, der: true },
-      { titulo: "Total", ancho: 15, der: true },
+      { titulo: "Tipo", ancho: 10 },
+      { titulo: "Médico (ID)", ancho: 12 },
+      { titulo: "% pago", ancho: 8, der: true },
+      { titulo: "Honorarios", ancho: 14, der: true },
+      { titulo: "Gastos", ancho: 11, der: true },
+      { titulo: "Total", ancho: 14, der: true },
+      { titulo: "Cargado", ancho: 11 },
       { titulo: "Observación" },
     ],
     filas,

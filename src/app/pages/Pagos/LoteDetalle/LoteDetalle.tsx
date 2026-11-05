@@ -11,14 +11,25 @@ import {
   type LoteAjuste,
   type Ajuste,
   type AtencionSearchRow,
+  PORCENTAJE_ITEM_DEFECTO,
+  aNumeroPorcentaje,
+  fechaDMA,
   fmt,
   mesLabel,
+  porcentajeItemValido,
+  verPorcentajeItem,
 } from "../types";
 import { saveAs } from "@/app/shared/lib/fileSaver";
 import { ArrowLeftRight, X } from "lucide-react";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
 import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
-import { ESTADO_TONO, estadoLabel } from "@/app/pages/Pagos/LoteDetalle/utiles";
+import {
+  ESTADO_TONO,
+  conAjusteAgregado,
+  conAjusteReemplazado,
+  estadoLabel,
+  sinAjustes,
+} from "@/app/pages/Pagos/LoteDetalle/utiles";
 import Dialogo from "@/app/components/ui/Dialogo/Dialogo";
 import paleta from "@/app/styles/paleta.module.scss";
 import { comoErrorApi, detalleDeError } from "@/app/shared/lib/httpErrors";
@@ -81,6 +92,7 @@ const LoteDetalle: React.FC = () => {
   const [newTipo, setNewTipo] = useState<"d" | "c">("d");
   const [newHonorarios, setNewHonorarios] = useState("");
   const [newGastos, setNewGastos] = useState("");
+  const [newPorcentaje, setNewPorcentaje] = useState(PORCENTAJE_ITEM_DEFECTO);
   const [newObservacion, setNewObservacion] = useState("");
   const [newObsIsOtro, setNewObsIsOtro] = useState(false);
   const [confirming, setConfirming] = useState(false);
@@ -172,6 +184,7 @@ const LoteDetalle: React.FC = () => {
     setSearchResults([]);
     setNewHonorarios("");
     setNewGastos("");
+    setNewPorcentaje(PORCENTAJE_ITEM_DEFECTO);
   };
 
   const handleConfirm = async (ev?: React.FormEvent) => {
@@ -193,16 +206,22 @@ const LoteDetalle: React.FC = () => {
       notify("Honorarios y gastos no pueden ser ambos 0.", "error");
       return;
     }
+    if (!porcentajeItemValido(newPorcentaje)) {
+      notify("El % de pago tiene que estar entre 0,01 y 200.", "error");
+      return;
+    }
     setConfirming(true);
     try {
-      await agregarItem(loteId, {
+      const nuevo = await agregarItem(loteId, {
         tipo: newTipo,
         id_atencion: selectedAtencion.id,
         honorarios: Number(newHonorarios),
         gastos: Number(newGastos),
         observacion: newObservacion.trim() || null,
+        porcentaje_pago: aNumeroPorcentaje(newPorcentaje),
       });
-      await loadLote(true);
+      // Sólo se suma la fila nueva (y se recalculan los totales): no se vuelve a pedir el lote.
+      setLote((prev) => (prev ? conAjusteAgregado(prev, nuevo) : prev));
       // Se conservan el tipo y el motivo: se suelen cargar varios seguidos.
       setSearchQuery("");
       limpiarSeleccion();
@@ -218,7 +237,7 @@ const LoteDetalle: React.FC = () => {
   // Guarda un cambio hecho sobre la fila (importe, tipo o motivo).
   const guardarAjuste = async (
     a: Ajuste,
-    cambio: Partial<{ tipo: "d" | "c"; honorarios: number; gastos: number; observacion: string }>,
+    cambio: Partial<{ tipo: "d" | "c"; honorarios: number; gastos: number; observacion: string; porcentaje_pago: number }>,
   ) => {
     if (!loteId) return;
     const honorarios = cambio.honorarios ?? Number(a.honorarios);
@@ -229,13 +248,14 @@ const LoteDetalle: React.FC = () => {
     }
     setSavingId(a.id);
     try {
-      await editarItem(loteId, a.id, {
+      const editado = await editarItem(loteId, a.id, {
         tipo: cambio.tipo ?? a.tipo,
         honorarios,
         gastos,
         observacion: cambio.observacion ?? a.observacion ?? null,
+        porcentaje_pago: cambio.porcentaje_pago ?? Number(a.porcentaje_pago ?? 100),
       });
-      await loadLote(true);
+      setLote((prev) => (prev ? conAjusteReemplazado(prev, editado) : prev));
     } catch (e) {
       notify(detalleDeError(e, "Error al guardar."), "error");
     } finally {
@@ -243,7 +263,7 @@ const LoteDetalle: React.FC = () => {
     }
   };
 
-  const keyDraft = (a: Ajuste, campo: "honorarios" | "gastos") => `${a.id}:${campo}`;
+  const keyDraft = (a: Ajuste, campo: "honorarios" | "gastos" | "porcentaje") => `${a.id}:${campo}`;
 
   const quitarDraft = (key: string) =>
     setDrafts((d) => {
@@ -265,13 +285,28 @@ const LoteDetalle: React.FC = () => {
     guardarAjuste(a, { [campo]: valor });
   };
 
+  const commitPorcentaje = (a: Ajuste) => {
+    const key = keyDraft(a, "porcentaje");
+    const texto = drafts[key];
+    if (texto === undefined) return;
+    quitarDraft(key);
+    if (!porcentajeItemValido(texto)) {
+      notify("El % de pago tiene que estar entre 0,01 y 200.", "error");
+      return;
+    }
+    const valor = aNumeroPorcentaje(texto);
+    if (valor === Number(a.porcentaje_pago ?? 100)) return;
+    guardarAjuste(a, { porcentaje_pago: valor });
+  };
+
   const handleDelete = async () => {
     if (!loteId || !deleteTarget) return;
     setDeleting(true);
     try {
       await borrarItem(loteId, deleteTarget.id);
+      const borrado = deleteTarget.id;
       setDeleteTarget(null);
-      await loadLote(true);
+      setLote((prev) => (prev ? sinAjustes(prev, [borrado]) : prev));
       notify("Ajuste eliminado.");
     } catch (e) {
       notify(detalleDeError(e, "Error al eliminar el ajuste."), "error");
@@ -306,6 +341,8 @@ const LoteDetalle: React.FC = () => {
   const isOpen = lote?.estado === "A";
   const isClosed = lote?.estado === "C";
   const isInLiq = lote?.estado === "L";
+  // Un lote con factura sólo pasa al pago si su factura está en ese pago o ya fue pagada.
+  const facturaSinCobertura = lote?.factura_en_pago === false && lote?.factura_pagada === false;
   const editable = isOpen;
   const ajustes = lote?.ajustes ?? [];
   const periodo = lote
@@ -375,6 +412,30 @@ const LoteDetalle: React.FC = () => {
     );
   };
 
+  // % de pago del ítem: se edita con el lote abierto; después se muestra (los importes ya vienen multiplicados por él).
+  const renderPorcentaje = (a: Ajuste) => {
+    if (!editable) return <span>{verPorcentajeItem(a.porcentaje_pago)}</span>;
+    const key = keyDraft(a, "porcentaje");
+    return (
+      <input
+        className={styles.cell}
+        type="number"
+        min="0.01"
+        max="200"
+        step="0.01"
+        aria-label="% de pago"
+        value={drafts[key] ?? String(Number(a.porcentaje_pago ?? 100))}
+        disabled={savingId === a.id}
+        onChange={(e) => setDrafts((d) => ({ ...d, [key]: e.target.value }))}
+        onBlur={() => commitPorcentaje(a)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+          if (e.key === "Escape") quitarDraft(key);
+        }}
+      />
+    );
+  };
+
   const renderFila = (a: Ajuste) => {
     const motivoEnLista = !a.observacion || OBSERVACION_OPTIONS.includes(a.observacion);
     return (
@@ -409,6 +470,7 @@ const LoteDetalle: React.FC = () => {
         <td>{a.nombre_afiliado ?? <span className={lq.tenue}>—</span>}</td>
         <td className={styles.numCell}>{renderImporte(a, "honorarios")}</td>
         <td className={styles.numCell}>{renderImporte(a, "gastos")}</td>
+        <td className={styles.numCell}>{renderPorcentaje(a)}</td>
         <td className={`${styles.numCell} ${a.tipo === "d" ? styles.negative : styles.positive}`}>
           {a.tipo === "d" ? "−" : "+"}${fmt(a.total)}
         </td>
@@ -433,6 +495,7 @@ const LoteDetalle: React.FC = () => {
             (a.observacion ?? <span className={lq.tenue}>—</span>)
           )}
         </td>
+        <td className={styles.numCell}>{fechaDMA(a.created_at)}</td>
         {editable && (
           <td>
             <BotonPlano
@@ -450,7 +513,7 @@ const LoteDetalle: React.FC = () => {
     );
   };
 
-  const columnasTabla = 10 + (agrupar ? 0 : 1) + (editable ? 1 : 0);
+  const columnasTabla = 12 + (agrupar ? 0 : 1) + (editable ? 1 : 0);
 
   return (
     <div className={lq.pagina}>
@@ -475,9 +538,15 @@ const LoteDetalle: React.FC = () => {
           {lote.snap_origen_id && (
             <span className={lq.tiraTexto}>Corrige el lote #{lote.snap_origen_id}</span>
           )}
-          {lote.factura_en_pago === false && (
+          {facturaSinCobertura && !isInLiq && (
             <span className={lq.tiraTexto}>
-              Esta factura todavía no está en el pago{lote.pago_id ? ` #${lote.pago_id}` : " abierto"}. Se puede pasar igual.
+              Para pasar el lote al pago{lote.pago_id ? ` #${lote.pago_id}` : " abierto"}, su factura tiene que estar en
+              el pago o haber sido pagada antes. Agregala primero en «Facturas y adelantos» del pago.
+            </span>
+          )}
+          {lote.factura_en_pago === false && lote.factura_pagada === true && (
+            <span className={lq.tiraTexto}>
+              Esta factura ya fue pagada en un pago anterior: el lote puede estar en el pago aunque la factura no esté en él.
             </span>
           )}
           {lote.pago_id && (
@@ -497,7 +566,13 @@ const LoteDetalle: React.FC = () => {
                 <Button variant="ghost" size="md" onClick={() => setTransitionModal("reabrir")}>
                   Reabrir
                 </Button>
-                <Button variant="primary" size="md" onClick={() => setTransitionModal("en_liquidaciones")}>
+                <Button
+                  variant="primary"
+                  size="md"
+                  onClick={() => setTransitionModal("en_liquidaciones")}
+                  disabled={facturaSinCobertura}
+                  title={facturaSinCobertura ? "Su factura todavía no está en el pago ni fue pagada." : undefined}
+                >
                   Pasar a liquidaciones
                 </Button>
               </>
@@ -583,6 +658,21 @@ const LoteDetalle: React.FC = () => {
                 placeholder="0.00"
                 value={newGastos}
                 onChange={(e) => setNewGastos(e.target.value)}
+                disabled={confirming}
+              />
+            </div>
+            <div className={`${styles.campo} ${styles.campoImporte}`}>
+              <label className={styles.formLabel} htmlFor="lote-pct">% de pago</label>
+              <input
+                id="lote-pct"
+                className={styles.formInput}
+                type="number"
+                min="0.01"
+                max="200"
+                step="0.01"
+                placeholder="100"
+                value={newPorcentaje}
+                onChange={(e) => setNewPorcentaje(e.target.value)}
                 disabled={confirming}
               />
             </div>
@@ -758,8 +848,10 @@ const LoteDetalle: React.FC = () => {
                 <th>Afiliado</th>
                 <th className={styles.numCell}>Honorarios</th>
                 <th className={styles.numCell}>Gastos</th>
+                <th className={styles.numCell}>% pago</th>
                 <th className={styles.numCell}>Total</th>
                 <th>Motivo</th>
+                <th>Cargado</th>
                 {editable && <th aria-label="Acciones" />}
               </tr>
             </thead>
@@ -779,7 +871,7 @@ const LoteDetalle: React.FC = () => {
                   <React.Fragment key={agrupar ? g.medicoId : "todos"}>
                     {agrupar && (
                       <tr className={styles.grupoFila}>
-                        <td colSpan={8}>
+                        <td colSpan={9}>
                           {g.nombre}
                           {g.nroSocio != null && <span className={lq.tenue}> #{g.nroSocio}</span>}
                           <span className={lq.tenue}> · {g.items.length} ajuste{g.items.length !== 1 ? "s" : ""}</span>
@@ -787,7 +879,7 @@ const LoteDetalle: React.FC = () => {
                         <td className={`${styles.numCell} ${g.neto < 0 ? styles.negative : styles.positive}`}>
                           {signo(g.neto)}
                         </td>
-                        <td colSpan={1 + (editable ? 1 : 0)} />
+                        <td colSpan={2 + (editable ? 1 : 0)} />
                       </tr>
                     )}
                     {g.items.map(renderFila)}

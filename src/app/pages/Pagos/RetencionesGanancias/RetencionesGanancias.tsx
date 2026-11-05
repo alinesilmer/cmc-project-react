@@ -6,7 +6,7 @@ import { useAppSnackbar } from "../../../hooks/useAppSnackbar";
 import Button from "@/app/components/ui/Button/Button";
 import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
 import Franja from "@/app/components/layout/Franja/Franja";
-import Caja from "@/app/components/ui/Caja/Caja";
+import Caja, { Filtros } from "@/app/components/ui/Caja/Caja";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
 import { exportarExcel, nombreArchivo, type ColumnaExport, type DocumentoReporte } from "@/app/pages/Reportes/exportar";
 import lq from "../Liquidacion.module.scss";
@@ -160,7 +160,7 @@ const RetencionesGanancias: React.FC = () => {
       </p>
 
       <Caja titulo="Mes">
-        <div className={lq.filtros}>
+        <Filtros>
           <label className={lq.campo}>
             <span className={lq.rotulo}>Mes</span>
             <select className={lq.select} value={mes} onChange={(e) => setMes(Number(e.target.value))}>
@@ -177,7 +177,7 @@ const RetencionesGanancias: React.FC = () => {
               ))}
             </select>
           </label>
-        </div>
+        </Filtros>
         {escalasDelMes.length > 0 && (
           <p className={s.escala}>
             Escala vigente: no se retiene por debajo de{" "}

@@ -200,7 +200,8 @@ const TabRecibos: React.FC<Props> = ({ pago, pagoId }) => {
     {
       key: "emision_timestamp",
       header: "Fecha Emisión",
-      render: (r) => r.emision_timestamp
+      // Sólo un recibo emitido tiene fecha de emisión (los viejos traían la del cierre o la del recálculo).
+      render: (r) => r.emision_timestamp && (r.estado === "emitido" || r.estado === "pagado")
         ? new Date(r.emision_timestamp).toLocaleDateString("es-AR")
         : "—",
     },

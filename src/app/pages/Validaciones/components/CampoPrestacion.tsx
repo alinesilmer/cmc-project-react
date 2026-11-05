@@ -2,6 +2,7 @@ import { CheckCircle2, XCircle } from "lucide-react";
 
 import CodigoSelect from "./CodigoSelect";
 import type { PrestacionFormEstado } from "./usePrestacionForm";
+import { formatMoneda, parseMonto } from "../validaciones.types";
 import type { CampoConfig, ObraSocialConfig } from "../validaciones.types";
 import s from "./CampoPrestacion.module.scss";
 import Cargando from "@/app/components/ui/Cargando/Cargando";
@@ -19,9 +20,13 @@ interface Props {
 
 const soloDigitos = (v: string) => v.replace(/\D/g, "");
 
-/** Deja escribir importes con coma o punto y un máximo de dos decimales. */
-const normalizarMoneda = (v: string) =>
-  v.replace(/[^\d.,]/g, "").replace(/([.,]\d{0,2}).*$/, "$1");
+/** Deja escribir importes a la argentina: puntos de miles y una sola coma con hasta dos decimales. */
+const normalizarMoneda = (v: string) => {
+  const t = v.replace(/[^\d.,]/g, "");
+  const coma = t.indexOf(",");
+  if (coma < 0) return t;
+  return t.slice(0, coma + 1) + t.slice(coma + 1).replace(/\D/g, "").slice(0, 2);
+};
 
 /** Un campo del formulario de carga, según el tipo que declara la obra social. */
 export default function CampoPrestacion({ campo, os, form, enviando, nroSocio, sinRotulo = false }: Props) {
@@ -42,9 +47,15 @@ export default function CampoPrestacion({ campo, os, form, enviando, nroSocio, s
         onChange={(codigo, opcion) => {
           setCampo(campo.name, codigo);
           form.setRequiereDocumentacion(Boolean(opcion?.requiereDocumentacion));
-          // Prellena el coseguro sugerido del código — solo si esta obra social pide ese campo (hoy Boreal).
-          if (opcion && opcion.coseguro > 0 && os.campos?.some((c) => c.name === "coseguro")) {
-            setCampo("coseguro", String(opcion.coseguro));
+          // Prellena el coseguro sugerido del código — solo si esta obra social pide ese campo (hoy Boreal)
+          // y el médico todavía no escribió uno: lo tipeado nunca se pisa.
+          if (
+            opcion &&
+            opcion.coseguro > 0 &&
+            os.campos?.some((c) => c.name === "coseguro") &&
+            !(valores.coseguro ?? "").trim()
+          ) {
+            setCampo("coseguro", String(opcion.coseguro).replace(".", ","));
           }
         }}
         placeholder={campo.placeholder}
@@ -88,21 +99,30 @@ export default function CampoPrestacion({ campo, os, form, enviando, nroSocio, s
       </div>
     );
   } else if (campo.tipo === "moneda") {
+    // Cómo se leyó lo tipeado: así el médico ve al instante si "1.500" quedó en 1500 y no en 1,5.
+    const leido = parseMonto(valor);
     control = (
-      <div className={`${s.moneyWrap} ${invalido ? s.inputInvalid : ""}`}>
-        <span className={s.moneyPrefix}>$</span>
-        <input
-          id={inputId}
-          className={s.moneyInput}
-          inputMode="decimal"
-          autoComplete="off"
-          disabled={enviando}
-          placeholder={campo.placeholder}
-          aria-label={rotulo}
-          value={valor}
-          onChange={(e) => setCampo(campo.name, normalizarMoneda(e.target.value))}
-        />
-      </div>
+      <>
+        <div className={`${s.moneyWrap} ${invalido ? s.inputInvalid : ""}`}>
+          <span className={s.moneyPrefix}>$</span>
+          <input
+            id={inputId}
+            className={s.moneyInput}
+            inputMode="decimal"
+            autoComplete="off"
+            disabled={enviando}
+            placeholder={campo.placeholder}
+            aria-label={rotulo}
+            value={valor}
+            onChange={(e) => setCampo(campo.name, normalizarMoneda(e.target.value))}
+          />
+        </div>
+        {campo.name === "coseguro" && (
+          <span className={s.vistaPrevia} role="status">
+            {leido > 0 ? `Se descontarán ${formatMoneda(leido)}` : "Sin coseguro"}
+          </span>
+        )}
+      </>
     );
   } else {
     const esNumero = campo.tipo === "numerico" || campo.tipo === "entero";

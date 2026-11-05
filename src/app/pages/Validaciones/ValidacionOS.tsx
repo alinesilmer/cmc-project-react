@@ -38,7 +38,7 @@ import {
   getPrestaciones,
   reemplazarDocumento,
 } from "./validaciones.api";
-import { iniciales, nombreMes } from "./validaciones.types";
+import { iniciales, nombreMes, parseMonto } from "./validaciones.types";
 import type {
   DocumentoDigital,
   Periodo,
@@ -232,7 +232,7 @@ export default function ValidacionOS() {
         barra_afiliado: dv ?? "",
         nro_validacion: valores.nroValidacion ?? "",
         token: valores.token ?? "",
-        coseguro: Number(String(valores.coseguro ?? "0").replace(",", ".")) || 0,
+        coseguro: parseMonto(valores.coseguro),
         cantidad: Number(valores.cantidad ?? 1) || 1,
         nro_socio: nroSocioElegido,
         },
@@ -424,6 +424,7 @@ export default function ValidacionOS() {
                 prestaciones={prestacionesDetalle}
                 cargando={cargandoDetalle}
                 permiteAdjuntarOrden={os.permiteAdjuntarOrden}
+                mostrarCoseguro={Boolean(os.campos?.some((c) => c.name === "coseguro"))}
                 onEliminar={setAEliminar}
                 onDocumentos={(p) => setDocsDe(p.id)}
                 soloLectura={Boolean(verDetalle.cerrado)}

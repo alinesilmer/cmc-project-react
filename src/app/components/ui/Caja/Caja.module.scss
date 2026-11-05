@@ -26,6 +26,41 @@
   box-shadow: 0 14px 34px -26px rgba($primary-blue-darker, 0.55);
 }
 
+// Fila de filtros (ver `Filtros` en Caja.tsx). Ocupa todo el ancho de la caja; cada control crece parejo desde su ancho
+// base (`--ancho-filtro`) hasta un tope (`--max-filtro`), así los renglones quedan alineados y ninguno se estira de más.
+.filtros {
+  flex: 1 1 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: $spacing-3 $spacing-4;
+  min-width: 0;
+
+  > * {
+    flex: 1 1 var(--ancho-filtro, 11rem);
+    min-width: 0;
+    max-width: var(--max-filtro, 15rem);
+  }
+
+  // Los botones no se estiran: quedan al final de la fila, alineados con la base de los campos.
+  > button {
+    flex: 0 0 auto;
+    max-width: none;
+    min-height: 2.75rem;
+  }
+
+  // Los buscadores (MUI) miden menos que los `select` e `input` de la fila: se igualan a su alto.
+  :global(.MuiAutocomplete-root .MuiOutlinedInput-root) {
+    min-height: 2.75rem;
+  }
+}
+
+// Un control más ancho que los demás (ver `filtroAncho` en Caja.tsx).
+.filtroAncho {
+  --ancho-filtro: 17rem;
+  --max-filtro: 26rem;
+}
+
 // Ocupa su propio renglón: los controles arrancan debajo.
 .titulo {
   flex: 1 1 100%;

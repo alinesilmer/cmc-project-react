@@ -12,6 +12,8 @@ interface Props {
   cargando: boolean;
   /** Obra social donde el médico puede adjuntar la orden aunque no sea obligatoria. */
   permiteAdjuntarOrden?: boolean;
+  /** La obra social descuenta coseguro (hoy Boreal): se muestra la columna. */
+  mostrarCoseguro?: boolean;
   onEliminar: (p: Prestacion) => void;
   /** Abre la gestión de documentos de la prestación (ver, agregar, reemplazar, eliminar). */
   onDocumentos?: (p: Prestacion) => void;
@@ -65,6 +67,7 @@ export default function PrestacionesTable({
   prestaciones,
   cargando,
   permiteAdjuntarOrden = false,
+  mostrarCoseguro = false,
   onEliminar,
   onDocumentos,
   soloLectura = false,
@@ -104,6 +107,7 @@ export default function PrestacionesTable({
               <th>Estado</th>
               <th className={s.right}>Honorarios</th>
               <th className={s.right}>Gastos</th>
+              {mostrarCoseguro && <th className={s.right}>Coseguro</th>}
               <th className={s.right}>Total</th>
               <th className={s.center}>Acciones</th>
             </tr>
@@ -126,6 +130,9 @@ export default function PrestacionesTable({
                 </td>
                 <td className={`${s.right} ${s.mono}`}>{formatMoneda(p.honorarios)}</td>
                 <td className={`${s.right} ${s.mono}`}>{formatMoneda(p.gastos)}</td>
+                {mostrarCoseguro && (
+                  <td className={`${s.right} ${s.mono}`}>{p.coseguro > 0 ? formatMoneda(p.coseguro) : "—"}</td>
+                )}
                 <td className={`${s.right} ${s.mono} ${s.total}`}>
                   {formatMoneda(p.total)}
                 </td>
@@ -159,7 +166,7 @@ export default function PrestacionesTable({
           </tbody>
           <tfoot>
             <tr>
-              <td colSpan={7} className={s.right}>
+              <td colSpan={mostrarCoseguro ? 8 : 7} className={s.right}>
                 Total autorizado del período
               </td>
               <td className={`${s.right} ${s.mono} ${s.total}`}>
@@ -198,6 +205,12 @@ export default function PrestacionesTable({
                 <dt>Validación</dt>
                 <dd className={s.mono}>{nroValidacionVisible(p)}</dd>
               </div>
+              {mostrarCoseguro && p.coseguro > 0 && (
+                <div>
+                  <dt>Coseguro</dt>
+                  <dd className={s.mono}>{formatMoneda(p.coseguro)}</dd>
+                </div>
+              )}
               <div>
                 <dt>Total</dt>
                 <dd className={`${s.mono} ${s.total}`}>{formatMoneda(p.total)}</dd>

@@ -5,7 +5,8 @@ import { getJSON, postJSON, delJSON } from "@/app/shared/lib/http";
 import { useAppSnackbar } from "../../../hooks/useAppSnackbar";
 import Button from "@/app/components/ui/Button/Button";
 import Franja from "@/app/components/layout/Franja/Franja";
-import Caja from "@/app/components/ui/Caja/Caja";
+import Caja, { Filtros } from "@/app/components/ui/Caja/Caja";
+import { filtroAncho } from "@/app/components/ui/Caja/filtroAncho";
 import Dialogo, { DialogoAviso, DialogoCampo } from "@/app/components/ui/Dialogo/Dialogo";
 import SelectableTable from "@/app/components/ui/SelectableTable/SelectableTable";
 import type { ActionDef, ColumnDef } from "@/app/components/ui/SelectableTable/types";
@@ -314,8 +315,8 @@ const Adelantos: React.FC = () => {
       </p>
 
       <Caja titulo="Configuración">
-        <div className={lq.filtros}>
-          <div className={`${lq.campo} ${lq.campoAncho}`}>
+        <Filtros>
+          <div className={`${lq.campo} ${filtroAncho}`}>
             <span className={lq.rotulo}>Obra social</span>
             <AppSearchSelect
               ordenar
@@ -326,7 +327,7 @@ const Adelantos: React.FC = () => {
               loading={obrasLoading}
             />
           </div>
-          <div className={`${lq.campo} ${lq.campoAncho}`}>
+          <div className={`${lq.campo} ${filtroAncho}`}>
             <span className={lq.rotulo}>Médico</span>
             <AppSearchSelect
               options={opcionesMedico}
@@ -364,7 +365,7 @@ const Adelantos: React.FC = () => {
               <option value="AP">Pagado</option>
             </select>
           </label>
-        </div>
+        </Filtros>
       </Caja>
 
       <div className={lq.barra}>

@@ -1,8 +1,8 @@
 // Excel de un lote de ajustes, con el mismo contenido que el PDF: datos del lote arriba (la obra social con su número),
 // los ajustes (los débitos en negativo) y, al final, débitos, créditos y neto del lote.
 import { estadoLabel } from "../LoteDetalle/utiles";
-import { mesLabel, type LoteAjuste } from "../types";
-import { fechaPrestacion, obraSocialDe, totalesDe } from "./loteAjustesPdf";
+import { fechaDMA, mesLabel, type LoteAjuste } from "../types";
+import { datosExtraDelLote, fechaPrestacion, obraSocialDe, totalesDe } from "./loteAjustesPdf";
 
 export async function generarLoteExcel(lote: LoteAjuste, sinFactura: boolean): Promise<Blob> {
   const { default: ExcelJS } = await import("exceljs");
@@ -19,6 +19,7 @@ export async function generarLoteExcel(lote: LoteAjuste, sinFactura: boolean): P
     ["Obra social", obraSocialDe(lote)],
     ["Período", `${mesLabel(lote.mes_periodo)} ${lote.anio_periodo}`],
     ["Estado", estadoLabel(lote.estado)],
+    ...datosExtraDelLote(lote),
   ]) {
     const r = ws.addRow([k, v]);
     r.getCell(1).font = { bold: true };
@@ -26,10 +27,11 @@ export async function generarLoteExcel(lote: LoteAjuste, sinFactura: boolean): P
   ws.addRow([]);
 
   const columnas = sinFactura
-    ? ["Tipo", "Médico (ID)", "Honorarios", "Gastos", "Total", "Observación"]
-    : ["Tipo", "ID prestación", "Nro. orden", "Socio", "Código", "Fecha", "Afiliado", "Honorarios", "Gastos", "Total", "Observación"];
-  const colTotal = sinFactura ? 5 : 10;
-  const colesImporte = sinFactura ? [3, 4, 5] : [8, 9, 10];
+    ? ["Tipo", "Médico (ID)", "% de pago", "Honorarios", "Gastos", "Total", "Cargado", "Observación"]
+    : ["Tipo", "ID prestación", "Nro. orden", "Socio", "Código", "Fecha prest.", "Afiliado", "% de pago", "Honorarios", "Gastos", "Total", "Cargado", "Observación"];
+  const colPorcentaje = sinFactura ? 3 : 8;
+  const colTotal = sinFactura ? 6 : 11;
+  const colesImporte = sinFactura ? [4, 5, 6] : [9, 10, 11];
 
   const encabezado = ws.addRow(columnas);
   encabezado.font = { bold: true };
@@ -37,7 +39,7 @@ export async function generarLoteExcel(lote: LoteAjuste, sinFactura: boolean): P
   ajustes.forEach((a) => {
     const tipo = a.tipo === "d" ? "Débito" : "Crédito";
     const fila = sinFactura
-      ? [tipo, a.medico_id, Number(a.honorarios), Number(a.gastos), firmado(a), a.observacion ?? ""]
+      ? [tipo, a.medico_id, Number(a.porcentaje_pago ?? 100), Number(a.honorarios), Number(a.gastos), firmado(a), fechaDMA(a.created_at), a.observacion ?? ""]
       : [
           tipo,
           a.id_atencion ?? "—",
@@ -46,13 +48,16 @@ export async function generarLoteExcel(lote: LoteAjuste, sinFactura: boolean): P
           a.codigo_prestacion ?? "—",
           fechaPrestacion(a.fecha_prestacion),
           a.nombre_afiliado ?? "—",
+          Number(a.porcentaje_pago ?? 100),
           Number(a.honorarios),
           Number(a.gastos),
           firmado(a),
+          fechaDMA(a.created_at),
           a.observacion ?? "",
         ];
     const r = ws.addRow(fila);
     colesImporte.forEach((c) => { r.getCell(c).numFmt = moneda; });
+    r.getCell(colPorcentaje).numFmt = '0.00" %"';
   });
 
   ws.addRow([]);
@@ -69,7 +74,7 @@ export async function generarLoteExcel(lote: LoteAjuste, sinFactura: boolean): P
     if (destacado) r.font = { bold: true };
   }
 
-  const anchos = sinFactura ? [10, 12, 14, 12, 14, 40] : [10, 14, 14, 32, 12, 12, 26, 14, 12, 14, 40];
+  const anchos = sinFactura ? [10, 12, 10, 14, 12, 14, 12, 40] : [10, 14, 14, 32, 12, 12, 26, 10, 14, 12, 14, 12, 40];
   anchos.forEach((w, i) => { ws.getColumn(i + 1).width = w; });
 
   const buf = await wb.xlsx.writeBuffer();

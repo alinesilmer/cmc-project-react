@@ -137,6 +137,12 @@
   outline: none;
 }
 
+.vistaPrevia {
+  display: block;
+  font-size: $font-size-base;
+  color: $gray-500;
+}
+
 .error {
   display: block;
   font-size: $font-size-base;

@@ -4,7 +4,8 @@ import { crearRefacturacion, listarFacturasParaRefacturar, listarObrasSociales, 
 import { useAppSnackbar } from "@/app/hooks/useAppSnackbar";
 import Button from "@/app/components/ui/Button/Button";
 import Franja from "@/app/components/layout/Franja/Franja";
-import Caja from "@/app/components/ui/Caja/Caja";
+import Caja, { Filtros } from "@/app/components/ui/Caja/Caja";
+import { filtroAncho } from "@/app/components/ui/Caja/filtroAncho";
 import Dialogo, { DialogoCampo } from "@/app/components/ui/Dialogo/Dialogo";
 import SelectableTable from "@/app/components/ui/SelectableTable/SelectableTable";
 import type {
@@ -294,8 +295,8 @@ const RefacturacionesList: React.FC = () => {
       <Franja titulo="Refacturaciones" icono={RotateCcw} />
 
       <Caja titulo="Configuración">
-        <div className={lq.filtros}>
-          <div className={`${lq.campo} ${lq.campoAncho}`}>
+        <Filtros>
+          <div className={`${lq.campo} ${filtroAncho}`}>
             <span className={lq.rotulo}>Obra social</span>
             <AppSearchSelect
               ordenar
@@ -335,7 +336,7 @@ const RefacturacionesList: React.FC = () => {
           <Button variant="ghost" size="md" leftIcon={<Search size={18} aria-hidden="true" />} onClick={fetchLotes} disabled={loading}>
             {loading ? "Buscando…" : "Buscar"}
           </Button>
-        </div>
+        </Filtros>
       </Caja>
 
       <div className={lq.barra}>

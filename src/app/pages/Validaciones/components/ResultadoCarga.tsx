@@ -1,5 +1,6 @@
 import { BadgeCheck, CircleAlert, X } from "lucide-react";
 
+import { formatMoneda } from "../validaciones.types";
 import type { ResultadoValidacion } from "../validaciones.types";
 import s from "./ResultadoCarga.module.scss";
 import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
@@ -45,6 +46,12 @@ export default function ResultadoCarga({ resultado, onCerrar }: Props) {
                 {prestacion.codigo} · {prestacion.descripcion}
               </dd>
             </div>
+            {estadoVisual !== "rechazada" && prestacion.coseguro > 0 && (
+              <div>
+                <dt>Coseguro descontado</dt>
+                <dd>{formatMoneda(prestacion.coseguro)}</dd>
+              </div>
+            )}
           </dl>
         )}
 
