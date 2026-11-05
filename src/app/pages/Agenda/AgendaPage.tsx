@@ -523,9 +523,9 @@ export default function AgendaPage() {
                   <div className={s.rowMain}>
                     <span className={s.rowTitulo}>{e.titulo}</span>
                     <span className={s.rowCuando}>
-                      {describirCuando(e)}
-                      {e.responsable ? ` · ${e.responsable}` : ""}
-                      {e.descripcion ? ` · ${e.descripcion}` : ""}
+                      {[e.recurrencia === "unica" ? null : describirCuando(e), e.responsable, e.descripcion]
+                        .filter(Boolean)
+                        .join(" · ")}
                     </span>
                   </div>
                   {puedeEditar && e.id > 0 && (

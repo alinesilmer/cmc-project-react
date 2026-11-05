@@ -34,6 +34,7 @@ import Franja, { Solapa } from "@/app/components/layout/Franja/Franja";
 import Cargando from "@/app/components/ui/Cargando/Cargando";
 import Paginador from "@/app/components/ui/Paginador/Paginador";
 import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
+import BotonVer from "@/app/components/ui/BotonVer/BotonVer";
 
 const PAGE_SIZE = 20;
 const SOLICITUDES_KEY = ["solicitudes-cambio", "gestion"] as const;
@@ -191,6 +192,9 @@ export default function SolicitudesCambioPage() {
                     </span>
                   </div>
                   <div className={s.cardHeadRight}>
+                    {item.medico_id !== null && (
+                      <BotonVer to={`/panel/doctors/${item.medico_id}`} etiqueta="Ver ficha del socio" />
+                    )}
                     <span className={s.campoChip}>{campoLabel(item.campo)}</span>
                     <span className={`${s.badge} ${s[`badge_${item.estado}`]}`}>
                       {ESTADO_LABELS[item.estado]}
