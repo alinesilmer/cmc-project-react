@@ -4,6 +4,7 @@ import HealthServices from "../../components/Servicios/HealthServices/HealthServ
 import HeroColegio from "../../components/Inicio/HeroColegio/HeroColegio";
 import FranjaPulso from "../../components/Inicio/FranjaPulso/FranjaPulso";
 import UltimasNoticias from "../../components/Inicio/UltimasNoticias/UltimasNoticias";
+import Comunicado from "../../components/Inicio/Comunicado/Comunicado";
 import { useTituloPagina } from "../../hooks/useTituloPagina";
 import styles from "./inicio.module.scss";
 
@@ -12,6 +13,7 @@ export default function Home() {
 
   return (
     <>
+      <Comunicado />
       <HeroColegio />
       <FranjaPulso />
       <div className={styles.fondo}>

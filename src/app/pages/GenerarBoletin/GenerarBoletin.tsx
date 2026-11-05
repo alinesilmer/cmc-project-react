@@ -16,6 +16,7 @@ import styles from "./GenerarBoletin.module.scss";
 import Button from "@/website/components/UI/Button/Button";
 import CMCLogoUrl from "../../assets/logoCMC.png";
 import { fetchValoresBoletin, type FilaBoletin, type ValorBoletin } from "./generarBoletin.api";
+import { conDescarga } from "@/app/hooks/descargas";
 import { axiosErrorMessage, sinControl } from "@/app/shared/lib/utiles";
 import Cargando from "@/app/components/ui/Cargando/Cargando";
 
@@ -827,7 +828,7 @@ const GenerarBoletin = () => {
       <Button
         variant="primary"
         size="medium"
-        onClick={generatePDF}
+        onClick={() => void conDescarga(generatePDF)}
         disabled={isGenerating || isLoading || boletinData.length === 0 || vigenciaError}
         type="button"
       >

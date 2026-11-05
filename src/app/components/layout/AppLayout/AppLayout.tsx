@@ -1,6 +1,7 @@
 import { Outlet } from "react-router-dom";
 import Topbar from "@/app/components/layout/Topbar/Topbar";
 import AvisoIngreso from "@/app/features/avisoIngreso/AvisoIngreso";
+import AvisosAgenda from "@/app/pages/Agenda/AvisosAgenda";
 import { CapaCarga } from "@/app/pages/facturacion/CargaFacturacion/CapaCarga";
 import styles from "./AppLayout.module.scss";
 
@@ -16,6 +17,7 @@ export default function AppLayout() {
         <CapaCarga />
       </div>
       <AvisoIngreso />
+      <AvisosAgenda />
     </>
   );
 }

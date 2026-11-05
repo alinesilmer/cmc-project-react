@@ -532,17 +532,17 @@ const ReportesPage: React.FC = () => {
           <Caja titulo="Descargas">
             <BotonDescarga
               formato="pdf"
-              onClick={() => descargas && void bajar(descargas.pdf)}
+              onClick={() => descargas && bajar(descargas.pdf)}
               disabled={!descargas?.hay || exportando}
             />
             <BotonDescarga
               formato="excel"
-              onClick={() => descargas && void bajar(descargas.excel)}
+              onClick={() => descargas && bajar(descargas.excel)}
               disabled={!descargas?.hay || exportando}
             />
             <BotonDescarga
               formato="csv"
-              onClick={() => descargas && void bajar(descargas.csv)}
+              onClick={() => descargas && bajar(descargas.csv)}
               disabled={!descargas?.hay || exportando}
             />
           </Caja>

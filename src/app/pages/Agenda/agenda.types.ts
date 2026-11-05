@@ -95,3 +95,14 @@ export function offsetPrimerDia(anio: number, mes: number): number {
 export function diasEnMes(anio: number, mes: number): number {
   return new Date(anio, mes, 0).getDate();
 }
+
+/** Un evento de hoy que el personal todavía no vio. */
+export interface AvisoAgenda {
+  id: number;
+  evento_id: number;
+  tipo: TipoEvento;
+  titulo: string;
+  descripcion?: string | null;
+  /** `YYYY-MM-DD`. */
+  fecha: string;
+}

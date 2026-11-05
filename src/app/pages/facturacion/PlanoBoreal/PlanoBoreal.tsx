@@ -4,6 +4,7 @@ import { Download, FileSpreadsheet } from "lucide-react";
 import { descargarPlanoBoreal, listarFacturas } from "../api";
 import type { FacturaRead } from "../types";
 import { formatMoney } from "../money";
+import { conDescarga } from "@/app/hooks/descargas";
 import { saveAs } from "@/app/shared/lib/fileSaver";
 import { mensajeDeError } from "@/app/shared/lib/httpErrors";
 // Mismo formato que las demás herramientas de exportación de Facturación.
@@ -132,7 +133,7 @@ export default function PlanoBoreal() {
             {error && <div className={styles.error}>{error}</div>}
 
             <div className={styles.acciones}>
-              <BotonPlano type="button" className={styles.btn} disabled={!factura || generando} onClick={generar}>
+              <BotonPlano type="button" className={styles.btn} disabled={!factura || generando} onClick={() => void conDescarga(generar)}>
                 {generando ? <Cargando size={16} /> : <Download size={16} />}
                 {generando ? "Generando…" : "Descargar Excel"}
               </BotonPlano>

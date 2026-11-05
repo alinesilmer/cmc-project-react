@@ -214,13 +214,13 @@ export default function Boletin() {
         <Caja titulo="Descargas">
           <BotonDescarga
             formato="pdf"
-            onClick={() => void descargar("pdf")}
+            onClick={() => descargar("pdf")}
             disabled={sinDatos || bajando !== null}
             cargando={bajando === "pdf"}
           />
           <BotonDescarga
             formato="excel"
-            onClick={() => void descargar("excel")}
+            onClick={() => descargar("excel")}
             disabled={sinDatos || bajando !== null}
             cargando={bajando === "excel"}
           />

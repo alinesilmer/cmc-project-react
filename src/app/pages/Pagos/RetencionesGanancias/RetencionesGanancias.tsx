@@ -194,8 +194,8 @@ const RetencionesGanancias: React.FC = () => {
 
       <div className={lq.barra}>
         <div className={lq.acciones}>
-          <BotonDescarga formato="pdf" onClick={() => void exportar("pdf")} disabled={!filas.length} cargando={generando === "pdf"} />
-          <BotonDescarga formato="excel" onClick={() => void exportar("excel")} disabled={!filas.length} cargando={generando === "excel"} />
+          <BotonDescarga formato="pdf" onClick={() => exportar("pdf")} disabled={!filas.length} cargando={generando === "pdf"} />
+          <BotonDescarga formato="excel" onClick={() => exportar("excel")} disabled={!filas.length} cargando={generando === "excel"} />
           <Button
             variant="primary"
             size="md"

@@ -159,7 +159,7 @@ export default function BoletinMedico() {
 
         {puedeBajar && (
           <div className={s.descarga}>
-            <BotonDescarga formato="pdf" onClick={() => void bajar()} cargando={bajando} disabled={base.length === 0} />
+            <BotonDescarga formato="pdf" onClick={() => bajar()} cargando={bajando} disabled={base.length === 0} />
           </div>
         )}
       </div>

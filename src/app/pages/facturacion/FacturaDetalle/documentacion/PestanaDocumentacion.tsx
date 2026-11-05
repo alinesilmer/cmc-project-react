@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { FileDown } from "lucide-react";
 
+import { conDescarga } from "@/app/hooks/descargas";
 import Button from "@/app/components/ui/Button/Button";
 import { abrirVentanaPdf, mostrarPdf } from "@/app/shared/lib/abrirPdf";
 import { descargarDocumentacionPdf } from "../../api";
@@ -99,7 +100,7 @@ export default function PestanaDocumentacion({ detalle, filas, vista }: Props) {
           <Button
             variant="primary"
             leftIcon={<FileDown size={18} aria-hidden="true" />}
-            onClick={exportar}
+            onClick={() => void conDescarga(exportar)}
             disabled={pendientes || nadaQueExportar || generando}
             isLoading={generando}
           >
