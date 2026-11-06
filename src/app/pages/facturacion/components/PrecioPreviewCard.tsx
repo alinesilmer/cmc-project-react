@@ -73,7 +73,7 @@ const PrecioPreviewCard: React.FC<Props> = ({ precio, onVolverATradicional }) =>
         <strong style={{ fontSize: 14 }}>{formatMoney(precio.gastos)}</strong>
       </div>
       <div>
-        <span style={{ fontSize: 11, color: paleta.gray500, display: "block" }}>Ayudante</span>
+        <span style={{ fontSize: 11, color: paleta.gray500, display: "block" }}>Ayudantía (total)</span>
         <strong style={{ fontSize: 14 }}>{formatMoney(precio.ayudante)}</strong>
       </div>
       {parseMoney(precio.coseguro) > 0 && (

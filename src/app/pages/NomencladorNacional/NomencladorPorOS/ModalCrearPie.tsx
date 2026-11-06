@@ -5,7 +5,7 @@ import type { PorOSCtx } from "./useNomencladorPorOS";
 import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 export default function ModalCrearPie({ ctx }: { ctx: PorOSCtx }) {
-  const { setModalKind, saving, parCargando, replicaTerminada, bloqueadoPorAlta, replicaActiva, handleSave } = ctx;
+  const { form, setModalKind, saving, parCargando, replicaTerminada, bloqueadoPorAlta, replicaActiva, handleSave } = ctx;
   return (
     <>
       <div className={styles.modalFooter}>
@@ -27,7 +27,7 @@ export default function ModalCrearPie({ ctx }: { ctx: PorOSCtx }) {
             <BotonPlano
               className={styles.btnPrimary}
               onClick={handleSave}
-              disabled={saving || parCargando || bloqueadoPorAlta}
+              disabled={saving || parCargando || bloqueadoPorAlta || !form.vigencia_desde}
             >
               {saving ? (
                 <>

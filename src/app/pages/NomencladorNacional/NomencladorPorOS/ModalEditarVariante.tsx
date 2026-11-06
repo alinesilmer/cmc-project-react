@@ -6,6 +6,7 @@ import { type ModalidadValor } from "./porOS.types";
 import { ComponentEditor } from "./ComponentEditor";
 import Cargando from "@/app/components/ui/Cargando/Cargando";
 import ReplicarFamiliaBlock, { ErrorReplica, ResultadoReplica } from "@/app/pages/NomencladorNacional/components/ReplicarFamilia/ReplicarFamiliaBlock";
+import FaltaVigencia from "../components/FaltaVigencia";
 import type { PorOSCtx } from "./useNomencladorPorOS";
 import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
@@ -44,11 +45,7 @@ export default function ModalEditarVariante({ ctx, editTarget }: { ctx: PorOSCtx
                     }));
                   }}
                 />
-                {editErrors.vigencia_desde && (
-                  <span className={styles.errorMsg}>
-                    {editErrors.vigencia_desde}
-                  </span>
-                )}
+                <FaltaVigencia vigencia={editEcu.vigencia_desde} />
                 {avisoVigencia(editEcu.vigencia_desde, editTarget.vigencia_desde) && (
                   <span className={styles.avisoPrecio}>
                     {avisoVigencia(editEcu.vigencia_desde, editTarget.vigencia_desde)}
@@ -134,7 +131,7 @@ export default function ModalEditarVariante({ ctx, editTarget }: { ctx: PorOSCtx
                 <BotonPlano
                   className={styles.btnWarning}
                   onClick={handleActualizar}
-                  disabled={savingEcu}
+                  disabled={savingEcu || !editEcu.vigencia_desde}
                 >
                   {savingEcu ? (
                     <>

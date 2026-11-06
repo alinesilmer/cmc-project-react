@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { type CodigoObraSocialOut, type ComponentePayload, type ComponentesNNSugeridos, type GalenoOut, type NomencladorOut, type Origen, type ReplicaResultadoItem, type ReplicarValoresFamiliaPayload, type RevalorizarResult, type TipoCodigo, type ValorOut } from "../nomenclador.types";
 import { type ComoFactura, type ComponenteForm, type EditEcuForm, type EditMetaForm, type EditMode, type ModalKind, type ModalidadValor, type PrecioForm, type PreciosExistentes, type ValorForm } from "./porOS.types";
 import { FIXED_CONCEPTOS, PAGE_SIZE, clonarPrecio, comoFacturaDe, componentesPayload, compsFromOut, errorCoseguro, erroresPrecio, firmaPrecio, formVacio, galenoNivelado, initComps, nomencladorPayload, precioDeValor } from "./porOS.helpers";
-import { parseMonto, today } from "../nomenclador.helpers";
+import { parseMonto } from "../nomenclador.helpers";
+import { MENSAJE_FALTA_VIGENCIA } from "../components/FaltaVigencia";
 import { REPLICA_INICIAL, destinosReplica, type ReplicaState } from "@/app/pages/NomencladorNacional/components/ReplicarFamilia/replicaState";
 import { useObrasSociales } from "../../ObrasSociales/useObrasSociales";
 import { useQuery } from "@tanstack/react-query";
@@ -64,7 +65,7 @@ export function useNomencladorPorOS() {
     observacion: "",
   });
   const [editEcu, setEditEcu] = useState<EditEcuForm>({
-    vigencia_desde: today(),
+    vigencia_desde: "",
     modalidad: "calculable",
     componentes: initComps(),
     coseguro: "",
@@ -715,7 +716,7 @@ export function useNomencladorPorOS() {
     const errs: Record<string, string> = {};
     if (!form.nomencladorId) errs.nomenclador = "Seleccioná un código";
     if (!form.descripcion.trim()) errs.descripcion = "Requerido";
-    if (!form.vigencia_desde) errs.vigencia_desde = "Requerido";
+    if (!form.vigencia_desde) errs.vigencia_desde = MENSAJE_FALTA_VIGENCIA;
     if (
       form.origen === "NE" &&
       !form.sinRestriccion &&
@@ -757,7 +758,7 @@ export function useNomencladorPorOS() {
 
   function validateEcuacion(): boolean {
     const errs: Record<string, string> = {};
-    if (!editEcu.vigencia_desde) errs.vigencia_desde = "Requerido";
+    if (!editEcu.vigencia_desde) errs.vigencia_desde = MENSAJE_FALTA_VIGENCIA;
     const cos = errorCoseguro(editEcu.coseguro);
     if (cos) errs.coseguro = cos;
     // Por presupuesto no tiene ecuación propia (H/G/A van en 0, ver `_crear_valor_con_ componentes` en el back) — solo importan vigencia_desde y coseguro, ya chequeados.
@@ -811,7 +812,7 @@ export function useNomencladorPorOS() {
       observacion: v.observacion ?? "",
     });
     setEditEcu({
-      vigencia_desde: today(),
+      vigencia_desde: "",
       modalidad: mod,
       componentes: compsFromOut(v.componentes),
       coseguro: v.coseguro && parseMonto(v.coseguro) !== 0 ? v.coseguro : "",
@@ -909,9 +910,9 @@ export function useNomencladorPorOS() {
 
   /** Un solo formulario para todas: con una sola fila (o NN) no hay qué elegir. */
   const nucleoUnico = nucleoMismo || nucleoVariantes.length <= 1;
-  /** Se eligió una fecha distinta de la de por defecto (hoy): aunque no se toque ningún
+  /** Se eligió una vigencia (el campo arranca vacío): aunque no se toque ningún
    * precio, es una vigencia nueva y la toman TODAS las especialidades del código. */
-  const nucleoVigenciaCambio = !!editEcu.vigencia_desde && editEcu.vigencia_desde !== today();
+  const nucleoVigenciaCambio = !!editEcu.vigencia_desde;
   const nucleoFilasCambiadas = nucleoUnico
     ? []
     : nucleoVariantes.filter(
@@ -922,6 +923,9 @@ export function useNomencladorPorOS() {
   const nucleoComunCambio =
     nucleoUnico &&
     (nucleoVigenciaCambio || firmaPrecio(nucleoComun) !== nucleoInicial.current.comun);
+  /** Hay precios por rotar y todavía no se indicó desde cuándo rigen: no se puede guardar. */
+  const nucleoFaltaVigencia =
+    (nucleoComunCambio || nucleoFilasCambiadas.length > 0) && !editEcu.vigencia_desde;
   /** La vigencia más nueva de los precios que se rotan (para el aviso de la fecha). */
   const ultimaNucleo = (nucleoComunCambio ? nucleoVariantes : nucleoFilasCambiadas)
     .map((v) => v.vigencia_desde).sort().pop();
@@ -1201,7 +1205,7 @@ export function useNomencladorPorOS() {
     if (!editTarget || !selectedNroOS) return;
     const errs: Record<string, string> = {};
     const rota = nucleoComunCambio || nucleoFilasCambiadas.length > 0;
-    if (rota && !editEcu.vigencia_desde) errs.vigencia_desde = "Requerido";
+    if (rota && !editEcu.vigencia_desde) errs.vigencia_desde = MENSAJE_FALTA_VIGENCIA;
     // Cualquier fecha vale: igual o anterior a la vigente sólo avisa (`avisoVigencia`).
     if (editTarget.por_presupuesto) {
       if (nucleoComunCambio) {
@@ -1489,6 +1493,7 @@ export function useNomencladorPorOS() {
     nucleoVigenciaCambio,
     nucleoFilasCambiadas,
     nucleoComunCambio,
+    nucleoFaltaVigencia,
     ultimaNucleo,
     nivelNucleo,
     leyendaEdicion,

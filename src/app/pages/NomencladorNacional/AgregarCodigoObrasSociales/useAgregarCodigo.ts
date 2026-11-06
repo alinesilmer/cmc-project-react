@@ -4,8 +4,6 @@ import { altaNECero, listNomenclador } from "../nomenclador.api";
 import type { AltaNECeroResult, NomencladorOut } from "../nomenclador.types";
 import { mensajeDeError } from "@/app/shared/lib/httpErrors";
 
-/** Vigencia por defecto de las altas: 01/01/2026 (editable). */
-const VIGENCIA_DEFAULT = "2026-01-01";
 const ESPERA_BUSQUEDA_MS = 300;
 const MIN_LETRAS = 2;
 
@@ -18,7 +16,7 @@ export function useAgregarCodigo() {
   const [buscando, setBuscando] = useState(false);
   const [codigo, setCodigo] = useState<NomencladorOut | null>(null);
   const [elegidas, setElegidas] = useState<Set<number>>(new Set());
-  const [vigencia, setVigencia] = useState(VIGENCIA_DEFAULT);
+  const [vigencia, setVigencia] = useState("");
 
   const [vista, setVista] = useState<Vista | null>(null);
   const [resultado, setResultado] = useState<AltaNECeroResult | null>(null);

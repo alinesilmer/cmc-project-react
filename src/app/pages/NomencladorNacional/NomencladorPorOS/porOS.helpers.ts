@@ -1,6 +1,6 @@
 import { ORIGEN_LABELS } from "../nomenclador.types";
 import type { ValorOut, GalenoOut, ComponentePayload, Origen } from "../nomenclador.types";
-import { today, parseMonto } from "../nomenclador.helpers";
+import { parseMonto } from "../nomenclador.helpers";
 import { fechaCorta } from "@/app/pages/NomencladorNacional/utiles";
 import type { ModalidadValor, ComoFactura, ComponenteForm, PrecioForm, ValorForm } from "./porOS.types";
 
@@ -13,7 +13,8 @@ export function formVacio(): ValorForm {
     modalidad: "calculable",
     comoFactura: "manual",
     nomencladorSlug: "",
-    vigencia_desde: today(),
+    // Vacía a propósito: la vigencia la elige quien carga, nunca se asume «hoy».
+    vigencia_desde: "",
     descripcion: "",
     porPresupuesto: false,
     nivel: "",

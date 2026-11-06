@@ -9,6 +9,7 @@ import type { Origen } from "../../nomenclador.types";
 import { ORIGENES, porcentajeValido } from "../aumento.helpers";
 import CampoFecha from "@/app/components/ui/CampoFecha/CampoFecha";
 import FieldError from "@/app/components/ui/FieldError/FieldError";
+import FaltaVigencia from "../../components/FaltaVigencia";
 import { formatFecha } from "@/app/shared/lib/fechas";
 import { formatoNumero2 } from "@/app/shared/lib/formatos";
 
@@ -54,6 +55,7 @@ function Parametros({ numero, incluirFijos, origen, onOrigen, vigencia, onVigenc
       <div className={c.campo}>
         <span className={c.rotulo} id="aumento-vigencia">Vigencia desde</span>
         <CampoFecha value={vigencia} onChange={onVigencia} />
+        <FaltaVigencia vigencia={vigencia} />
         <p className={c.ayuda}>Tiene que ser posterior a la del precio actual: lo que ya la tenga se omite.</p>
       </div>
 

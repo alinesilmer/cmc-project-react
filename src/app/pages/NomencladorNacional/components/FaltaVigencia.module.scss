@@ -1,0 +1,9 @@
+@use "@/app/styles/all.scss" as *;
+
+// Aviso bajo un campo de vigencia que todavía está vacío.
+.falta {
+  margin: 0;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $peligro;
+}

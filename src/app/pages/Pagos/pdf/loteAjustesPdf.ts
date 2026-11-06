@@ -2,7 +2,7 @@
 import type { jsPDF } from "jspdf";
 import { PdfFormatoA, conSigno, fechaCorta, importe, type Fila } from "@/app/shared/lib/documentos/pdfFormatoA";
 import { estadoLabel } from "../LoteDetalle/utiles";
-import { fechaDMA, mesLabel, verPorcentajeItem, type Ajuste, type LoteAjuste } from "../types";
+import { facturaRefact, fechaDMA, mesLabel, verPorcentajeItem, type Ajuste, type LoteAjuste } from "../types";
 
 /** «2026-09-03» → «03/09/2026»; si viene de otra forma, tal cual. */
 export const fechaPrestacion = (f: string | null) => {
@@ -14,7 +14,13 @@ const esDebito = (a: Ajuste) => a.tipo === "d";
 
 /** Datos del lote que van arriba del PDF y del Excel (aparte de la obra social, el período y el estado). El % de pago es de cada ítem, no del lote. */
 export function datosExtraDelLote(lote: LoteAjuste): [string, string][] {
-  return [["Creado", fechaDMA(lote.created_at)]];
+  const extra: [string, string][] = [["Creado", fechaDMA(lote.created_at)]];
+  if (lote.tipo === "refacturacion") {
+    if (lote.nro_factura) extra.push(["Corrige factura", lote.nro_factura]);
+    const nueva = facturaRefact(lote);
+    if (nueva) extra.push(["Factura de la refacturación", nueva]);
+  }
+  return extra;
 }
 
 /** Cuenta de débitos y créditos del lote: lo que muestra la tabla es lo que suma el neto. */

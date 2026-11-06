@@ -8,7 +8,8 @@ import base from "../NomencladorCodigos/NomencladorCodigos.module.scss";
 import styles from "./aplicarNivelado.module.scss";
 import { useObrasSociales } from "../../ObrasSociales/useObrasSociales";
 import { aplicarNivelado, getEscalaNivelado, getEstadoOsNivelado } from "../nomenclador.api";
-import { today, parseMonto } from "../nomenclador.helpers";
+import { parseMonto } from "../nomenclador.helpers";
+import FaltaVigencia from "./FaltaVigencia";
 import type { AplicarNiveladoAjuste, AplicarNiveladoGaleno, AplicarNiveladoOut, EstadoAplicarNivelado } from "../nomenclador.types";
 import CampoFecha from "@/app/components/ui/CampoFecha/CampoFecha";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
@@ -54,7 +55,7 @@ export default function AplicarNiveladoModal({
   onAplicado?: (r: AplicarNiveladoOut) => void;
 }) {
   const [os, setOs] = useState<number | null>(obraSocialNro);
-  const [vigencia, setVigencia] = useState(vigenciaInicial ?? today());
+  const [vigencia, setVigencia] = useState(vigenciaInicial ?? "");
   const [preview, setPreview] = useState<AplicarNiveladoOut | null>(null);
   const [hecho, setHecho] = useState<AplicarNiveladoOut | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -71,7 +72,7 @@ export default function AplicarNiveladoModal({
   useEffect(() => {
     if (!isOpen) return;
     setOs(obraSocialNro);
-    setVigencia(vigenciaInicial ?? today());
+    setVigencia(vigenciaInicial ?? "");
     setPreview(null);
     setHecho(null);
     setError(null);
@@ -205,6 +206,7 @@ export default function AplicarNiveladoModal({
               id="apl-vig"
               disabled={!!hecho}
             />
+            <FaltaVigencia vigencia={vigencia} />
           </div>
         </div>
 

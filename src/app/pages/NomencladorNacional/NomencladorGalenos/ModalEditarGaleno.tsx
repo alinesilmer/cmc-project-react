@@ -7,6 +7,7 @@ import { formatoPesos } from "@/app/shared/lib/formatos";
 import { parseMonto } from "./galenos.helpers";
 import CampoFecha from "@/app/components/ui/CampoFecha/CampoFecha";
 import { avisoVigenciaGaleno } from "../nomenclador.helpers";
+import FaltaVigencia from "../components/FaltaVigencia";
 import type { GalenosCtx } from "./useGalenos";
 import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
@@ -102,11 +103,7 @@ export default function ModalEditarGaleno({ ctx, editTarget }: { ctx: GalenosCtx
                 setEditErrors((p) => ({ ...p, vigencia_precio: "" }));
               }}
             />
-            {editErrors.vigencia_precio && (
-              <span className={styles.errorMsg}>
-                {editErrors.vigencia_precio}
-              </span>
-            )}
+            <FaltaVigencia vigencia={editForm.vigencia_precio} />
             {avisoVigenciaGaleno(editForm.vigencia_precio, editTarget.vigencia_desde) && (
               <span className={styles.hintText}>
                 {avisoVigenciaGaleno(editForm.vigencia_precio, editTarget.vigencia_desde)}
@@ -124,7 +121,7 @@ export default function ModalEditarGaleno({ ctx, editTarget }: { ctx: GalenosCtx
           <BotonPlano
             className={styles.btnPrimary}
             onClick={handleActualizarPrecio}
-            disabled={savingPrecio}
+            disabled={savingPrecio || !editForm.vigencia_precio}
           >
             {savingPrecio ? (
               <>
@@ -169,11 +166,7 @@ export default function ModalEditarGaleno({ ctx, editTarget }: { ctx: GalenosCtx
               }))
             }
           />
-          {editErrors.vigencia_unidades && (
-            <span className={styles.errorMsg}>
-              {editErrors.vigencia_unidades}
-            </span>
-          )}
+          <FaltaVigencia vigencia={editForm.vigencia_unidades} />
         </div>
 
         <p className={styles.hintText}>
@@ -238,7 +231,7 @@ export default function ModalEditarGaleno({ ctx, editTarget }: { ctx: GalenosCtx
           <BotonPlano
             className={styles.btnPrimary}
             onClick={handleActualizarUnidades}
-            disabled={savingUnidades}
+            disabled={savingUnidades || !editForm.vigencia_unidades}
           >
             {savingUnidades ? (
               <>

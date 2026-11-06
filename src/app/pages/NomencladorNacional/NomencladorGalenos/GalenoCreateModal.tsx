@@ -21,7 +21,7 @@ import {
   REPLICA_INICIAL, destinosReplica, type ReplicaState,
 } from "@/app/pages/NomencladorNacional/components/ReplicarFamilia/replicaState";
 import type { ObraSocialListItem } from "../../ObrasSociales/obrasSociales.types";
-import { hoyISO } from "@/app/shared/lib/fechas";
+import FaltaVigencia, { MENSAJE_FALTA_VIGENCIA } from "../components/FaltaVigencia";
 import CampoFecha from "@/app/components/ui/CampoFecha/CampoFecha";
 import { extractDetail } from "@/app/pages/NomencladorNacional/NomencladorGalenos/utiles";
 import Button from "@/app/components/ui/Button/Button";
@@ -31,8 +31,6 @@ import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-// hoyISO y no toISOString(): este último pasa la hora local a UTC.
-const today = hoyISO;
 function parseOpt(s: string): number | null {
   const t = s.trim();
   if (t === "") return null;
@@ -96,7 +94,7 @@ function newDraft(): GalenoDraft {
   return {
     uid: `d${Date.now()}_${draftSeq++}`,
     grupo: "", nombre: "", codigo: "", sinNivel: false,
-    vigencia_desde: today(), valor_unitario: "", observacion: "",
+    vigencia_desde: "", valor_unitario: "", observacion: "",
     niveles: [], errors: {},
   };
 }
@@ -104,7 +102,7 @@ function newDraft(): GalenoDraft {
 function validateDraft(d: GalenoDraft): Record<string, string> {
   const e: Record<string, string> = {};
   if (!d.grupo) e.grupo = "Elegí una plantilla";
-  if (!d.vigencia_desde) e.vigencia_desde = "Requerido";
+  if (!d.vigencia_desde) e.vigencia_desde = MENSAJE_FALTA_VIGENCIA;
   const vu = parseFloat(d.valor_unitario);
   if (d.valor_unitario.trim() === "" || isNaN(vu) || vu < 0)
     e.valor_unitario = "Precio inválido (debe ser ≥ 0)";
@@ -229,6 +227,12 @@ export default function GalenoCreateModal({
 
   const totalDrafts = useMemo(
     () => blocks.reduce((acc, b) => acc + b.drafts.length, 0),
+    [blocks],
+  );
+
+  // Cada galeno con plantilla elegida necesita su vigencia: sin ella no se puede crear nada.
+  const faltaVigencia = useMemo(
+    () => blocks.some((b) => b.drafts.some((d) => d.grupo !== "" && !d.vigencia_desde)),
     [blocks],
   );
 
@@ -486,7 +490,7 @@ export default function GalenoCreateModal({
             <Button
               leftIcon={<Save size={16} aria-hidden="true" />}
               onClick={handleSubmit}
-              disabled={totalDrafts === 0}
+              disabled={totalDrafts === 0 || faltaVigencia}
               isLoading={submitting}
             >
               Crear {totalDrafts > 0 ? `${totalDrafts} ` : ""}galeno{totalDrafts !== 1 ? "s" : ""}{destinosReplica(replica).length > 0 ? " y replicar" : ""}
@@ -690,7 +694,7 @@ function DraftCard({
                 value={draft.vigencia_desde}
                 onChange={(valor) => onField({ vigencia_desde: valor })}
               />
-              {e.vigencia_desde && <span className={styles.errorMsg}>{e.vigencia_desde}</span>}
+              <FaltaVigencia vigencia={draft.vigencia_desde} />
             </div>
             <div className={styles.formGroup}>
               <label className={styles.formLabel}>

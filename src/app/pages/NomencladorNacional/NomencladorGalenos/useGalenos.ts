@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { type EditForm, type ImportForm, type ModalKind } from "./galenos.types";
 import { type GalenoOut, type GalenosImportarResult, type ObraSocialFamiliaItem, type ReplicaResultadoItem, type ReplicarGalenoFamiliaPayload } from "../nomenclador.types";
-import { today } from "./galenos.helpers";
+import { MENSAJE_FALTA_VIGENCIA } from "../components/FaltaVigencia";
 import { REPLICA_INICIAL, destinosReplica, type ReplicaState } from "@/app/pages/NomencladorNacional/components/ReplicarFamilia/replicaState";
 import { useObrasSociales } from "../../ObrasSociales/useObrasSociales";
 import { actualizarPrecioGaleno, actualizarUnidadesGaleno, deleteGaleno, getFamiliaObraSocial, getHistorialGaleno, importarGalenosDeObraSocial, listGalenos, replicarGalenoEnFamilia, updateGaleno } from "../nomenclador.api";
@@ -26,12 +26,12 @@ export function useGalenos() {
   const [editTarget, setEditTarget] = useState<GalenoOut | null>(null);
   const [editForm, setEditForm] = useState<EditForm>({
     observacion: "",
-    vigencia_unidades: today(),
+    vigencia_unidades: "",
     hon: "",
     ayu: "",
     gas: "",
     valor: "",
-    vigencia_precio: today(),
+    vigencia_precio: "",
   });
   const [savingObs, setSavingObs] = useState(false);
   const [savingUnidades, setSavingUnidades] = useState(false);
@@ -50,7 +50,7 @@ export function useGalenos() {
   // ── Import modal state ────────────────────────────────────────────────────
   const [importForm, setImportForm] = useState<ImportForm>({
     osOrigen: "",
-    vigencia_desde: today(),
+    vigencia_desde: "",
     alcance: "todos",
     convertir: false,
     actualizar: "valor_y_unidades",
@@ -129,12 +129,12 @@ export function useGalenos() {
     setEditTarget(g);
     setEditForm({
       observacion: g.observacion ?? "",
-      vigencia_unidades: today(),
+      vigencia_unidades: "",
       hon: "",
       ayu: "",
       gas: "",
       valor: g.valor_unitario ?? "",
-      vigencia_precio: today(),
+      vigencia_precio: "",
     });
     setEditErrors({});
     setConfirmUnidades(false);
@@ -181,7 +181,7 @@ export function useGalenos() {
     const e: Record<string, string> = {};
     if (editForm.valor.trim() === "" || isNaN(v) || v < 0)
       e.valor = "Valor inválido";
-    if (!editForm.vigencia_precio) e.vigencia_precio = "Requerido";
+    if (!editForm.vigencia_precio) e.vigencia_precio = MENSAJE_FALTA_VIGENCIA;
     setEditErrors((p) => ({ ...p, ...e }));
     if (Object.keys(e).length > 0) return;
 
@@ -229,7 +229,7 @@ export function useGalenos() {
 
   function validateUnidades(): boolean {
     const e: Record<string, string> = {};
-    if (!editForm.vigencia_unidades) e.vigencia_unidades = "Requerido";
+    if (!editForm.vigencia_unidades) e.vigencia_unidades = MENSAJE_FALTA_VIGENCIA;
     const someSet = [editForm.hon, editForm.ayu, editForm.gas].some(
       (v) => v.trim() !== "",
     );
@@ -291,7 +291,7 @@ export function useGalenos() {
   function openImport() {
     setImportForm({
       osOrigen: "",
-      vigencia_desde: today(),
+      vigencia_desde: "",
       alcance: "todos",
       convertir: false,
       actualizar: "valor_y_unidades",
@@ -319,7 +319,7 @@ export function useGalenos() {
   async function handleImport(forceConvertir?: boolean) {
     const e: Record<string, string> = {};
     if (importForm.osOrigen === "") e.osOrigen = "Requerido";
-    if (!importForm.vigencia_desde) e.vigencia_desde = "Requerido";
+    if (!importForm.vigencia_desde) e.vigencia_desde = MENSAJE_FALTA_VIGENCIA;
     if (
       importForm.osOrigen !== "" &&
       Number(importForm.osOrigen) === selectedOsNro

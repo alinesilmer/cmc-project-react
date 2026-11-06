@@ -1,0 +1,60 @@
+@use "@/app/styles/all.scss" as *;
+
+// Ver FacturaRefacturacion.tsx: tipo y número a la izquierda, el archivo a la derecha.
+.fila {
+  flex: 1 1 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: $spacing-4 $spacing-8;
+  min-width: 0;
+}
+
+.izquierda {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: $spacing-3 $spacing-4;
+  min-width: 0;
+}
+
+.tipo { width: 6rem; }
+.numero { width: 15rem; max-width: 100%; }
+
+.derecha {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: $spacing-1;
+  margin-left: auto;
+  min-width: 0;
+
+  @media (max-width: $breakpoint-sm) {
+    align-items: flex-start;
+    margin-left: 0;
+  }
+}
+
+.archivo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: $spacing-2 $spacing-3;
+  min-height: 2.75rem;
+
+  @media (max-width: $breakpoint-sm) { justify-content: flex-start; }
+}
+
+.nombre {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-1;
+  max-width: 18rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.punto { color: $gray-300; }

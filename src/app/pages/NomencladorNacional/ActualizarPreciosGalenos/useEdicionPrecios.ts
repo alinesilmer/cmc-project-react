@@ -5,7 +5,6 @@ import type { GalenoOut, ReplicaResultadoItem } from "../nomenclador.types";
 import { avisoVigenciaGaleno } from "../nomenclador.helpers";
 import { montoValido, type Grupo, type ResultadoGuardado } from "./precios.helpers";
 import { useNotify } from "@/app/hooks/useNotify";
-import { hoyISO } from "@/app/shared/lib/fechas";
 import { comoErrorApi, mensajeDeError } from "@/app/shared/lib/httpErrors";
 
 /** Los valores nuevos tipeados, la vigencia y el guardado en lote: todos los galenos se aplican o ninguno. */
@@ -20,7 +19,8 @@ export function useEdicionPrecios(
   const notify = useNotify();
   const [edits, setEdits] = useState<Record<string, string>>({});
   const [abiertos, setAbiertos] = useState<Record<string, boolean>>({});
-  const [vigencia, setVigencia] = useState(hoyISO());
+  // Arranca vacía a propósito: la vigencia la tiene que elegir quien guarda, nunca se asume «hoy».
+  const [vigencia, setVigencia] = useState("");
   const [guardando, setGuardando] = useState(false);
   const [resultados, setResultados] = useState<ResultadoGuardado[]>([]);
   const [confirmando, setConfirmando] = useState(false);

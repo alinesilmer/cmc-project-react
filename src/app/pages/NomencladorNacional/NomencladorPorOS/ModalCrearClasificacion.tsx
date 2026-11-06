@@ -1,6 +1,7 @@
 import styles from "./NomencladorPorOS.module.scss";
 import MultiSelectBuscable from "@/app/components/ui/MultiSelectBuscable/MultiSelectBuscable";
 import CampoFecha from "@/app/components/ui/CampoFecha/CampoFecha";
+import FaltaVigencia from "../components/FaltaVigencia";
 import type { PorOSCtx } from "./useNomencladorPorOS";
 
 export default function ModalCrearClasificacion({ ctx }: { ctx: PorOSCtx }) {
@@ -132,11 +133,7 @@ export default function ModalCrearClasificacion({ ctx }: { ctx: PorOSCtx }) {
               setErrors((p) => ({ ...p, vigencia_desde: "" }));
             }}
           />
-          {errors.vigencia_desde && (
-            <span className={styles.errorMsg}>
-              {errors.vigencia_desde}
-            </span>
-          )}
+          <FaltaVigencia vigencia={form.vigencia_desde} />
         </div>
         <div className={styles.formGroup}>
           <label className={styles.formLabel}>
