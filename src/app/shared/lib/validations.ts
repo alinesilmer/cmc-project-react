@@ -19,7 +19,8 @@ const NUMERIC_ONLY_FIELDS: (keyof RegisterFormData)[] = [
   "officePhone",
   "resolutionNumber",
   "cuit",
-  "cbu",
+  "cbuSantander",
+  "cbuOtroBanco",
   "malpracticeCoverage",
 ];
 
@@ -83,7 +84,7 @@ export function getInputProps(
     };
     if (name === "documentNumber") props.maxLength = LIMITS.dni;
     if (name === "cuit") props.maxLength = LIMITS.cuit;
-    if (name === "cbu") props.maxLength = LIMITS.cbu;
+    if (name === "cbuSantander" || name === "cbuOtroBanco") props.maxLength = LIMITS.cbu;
     return props;
   }
   return {};

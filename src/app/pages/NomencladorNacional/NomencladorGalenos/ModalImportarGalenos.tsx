@@ -6,6 +6,7 @@ import { type GalenoOut } from "../nomenclador.types";
 import Cargando from "@/app/components/ui/Cargando/Cargando";
 import type { GalenosCtx } from "./useGalenos";
 import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
+import FaltaVigencia from "../components/FaltaVigencia";
 
 export default function ModalImportarGalenos({ ctx }: { ctx: GalenosCtx }) {
   const { setModalKind, selectedOsNro, importForm, setImportForm, importOsSearch, setImportOsSearch, importOsOpen, setImportOsOpen, importing, importResult, importErrors, setImportErrors, importOrigenGalenos, setImportOrigenGalenos, osList, selectedOsName, loadImportOrigenGalenos, handleImport } = ctx;
@@ -119,11 +120,7 @@ export default function ModalImportarGalenos({ ctx }: { ctx: GalenosCtx }) {
               }))
             }
           />
-          {importErrors.vigencia_desde && (
-            <span className={styles.errorMsg}>
-              {importErrors.vigencia_desde}
-            </span>
-          )}
+          <FaltaVigencia vigencia={importForm.vigencia_desde} />
         </div>
 
         {/* Alcance de la importación */}
@@ -375,7 +372,7 @@ export default function ModalImportarGalenos({ ctx }: { ctx: GalenosCtx }) {
             <BotonPlano
               className={styles.btnPrimary}
               onClick={() => handleImport()}
-              disabled={importing}
+              disabled={importing || !importForm.vigencia_desde}
             >
               {importing ? (
                 <>

@@ -28,7 +28,7 @@ import {
 import type { NiveladoCodigoOut, NomencladorNiveladoOut, RecalcularNiveladoResult } from "../nomenclador.types";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
 import { motivoError as detalleError } from "@/app/pages/NomencladorNacional/utiles";
-import { today } from "../nomenclador.helpers";
+import FaltaVigencia from "../components/FaltaVigencia";
 import Paginador from "@/app/components/ui/Paginador/Paginador";
 import { Solapa } from "@/app/components/layout/Franja/Franja";
 import PaginaPasos from "@/app/components/layout/PaginaPasos/PaginaPasos";
@@ -363,7 +363,8 @@ function EscalaDelNomenclador({
   const escala = useQuery({ queryKey: ["nivelado-escala", slug], queryFn: () => getEscalaNivelado(slug) });
   const [filas, setFilas] = useState<FilaEscala[]>([]);
   const [recalcular, setRecalcular] = useState(true);
-  const [vigencia, setVigencia] = useState(today());
+  // Vacía a propósito: la vigencia del recálculo la elige quien guarda.
+  const [vigencia, setVigencia] = useState("");
   const [guardando, setGuardando] = useState(false);
   const [previa, setPrevia] = useState<RecalcularNiveladoResult | null>(null);
   const [aplicando, setAplicando] = useState(false);
@@ -385,6 +386,8 @@ function EscalaDelNomenclador({
     return { uh, ua };
   };
   const invalida = filas.some((f) => aNum(f.uh) == null || (f.manual && aNum(f.ua) == null));
+  // Recalcular los valores de las obras sociales exige la vigencia; guardar sólo la escala, no.
+  const faltaVigencia = recalcular && !vigencia;
 
   function cambiar(nivel: number, cambio: Partial<FilaEscala>) {
     setPrevia(null);
@@ -392,6 +395,7 @@ function EscalaDelNomenclador({
   }
 
   async function guardar() {
+    if (faltaVigencia) return;
     setGuardando(true);
     setPrevia(null);
     try {
@@ -415,6 +419,7 @@ function EscalaDelNomenclador({
   }
 
   async function aplicarRecalculo() {
+    if (!vigencia) return;
     setAplicando(true);
     const r = await conProceso(
       {
@@ -490,6 +495,7 @@ function EscalaDelNomenclador({
               className={base.formInput} type="date" value={vigencia} disabled={!recalcular}
               aria-label="Vigencia del recálculo" onChange={(e) => { setVigencia(e.target.value); setPrevia(null); }}
             />
+            {recalcular && <FaltaVigencia vigencia={vigencia} />}
             <span className={base.hintText}>
               Antes de aplicar se muestra una vista previa. Las obras sociales con niveles ajustados conservan su ajuste.
             </span>
@@ -497,7 +503,7 @@ function EscalaDelNomenclador({
               <BotonPlano type="button" className={base.btnGhost} disabled={guardando || escala.isFetching} onClick={() => void escala.refetch()}>
                 Descartar
               </BotonPlano>
-              <BotonPlano type="button" className={base.btnPrimary} disabled={guardando || invalida} onClick={() => void guardar()}>
+              <BotonPlano type="button" className={base.btnPrimary} disabled={guardando || invalida || faltaVigencia} onClick={() => void guardar()}>
                 {guardando ? "Guardando…" : recalcular ? "Guardar y ver vista previa" : "Guardar escala"}
               </BotonPlano>
             </div>

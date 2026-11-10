@@ -3,10 +3,11 @@ import CampoFecha from "@/app/components/ui/CampoFecha/CampoFecha";
 import { avisoVigencia, erroresDe } from "./porOS.helpers";
 import { ComoSeFacturaEdit } from "./ComoSeFacturaEdit";
 import { BloquePrecio } from "./BloquePrecio";
+import FaltaVigencia from "../components/FaltaVigencia";
 import type { PorOSCtx } from "./useNomencladorPorOS";
 
 export default function ModalEditarValores({ ctx, editTarget }: { ctx: PorOSCtx; editTarget: NonNullable<PorOSCtx["editTarget"]> }) {
-  const { selectedNroOS, galenos, editEcu, setEditEcu, editErrors, setEditErrors, editMode, nucleoOrigen, nucleoVariantes, nucleoMismo, nucleoComun, nucleoPrecios, espMap, cambiarNucleoMismo, actualizarNucleoPrecio, cambiarModalidadNucleo, cambiarCompNucleo, nucleoUnico, ultimaNucleo } = ctx;
+  const { selectedNroOS, galenos, editEcu, setEditEcu, editErrors, setEditErrors, editMode, nucleoOrigen, nucleoVariantes, nucleoMismo, nucleoComun, nucleoPrecios, espMap, cambiarNucleoMismo, actualizarNucleoPrecio, cambiarModalidadNucleo, cambiarCompNucleo, nucleoUnico, ultimaNucleo, nucleoFaltaVigencia } = ctx;
   return (
     <>
       {/* Valores, vigencia y coseguro. */}
@@ -30,9 +31,7 @@ export default function ModalEditarValores({ ctx, editTarget }: { ctx: PorOSCtx;
                 setEditErrors((p) => ({ ...p, vigencia_desde: "" }));
               }}
             />
-            {editErrors.vigencia_desde && (
-              <span className={styles.errorMsg}>{editErrors.vigencia_desde}</span>
-            )}
+            {nucleoFaltaVigencia && <FaltaVigencia vigencia={editEcu.vigencia_desde} />}
             {avisoVigencia(editEcu.vigencia_desde, ultimaNucleo) && (
               <span className={styles.avisoPrecio}>{avisoVigencia(editEcu.vigencia_desde, ultimaNucleo)}</span>
             )}

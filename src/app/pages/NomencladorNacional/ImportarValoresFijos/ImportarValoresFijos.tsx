@@ -24,6 +24,7 @@ import type {
 } from "../nomenclador.types";
 import { formatoPesos } from "@/app/shared/lib/formatos";
 import Cargando from "@/app/components/ui/Cargando/Cargando";
+import FaltaVigencia from "../components/FaltaVigencia";
 import Paginador from "@/app/components/ui/Paginador/Paginador";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
 import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
@@ -408,6 +409,7 @@ export default function ImportarValoresFijos() {
           <div className={styles.campo}>
             <label className={styles.label} htmlFor="ivf-vig">Vigencia desde</label>
             <input id="ivf-vig" type="date" className={styles.input} value={vigencia} onChange={(e) => setVigencia(e.target.value)} disabled={aplicando} />
+            <FaltaVigencia vigencia={vigencia} />
           </div>
           <div className={styles.campo}>
             <span className={styles.label}>Archivo (.xlsx)</span>

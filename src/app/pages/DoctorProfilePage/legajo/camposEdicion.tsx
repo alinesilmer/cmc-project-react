@@ -2,6 +2,7 @@ import DatePicker from "react-datepicker";
 import styles from "../DoctorProfilePage.module.scss";
 import type { DoctorProfileX } from "./legajo.types";
 import { parseLocalDate, toYmd } from "./legajo.helpers";
+import { errorCbu, MEDIOS_COBRO, type MedioCobro } from "@/app/shared/lib/cbu";
 
 type Valor = DoctorProfileX[keyof DoctorProfileX];
 
@@ -76,7 +77,52 @@ export function camposEdicion(draft: Partial<DoctorProfileX>, setField: SetField
     );
   };
 
-  return { RText, RNumber, RSexo, RCondicion_impositiva, RDate };
+  // setField está tipado por clave; para los campos de cobro alcanza con un setter sin tipo.
+  const setAny = setField as unknown as (key: keyof DoctorProfileX, val: unknown) => void;
+
+  /** CBU de Santander o de otro banco: solo dígitos, con el aviso de por qué no sirve si no es válido. */
+  const RCbu = (key: "cbu_santander" | "cbu_otro_banco", banco: "santander" | "otro") => {
+    const valor = (draft[key] as string | null | undefined) ?? "";
+    const error = errorCbu(valor, banco);
+    return (
+      <>
+        <input
+          className={styles.input}
+          value={valor}
+          onChange={(e) => setAny(key, e.target.value.replace(/\D/g, ""))}
+          inputMode="numeric"
+          maxLength={22}
+          placeholder="22 dígitos"
+        />
+        {error && <small className={styles.errorInline}>{error}</small>}
+      </>
+    );
+  };
+
+  /** Por dónde cobra: Santander, Otros bancos o Cheque (radios). */
+  const RMedioCobro = () => (
+    <>
+    <div className={styles.radioGroup} role="radiogroup" aria-label="Cobra por">
+      {MEDIOS_COBRO.map(({ value, label }) => (
+        <label key={value} className={styles.radioOpcion}>
+          <input
+            type="radio"
+            name="medio_cobro"
+            value={value}
+            checked={(draft.medio_cobro ?? "cheque") === value}
+            onChange={() => setAny("medio_cobro", value satisfies MedioCobro)}
+          />
+          {label}
+        </label>
+      ))}
+    </div>
+    {(draft.medio_cobro ?? "cheque") === "cheque" && (
+      <small className={styles.ayudaCobro}>Con cheque no hace falta cargar un CBU.</small>
+    )}
+    </>
+  );
+
+  return { RText, RNumber, RSexo, RCondicion_impositiva, RDate, RCbu, RMedioCobro };
 }
 
 export type CamposEdicion = ReturnType<typeof camposEdicion>;

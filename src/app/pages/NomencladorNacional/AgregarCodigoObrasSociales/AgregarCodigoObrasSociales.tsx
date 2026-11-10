@@ -12,6 +12,7 @@ import CampoFecha from "@/app/components/ui/CampoFecha/CampoFecha";
 import Cargando from "@/app/components/ui/Cargando/Cargando";
 import Dialogo, { DialogoAviso, DialogoDatos } from "@/app/components/ui/Dialogo/Dialogo";
 import Paso from "@/app/components/ui/Paso/Paso";
+import FaltaVigencia from "../components/FaltaVigencia";
 import c from "@/app/components/ui/Paso/Campos.module.scss";
 import { ErrorAccion } from "@/app/components/ui/ResultadoAccion/ResultadoAccion";
 import { fechaAR } from "../utiles";
@@ -50,6 +51,7 @@ export default function AgregarCodigoObrasSociales() {
         <div className={c.campo}>
           <label className={c.rotulo} htmlFor="vigencia-alta">Vigencia desde</label>
           <CampoFecha value={h.vigencia} onChange={h.setVigencia} id="vigencia-alta" disabled={aplicando} />
+          <FaltaVigencia vigencia={h.vigencia} />
           <p className={c.ayuda}>
             Se crea un NE en $0 por cada especialidad de la plantilla del código (o uno sin especialidad). Lo que ya tienen no se
             toca. Después cargá el precio en Por obra social.

@@ -41,7 +41,10 @@ export interface RegisterFormData {
   malpracticeCompany: string;
   malpracticeExpiry: string;
   taxCondition: string;
-  cbu: string;
+  /** Por dónde cobra; define cuál de los dos CBU se pide. */
+  medioCobro: "santander" | "otros_bancos" | "cheque";
+  cbuSantander: string;
+  cbuOtroBanco: string;
   malpracticeCoverage: string;
   coverageExpiry: string;
 

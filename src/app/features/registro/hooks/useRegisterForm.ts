@@ -64,7 +64,9 @@ export function useRegisterForm(mode: Mode) {
     malpracticeCompany: "",
     malpracticeExpiry: "",
     taxCondition: "",
-    cbu: "",
+    medioCobro: "cheque",
+    cbuSantander: "",
+    cbuOtroBanco: "",
     malpracticeCoverage: "",
     coverageExpiry: "",
     observations: "",
@@ -187,7 +189,9 @@ export function useRegisterForm(mode: Mode) {
       anssalExpiry: toUndef(formData.anssalExpiry),
       malpracticeCompany: toUndef(formData.malpracticeCompany),
       malpracticeExpiry: toUndef(formData.malpracticeExpiry),
-      cbu: toUndef(formData.cbu),
+      medioCobro: formData.medioCobro,
+      cbuSantander: formData.medioCobro === "santander" ? toUndef(formData.cbuSantander) : undefined,
+      cbuOtroBanco: formData.medioCobro === "otros_bancos" ? toUndef(formData.cbuOtroBanco) : undefined,
 
       // Otros
       observations: toUndef(formData.observations),

@@ -8,6 +8,7 @@ import Dialogo, { DialogoAviso, DialogoDatos } from "@/app/components/ui/Dialogo
 import ListaCambios from "@/app/components/ui/ListaCambios/ListaCambios";
 import c from "@/app/components/ui/Paso/Campos.module.scss";
 import { ErrorReplica, ResultadoReplica } from "../../components/ReplicarFamilia/ReplicarFamiliaBlock";
+import FaltaVigencia from "../../components/FaltaVigencia";
 import type { EdicionPrecios } from "../useEdicionPrecios";
 import { formatFecha } from "@/app/shared/lib/fechas";
 
@@ -24,6 +25,7 @@ export default function PasoGuardar({ ed, obraNombre, alDescartar }: Props) {
       <div className={c.campo}>
         <label className={c.rotulo} htmlFor="vigencia-galenos">Vigente desde</label>
         <CampoFecha value={ed.vigencia} onChange={ed.setVigencia} id="vigencia-galenos" />
+        <FaltaVigencia vigencia={ed.vigencia} />
       </div>
 
       {ed.avisoFecha && <Aviso>{ed.avisoFecha}</Aviso>}

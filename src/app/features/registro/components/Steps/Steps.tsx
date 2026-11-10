@@ -11,6 +11,7 @@ import type {
 import Button from "@/app/components/ui/Button/Button";
 import { Mail, Phone, MapPin } from "lucide-react";
 import CampoFecha from "@/app/components/ui/CampoFecha/CampoFecha";
+import { errorCbu, MEDIOS_COBRO } from "@/app/shared/lib/cbu";
 
 // -------------------- utils fecha (dd-MM-yyyy ↔ Date) --------------------
 const dateToStr = (d: Date | null): string => {
@@ -774,22 +775,61 @@ const Steps: React.FC<Props> = (props) => {
             />
           </div>
 
-          <FieldWithAttach
-            label="CBU"
-            htmlFor="cbu"
-            attach={attach("cbuImg", "Adjuntar CBU")}
-            error={errors.cbu}
-          >
-            <input
-              id="cbu"
-              type="text"
-              value={formData.cbu}
-              onChange={(e) => onChange("cbu", e.target.value)}
-              placeholder="22 dígitos"
-              {...getInputProps("cbu")}
-              className={errors.cbu ? styles.error : ""}
-            />
-          </FieldWithAttach>
+          <div className={styles.formGroup}>
+            <label>Cobra por</label>
+            <div role="radiogroup" aria-label="Cobra por" style={{ display: "flex", gap: "1.25rem", flexWrap: "wrap" }}>
+              {MEDIOS_COBRO.map(({ value, label }) => (
+                <label key={value} style={{ display: "inline-flex", gap: "0.375rem", alignItems: "center" }}>
+                  <input
+                    type="radio"
+                    name="medioCobro"
+                    value={value}
+                    checked={formData.medioCobro === value}
+                    onChange={() => onChange("medioCobro", value)}
+                  />
+                  {label}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {formData.medioCobro === "santander" && (
+            <FieldWithAttach
+              label="CBU Santander"
+              htmlFor="cbuSantander"
+              attach={attach("cbuImg", "Adjuntar CBU")}
+              error={errorCbu(formData.cbuSantander, "santander")}
+            >
+              <input
+                id="cbuSantander"
+                type="text"
+                value={formData.cbuSantander}
+                onChange={(e) => onChange("cbuSantander", e.target.value)}
+                placeholder="22 dígitos (empieza con 072)"
+                {...getInputProps("cbuSantander")}
+                className={errorCbu(formData.cbuSantander, "santander") ? styles.error : ""}
+              />
+            </FieldWithAttach>
+          )}
+
+          {formData.medioCobro === "otros_bancos" && (
+            <FieldWithAttach
+              label="CBU del otro banco"
+              htmlFor="cbuOtroBanco"
+              attach={attach("cbuImg", "Adjuntar CBU")}
+              error={errorCbu(formData.cbuOtroBanco, "otro")}
+            >
+              <input
+                id="cbuOtroBanco"
+                type="text"
+                value={formData.cbuOtroBanco}
+                onChange={(e) => onChange("cbuOtroBanco", e.target.value)}
+                placeholder="22 dígitos"
+                {...getInputProps("cbuOtroBanco")}
+                className={errorCbu(formData.cbuOtroBanco, "otro") ? styles.error : ""}
+              />
+            </FieldWithAttach>
+          )}
         </div>
       </div>
     );

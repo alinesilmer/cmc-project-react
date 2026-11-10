@@ -1,6 +1,13 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { crearRefacturacion, listarFacturasParaRefacturar, listarObrasSociales, listarRefacturaciones } from "@/app/pages/Pagos/pagos.api";
+import {
+  crearRefacturacion,
+  guardarFacturaRefact,
+  listarFacturasParaRefacturar,
+  listarObrasSociales,
+  listarRefacturaciones,
+  subirDocumentoRefact,
+} from "@/app/pages/Pagos/pagos.api";
 import { useAppSnackbar } from "@/app/hooks/useAppSnackbar";
 import Button from "@/app/components/ui/Button/Button";
 import Franja from "@/app/components/layout/Franja/Franja";
@@ -20,14 +27,17 @@ import {
   mesLabel,
   MESES,
   fmt,
+  facturaRefact,
   type RefacturacionListItem,
+  type TipoFacturaRefact,
 } from "../types";
 import AppSearchSelect from "@/app/components/ui/AppSearchSelect/AppSearchSelect";
-import { Plus, RotateCcw, Search } from "lucide-react";
+import DocumentosUploader, { type DocumentoItem } from "@/app/components/ui/DocumentosUploader/DocumentosUploader";
+import { Paperclip, Plus, RotateCcw, Search } from "lucide-react";
 import BotonVer from "@/app/components/ui/BotonVer/BotonVer";
 import { ESTADO_URL } from "@/app/pages/Pagos/utiles";
 import { DELETE_LOTE_URL } from "@/app/pages/Pagos/utiles";
-import { comoErrorApi } from "@/app/shared/lib/httpErrors";
+import { comoErrorApi, detalleDeError } from "@/app/shared/lib/httpErrors";
 import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 const estadoLabel = (e: string) =>
@@ -62,6 +72,10 @@ const RefacturacionesList: React.FC = () => {
   const [addFactura, setAddFactura] = useState("");
   const [facturasLoading, setFacturasLoading] = useState(false);
   const [adding, setAdding] = useState(false);
+  // Factura nueva de la refacturación: opcional, se puede cargar después desde el lote.
+  const [addTipo, setAddTipo] = useState("");
+  const [addNro, setAddNro] = useState("");
+  const [addArchivo, setAddArchivo] = useState<File | null>(null);
 
   const buildParams = useCallback(() => {
     const p: Record<string, string> = {};
@@ -108,6 +122,9 @@ const RefacturacionesList: React.FC = () => {
     setAddOs("");
     setFacturas([]);
     setAddFactura("");
+    setAddTipo("");
+    setAddNro("");
+    setAddArchivo(null);
   };
 
   const handleAddOsChange = async (val: string) => {
@@ -126,8 +143,19 @@ const RefacturacionesList: React.FC = () => {
     }
   };
 
+  const nroNuevo = addNro.trim();
+  const facturaNuevaIncompleta = (nroNuevo !== "") !== (addTipo !== "");
+
+  // El archivo elegido todavía no se subió: se abre desde la memoria del navegador.
+  const verArchivoNuevo = (item: DocumentoItem) => {
+    if (!item.archivo) return;
+    const url = URL.createObjectURL(item.archivo);
+    window.open(url, "_blank", "noopener,noreferrer");
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  };
+
   const handleAdd = async () => {
-    if (!addOs || !addFactura) return;
+    if (!addOs || !addFactura || facturaNuevaIncompleta) return;
     setAdding(true);
     try {
       // El lote que se corrige (la última refacturación o el lote normal de la factura) lo resuelve la API.
@@ -135,6 +163,16 @@ const RefacturacionesList: React.FC = () => {
         obra_social_id: Number(addOs),
         factura_id: Number(addFactura),
       });
+      // La factura nueva es opcional. Si falla un paso, el lote ya existe: se avisa y se sigue (se carga desde el lote).
+      try {
+        if (nroNuevo) {
+          const res = await guardarFacturaRefact(lote.id, { tipo_factura: addTipo as TipoFacturaRefact, nro_factura: nroNuevo });
+          for (const aviso of res.advertencias ?? []) notify(aviso, "warning");
+        }
+        if (addArchivo) await subirDocumentoRefact(lote.id, addArchivo);
+      } catch (e2) {
+        notify(`La refacturación se creó, pero no se pudo cargar la factura: ${detalleDeError(e2, "error")}. Cargala desde el lote.`, "warning");
+      }
       navigate(`/panel/refacturaciones/${lote.id}`);
     } catch (e) {
       const err = comoErrorApi(e);
@@ -162,8 +200,24 @@ const RefacturacionesList: React.FC = () => {
     },
     {
       key: "nro_factura",
-      header: "Factura",
+      header: "Corrige factura",
       render: (l) => <span className={lq.mono}>{l.nro_factura ?? "—"}</span>,
+    },
+    {
+      key: "refact_nro_factura",
+      header: "Factura refact.",
+      render: (l) => {
+        const f = facturaRefact(l);
+        if (!f) return <span className={lq.tenue}>—</span>;
+        return (
+          <span className={lq.mono}>
+            {f}
+            {l.refact_documento_url && (
+              <Paperclip size={13} aria-label="Tiene archivo" style={{ marginLeft: 6, verticalAlign: "-2px" }} />
+            )}
+          </span>
+        );
+      },
     },
     {
       key: "periodo",
@@ -184,7 +238,9 @@ const RefacturacionesList: React.FC = () => {
             className={lq.enlace}
             onClick={(e) => {
               e.stopPropagation();
-              navigate(`/panel/debitos-creditos/${l.snap_origen_id}`);
+              // Si el lote que corrige es otra refacturación, se abre desde su propia sección.
+              const origen = lotes.find((x) => x.id === l.snap_origen_id);
+              navigate(`/panel/${origen?.tipo === "refacturacion" ? "refacturaciones" : "debitos-creditos"}/${l.snap_origen_id}`);
             }}
           >
             Lote #{l.snap_origen_id}
@@ -372,7 +428,7 @@ const RefacturacionesList: React.FC = () => {
               <Button
                 variant="primary"
                 onClick={handleAdd}
-                disabled={adding || !addOs || !addFactura}
+                disabled={adding || !addOs || !addFactura || facturaNuevaIncompleta}
               >
                 {adding ? "Creando…" : "Crear refacturación"}
               </Button>
@@ -411,6 +467,49 @@ const RefacturacionesList: React.FC = () => {
                 ))}
               </select>
             )}
+          </DialogoCampo>
+          <DialogoCampo rotulo="Factura nueva (opcional)" htmlFor="rf-nro">
+            <div style={{ display: "flex", gap: "0.5rem" }}>
+              <select
+                aria-label="Tipo de factura"
+                value={addTipo}
+                onChange={(e) => setAddTipo(e.target.value)}
+                disabled={adding}
+                style={{ width: "5rem" }}
+              >
+                <option value="">Tipo</option>
+                <option value="A">A</option>
+                <option value="B">B</option>
+                <option value="C">C</option>
+              </select>
+              <input
+                id="rf-nro"
+                type="text"
+                maxLength={20}
+                placeholder="Número, ej. 00032-00000172"
+                autoComplete="off"
+                value={addNro}
+                onChange={(e) => setAddNro(e.target.value)}
+                disabled={adding}
+              />
+            </div>
+            {facturaNuevaIncompleta && <p className={lq.tenue}>Cargá el tipo y el número juntos, o dejá los dos vacíos.</p>}
+          </DialogoCampo>
+          <DialogoCampo rotulo="Archivo de la factura (opcional)">
+            <DocumentosUploader
+              unico
+              maxMb={10}
+              ocupado={adding}
+              items={
+                addArchivo
+                  ? [{ id: "nuevo", nombre: addArchivo.name, tamano: addArchivo.size, contentType: addArchivo.type, archivo: addArchivo }]
+                  : []
+              }
+              onAgregar={(archivos) => setAddArchivo(archivos[0] ?? null)}
+              onReemplazar={(_, archivo) => setAddArchivo(archivo)}
+              onEliminar={() => setAddArchivo(null)}
+              onVer={verArchivoNuevo}
+            />
           </DialogoCampo>
         </Dialogo>
       )}

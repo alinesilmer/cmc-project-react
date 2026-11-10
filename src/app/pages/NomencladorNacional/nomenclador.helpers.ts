@@ -1,13 +1,8 @@
-import { hoyISO } from "@/app/shared/lib/fechas";
-
 export function parseMonto(s: string | null | undefined): number {
   if (!s) return 0;
   const n = parseFloat(s);
   return isNaN(n) ? 0 : n;
 }
-
-// hoyISO y no toISOString(): este último pasa la hora local a UTC, así que después de las 21:00 en Argentina devolvía el día siguiente.
-export const today = hoyISO;
 
 // ── Orden de los galenos ─────────────────────────────────────────────────────
 // El orden en que el Colegio los lee y los carga, que **no** es el alfabético: primero el par quirúrgico (galeno + gasto).

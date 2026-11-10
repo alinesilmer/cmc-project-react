@@ -3,7 +3,7 @@
 import type { jsPDF } from "jspdf";
 import { PdfFormatoA, conSigno, fechaCorta, importe, type Fila } from "@/app/shared/lib/documentos/pdfFormatoA";
 import { etiquetaConcepto } from "@/app/shared/lib/conceptos";
-import { mesLabel, nroFacturaMarcado } from "../types";
+import { facturaRefact, mesLabel, nroFacturaMarcado } from "../types";
 
 // ── Lo que devuelve la vista previa del pago ──
 
@@ -55,8 +55,11 @@ export type LoteItem = {
   mes_periodo: number;
   anio_periodo: number;
   estado: "A" | "C" | "L" | "AP";
-  /** Factura a la que está atado el lote, si la tiene. */
+  /** Factura a la que está atado el lote, si la tiene (en una refacturación, la que se corrige). */
   nro_factura?: string | null;
+  /** Refacturaciones: la factura NUEVA (tipo y número), si ya se cargó. */
+  refact_tipo_factura?: string | null;
+  refact_nro_factura?: string | null;
   /** Lo que el lote suma o resta en honorarios y en gastos (créditos +, débitos −). */
   total_honorarios?: string;
   total_gastos?: string;
@@ -226,7 +229,8 @@ export function armarResumen(data: VistaPrevia, totalAPagar: number): ResumenArm
       h: desglosado ? Number(lote.total_honorarios) : neto,
       g: desglosado ? Number(lote.total_gastos) : 0,
       concepto: sinFactura ? "Lote s/fact" : refac ? "Refacturación" : "Lote",
-      id: refac ? (lote.nro_factura ?? String(lote.lote_id)) : String(lote.lote_id),
+      // La refacturación se identifica por su factura nueva; sin cargar, por el nº de lote (no por la factura que corrige).
+      id: refac ? (facturaRefact(lote) ?? `Lote ${lote.lote_id}`) : String(lote.lote_id),
       conSigno: true,
     });
   }

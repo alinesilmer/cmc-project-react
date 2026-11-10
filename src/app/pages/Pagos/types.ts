@@ -159,6 +159,12 @@ export type FacturaPagoDisp = FacturaDisp & {
   IMPORTE_RESERVADO?: number;
 };
 
+export type TipoFacturaRefact = "A" | "B" | "C";
+
+/** «B 00032-00000172», o null si la refacturación todavía no tiene su factura cargada. */
+export const facturaRefact = (l: { refact_tipo_factura?: string | null; refact_nro_factura?: string | null }): string | null =>
+  l.refact_nro_factura ? `${l.refact_tipo_factura ? `${l.refact_tipo_factura} ` : ""}${l.refact_nro_factura}` : null;
+
 export type LoteAjuste = {
   id: number;
   obra_social_id: number;
@@ -166,6 +172,12 @@ export type LoteAjuste = {
   factura_id?: number | null;
   nro_factura?: string | null;
   factura_version?: number | null;
+  // Refacturaciones: la factura NUEVA que genera el Colegio (nro_factura de arriba es la de la original que se corrige).
+  refact_tipo_factura?: TipoFacturaRefact | null;
+  refact_nro_factura?: string | null;
+  /** Ruta de la API (pide token): se abre con `abrirAdjunto()`. */
+  refact_documento_url?: string | null;
+  refact_documento_nombre?: string | null;
   // La factura del lote está en el pago al que va (o está) el lote. null = no aplica.
   factura_en_pago?: boolean | null;
   // La factura ya fue pagada (está en un pago cerrado o pagado). Un lote con factura sólo pasa al pago si
@@ -270,6 +282,10 @@ export type RefacturacionListItem = {
   obra_social_id: number;
   obra_social_nombre: string;
   nro_factura: string | null;
+  refact_tipo_factura?: TipoFacturaRefact | null;
+  refact_nro_factura?: string | null;
+  refact_documento_url?: string | null;
+  refact_documento_nombre?: string | null;
   snap_origen_id: number | null;
   total_debitos: string;
   total_creditos: string;

@@ -5,7 +5,7 @@ import type { PorOSCtx } from "./useNomencladorPorOS";
 import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 export default function ModalEditarPie({ ctx }: { ctx: PorOSCtx }) {
-  const { setModalKind, savingMeta, editMode, replicaTerminada, replicaActiva, handleSaveNucleo } = ctx;
+  const { setModalKind, nucleoFaltaVigencia, savingMeta, editMode, replicaTerminada, replicaActiva, handleSaveNucleo } = ctx;
   return (
     <>
       <div className={styles.modalFooter}>
@@ -28,7 +28,7 @@ export default function ModalEditarPie({ ctx }: { ctx: PorOSCtx }) {
               <BotonPlano
                 className={styles.btnPrimary}
                 onClick={handleSaveNucleo}
-                disabled={savingMeta}
+                disabled={savingMeta || nucleoFaltaVigencia}
               >
                 {savingMeta ? (
                   <>

@@ -159,6 +159,16 @@ export const patchForm = async <T = unknown>(
   return data as T;
 };
 
+// Multipart por PUT (subir o reemplazar un archivo).
+export const putForm = async <T = unknown>(
+  url: string,
+  form: FormData,
+  config?: AxiosRequestConfig
+): Promise<T> => {
+  const { data } = await http.put(url, form, config); // sin headers
+  return data as T;
+};
+
 export const putJSON = async <T = unknown>(
   url: string,
   body?: unknown

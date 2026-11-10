@@ -37,6 +37,7 @@ import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 import { CMC_LOGO_SRC, fetchAsDataUrl } from "@/app/shared/lib/documentos/institucion";
 import { generarLotePdf } from "../pdf/loteAjustesPdf";
 import { generarLoteExcel } from "../pdf/loteAjustesExcel";
+import FacturaRefacturacion from "./FacturaRefacturacion";
 
 const OBSERVACION_OPTIONS = [
   "Falta firma y sello prestador",
@@ -531,7 +532,7 @@ const LoteDetalle: React.FC = () => {
               #{lote.obra_social_id}
               {lote.obra_social_nombre ? ` · ${lote.obra_social_nombre}` : ""}
               {lote.nro_factura
-                ? ` · Factura ${lote.nro_factura}${lote.factura_version ? ` (${lote.factura_version > 1 ? `complementaria ${lote.factura_version - 1}` : "original"})` : ""}`
+                ? ` · ${lote.tipo === "refacturacion" ? "Corrige factura" : "Factura"} ${lote.nro_factura}${lote.factura_version ? ` (${lote.factura_version > 1 ? `complementaria ${lote.factura_version - 1}` : "original"})` : ""}`
                 : ""}
             </b>
           </div>
@@ -585,6 +586,8 @@ const LoteDetalle: React.FC = () => {
           </div>
         </div>
       )}
+
+      {lote?.tipo === "refacturacion" && <FacturaRefacturacion lote={lote} onLote={setLote} />}
 
       {error && <div className={styles.errorBanner}>{error}</div>}
 

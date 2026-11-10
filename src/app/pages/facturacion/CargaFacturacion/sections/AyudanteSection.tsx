@@ -2,11 +2,11 @@ import React from "react";
 import MedicoAutocomplete from "../../components/MedicoAutocomplete";
 import NumericInput from "../../components/NumericInput";
 import type { MedicoOption, PrecioResponse, TipoCalculo } from "../../types";
-import { formatMoney } from "../../money";
+import { formatMoney, parseMoney } from "../../money";
 import comun from "../Comun.module.scss";
 import styles from "./AyudanteSection.module.scss";;
 import { X } from "lucide-react";
-import { crearAyudanteLinea, montoLinea } from "./ayudante.helpers";
+import { crearAyudanteLinea, montoLinea, repartirAyudante } from "./ayudante.helpers";
 import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 export interface AyudanteLinea {
@@ -74,7 +74,9 @@ const AyudanteSection: React.FC<Props> = ({
         const isDuplicateMain = !!(codMedicoMain && linea.codMedico === codMedicoMain);
         const isDuplicateOther = !!(linea.codMedico && codigosUsados(linea.id).has(linea.codMedico));
         const error = errors[`ayudante_${idx}`];
-        const monto = montoLinea(linea, precio);
+        const monto = montoLinea(linea, precio, ayudantes.length, idx);
+        // En Automático cada ayudante cobra su parte del total de ayudantía del código.
+        const parteAutomatica = repartirAyudante(parseMoney(precio.ayudante), ayudantes.length)[idx] ?? 0;
 
         return (
           <div key={linea.id} className={comun.ayudanteBox}>
@@ -182,7 +184,7 @@ const AyudanteSection: React.FC<Props> = ({
                 <NumericInput
                   className={comun.input}
                   decimals min={0}
-                  value={linea.tipoCalculo === "A" ? precio.ayudante : linea.precioManual}
+                  value={linea.tipoCalculo === "A" ? parteAutomatica.toFixed(2) : linea.precioManual}
                   onChange={(v) => updateLinea(linea.id, { precioManual: v })}
                   disabled={disabled || linea.tipoCalculo === "A"}
                 />
@@ -205,7 +207,7 @@ const AyudanteSection: React.FC<Props> = ({
       >
         <span style={{ fontSize: 16 }}>+</span>
         <span>Agregar ayudante</span>
-        <span className={comun.sectionHint}>(valor automático: {formatMoney(precio.ayudante)})</span>
+        <span className={comun.sectionHint}>(ayudantía del código: {formatMoney(precio.ayudante)}, se reparte entre los ayudantes)</span>
       </BotonPlano>
     </div>
   );

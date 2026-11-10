@@ -34,16 +34,19 @@ interface Props {
   textoAgregar?: string;
   /** Sólo se pueden ver: sin agregar, reemplazar, eliminar ni reordenar (p. ej. período cerrado). */
   soloLectura?: boolean;
+  /** Tamaño máximo de cada archivo en MB (5 por defecto). */
+  maxMb?: number;
+  /** Un solo archivo: se elige de a uno y, cuando ya hay uno, la zona de carga se oculta (queda «Reemplazar»). */
+  unico?: boolean;
 }
 
 const MAX_MB = 5;
-const MAX_BYTES = MAX_MB * 1024 * 1024;
 const EXTENSIONES = [".pdf", ".jpg", ".jpeg", ".png"];
 
-function validar(archivo: File): string | null {
+function validar(archivo: File, maxMb: number): string | null {
   const nombre = archivo.name.toLowerCase();
   if (!EXTENSIONES.some((e) => nombre.endsWith(e))) return `«${archivo.name}»: sólo se aceptan PDF, JPG o PNG.`;
-  if (archivo.size > MAX_BYTES) return `«${archivo.name}» supera los ${MAX_MB} MB.`;
+  if (archivo.size > maxMb * 1024 * 1024) return `«${archivo.name}» supera los ${maxMb} MB.`;
   if (archivo.size === 0) return `«${archivo.name}» está vacío.`;
   return null;
 }
@@ -69,7 +72,7 @@ const ORIGEN: Record<string, string> = { medico: "Lo subió el médico", colegio
  */
 export default function DocumentosUploader({
   items, onAgregar, onReemplazar: onReemplazarProp, onEliminar: onEliminarProp, onMover: onMoverProp, onVer,
-  ocupado = false, error, textoAgregar, soloLectura = false,
+  ocupado = false, error, textoAgregar, soloLectura = false, maxMb = MAX_MB, unico = false,
 }: Props) {
   const onReemplazar = soloLectura ? undefined : onReemplazarProp;
   const onEliminar = soloLectura ? undefined : onEliminarProp;
@@ -82,11 +85,11 @@ export default function DocumentosUploader({
   const [arrastrando, setArrastrando] = useState(false);
 
   const agregar = (lista: FileList | File[] | null) => {
-    const archivos = Array.from(lista ?? []);
+    const archivos = Array.from(lista ?? []).slice(0, unico ? 1 : undefined);
     if (archivos.length === 0) return;
-    const errores = archivos.map(validar).filter((e): e is string => e !== null);
+    const errores = archivos.map((a) => validar(a, maxMb)).filter((e): e is string => e !== null);
     setErrorLocal(errores.length ? errores.join(" ") : null);
-    const validos = archivos.filter((a) => validar(a) === null);
+    const validos = archivos.filter((a) => validar(a, maxMb) === null);
     if (validos.length) void onAgregar(validos);
   };
 
@@ -95,7 +98,7 @@ export default function DocumentosUploader({
     const destino = aReemplazar;
     setAReemplazar(null);
     if (!archivo || !destino || !onReemplazar) return;
-    const motivo = validar(archivo);
+    const motivo = validar(archivo, maxMb);
     setErrorLocal(motivo);
     if (!motivo) void onReemplazar(destino, archivo);
   };
@@ -155,7 +158,7 @@ export default function DocumentosUploader({
         </ul>
       )}
 
-      {!soloLectura && (
+      {!soloLectura && !(unico && items.length > 0) && (
       <>
       <label
         htmlFor={idAgregar}
@@ -165,14 +168,16 @@ export default function DocumentosUploader({
         onDrop={(e) => { e.preventDefault(); setArrastrando(false); if (!ocupado) agregar(e.dataTransfer.files); }}
       >
         <FileUp size={20} aria-hidden="true" />
-        <strong>{items.length === 0 ? "Elegí o arrastrá los archivos" : (textoAgregar ?? "Agregar archivos")}</strong>
-        <span>PDF, JPG o PNG · hasta {MAX_MB} MB cada uno · podés subir varios</span>
+        <strong>
+          {unico ? "Elegí o arrastrá el archivo" : items.length === 0 ? "Elegí o arrastrá los archivos" : (textoAgregar ?? "Agregar archivos")}
+        </strong>
+        <span>{unico ? `PDF, JPG o PNG · hasta ${maxMb} MB` : `PDF, JPG o PNG · hasta ${maxMb} MB cada uno · podés subir varios`}</span>
       </label>
       <input
         id={idAgregar}
         ref={refAgregar}
         type="file"
-        multiple
+        multiple={!unico}
         hidden
         disabled={ocupado}
         accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"

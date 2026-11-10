@@ -1,6 +1,6 @@
 // Todas las llamadas de Liquidación (pagos, lotes, deducciones, recibos). Las pantallas no conocen las URL.
 
-import { delJSON, delJSONBody, getJSON, patchJSON, postJSON, putJSON } from "@/app/shared/lib/http";
+import { delJSON, delJSONBody, getJSON, patchJSON, postJSON, putForm, putJSON } from "@/app/shared/lib/http";
 import type { Parametros } from "@/app/shared/lib/http";
 import type {
   Ajuste,
@@ -15,6 +15,7 @@ import type {
   Pago,
   PeriodoDisp,
   RefacturacionListItem,
+  TipoFacturaRefact,
 } from "./types";
 import { DELETE_LOTE_URL, PERIODOS_DISP_URL } from "./utiles";
 import { ADELANTO_ESTADO_URL, ADELANTOS_LISTA_URL, type AdelantoListaRow } from "./Adelantos/utiles";
@@ -134,6 +135,21 @@ export const editarItem = (loteId: Id, ajusteId: number, body: ItemLoteEditado) 
   putJSON<Ajuste>(ITEM_URL(loteId, ajusteId), body);
 export const borrarItem = (loteId: Id, ajusteId: number) => delJSON(ITEM_URL(loteId, ajusteId));
 export const cambiarEstadoLote = (loteId: Id, estado: string) => patchJSON<LoteAjuste>(ESTADO_URL(loteId), { estado });
+
+// Factura nueva de una refacturación (tipo, número y un archivo). Los tres devuelven el lote completo; el primero
+// agrega `advertencias` (p. ej. el número ya está en otra factura de la obra social: avisa, no bloquea).
+const FACTURA_REFACT_URL = (loteId: Id) => `/api/lotes/snaps/${loteId}/factura_refact`;
+export type LoteConAvisos = LoteAjuste & { advertencias?: string[] };
+export const guardarFacturaRefact = (
+  loteId: Id,
+  body: { tipo_factura: TipoFacturaRefact | null; nro_factura: string | null },
+) => patchJSON<LoteConAvisos>(FACTURA_REFACT_URL(loteId), body);
+export const subirDocumentoRefact = (loteId: Id, archivo: File) => {
+  const form = new FormData();
+  form.append("archivo", archivo);
+  return putForm<LoteAjuste>(`${FACTURA_REFACT_URL(loteId)}/documento`, form);
+};
+export const quitarDocumentoRefact = (loteId: Id) => delJSON<LoteAjuste>(`${FACTURA_REFACT_URL(loteId)}/documento`);
 
 // ── Deducciones del Colegio ───────────────────────────────────────
 
