@@ -11,6 +11,7 @@ import type { PrestacionConSocio } from "./FilaPrestacion";
 import ExportarOsBoton from "./ExportarOsBoton";
 import { usePeriodosVecinos } from "./usePeriodosVecinos";
 import BackButton from "@/app/components/ui/BackButton/BackButton";
+import Button from "@/app/components/ui/Button/Button";
 import styles from "./CabeceraExpediente.module.scss";
 import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
@@ -117,20 +118,19 @@ export default function CabeceraExpediente({
 
   const botones = (
     <>
-      <BotonPlano type="button" className={styles.btn} onClick={onVista} disabled={!detalle}>
-        <SlidersHorizontal size={15} /> Vista
-      </BotonPlano>
-      <BotonPlano type="button" className={`${styles.btn} ${styles.btnPrimario}`} onClick={onExportar} disabled={!detalle}>
-        <Download size={15} /> Exportar
-      </BotonPlano>
+      <Button variant="ghost" leftIcon={<SlidersHorizontal size={17} aria-hidden="true" />} onClick={onVista} disabled={!detalle}>
+        Vista
+      </Button>
+      <Button variant="secondary" leftIcon={<Download size={17} aria-hidden="true" />} onClick={onExportar} disabled={!detalle}>
+        Exportar
+      </Button>
       <ExportarOsBoton detalle={detalle} />
     </>
   );
 
   if (!detalle) {
     return (
-      <div className={styles.simple}>
-        <h1 className={styles.tituloSimple}>Listado de prestaciones</h1>
+      <div className={styles.barra}>
         <BackButton onClick={onVolver} />
       </div>
     );
@@ -141,16 +141,9 @@ export default function CabeceraExpediente({
 
   return (
     <>
-      <div className={styles.migas}>
-        <nav className={styles.ruta} aria-label="Ubicación">
-          <span>Facturación</span><span>›</span>
-          <BotonPlano type="button" className={styles.rutaLink} onClick={onVolver}>Períodos</BotonPlano><span>›</span>
-          <strong>Expediente {detalle.id_factura}</strong>
-        </nav>
-        <div className={styles.acciones}>
-          {botones}
-          <BackButton onClick={onVolver} />
-        </div>
+      <div className={styles.barra}>
+        <BackButton onClick={onVolver} />
+        <div className={styles.acciones}>{botones}</div>
       </div>
 
       <div className={styles.tarjeta} ref={cabeceraRef}>

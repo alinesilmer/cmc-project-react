@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { conProceso } from "@/app/hooks/proceso";
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertCircle, CheckCircle2, ClipboardList, Pencil } from "lucide-react";
 
@@ -225,20 +226,25 @@ export default function CodigosPorOS() {
   async function confirmarAccion() {
     if (os == null || !aConfirmar) return;
     setEjecutando(true);
-    try {
-      const r = await accionCodigosOS({ obra_social_nro: os, nomenclador_ids: aConfirmar.ids, accion: aConfirmar.accion });
-      setAConfirmar(null);
+    const { accion: hecha, ids } = aConfirmar;
+    const r = await conProceso(
+      {
+        haciendo: "Aplicando en las obras sociales",
+        listo: TEXTO_ACCION[hecha],
+        detalleListo: (x) => `${x.aplicados} código${x.aplicados === 1 ? "" : "s"}`,
+        fallo: "No se pudo aplicar",
+        detalleFallo: (e) => detalleError(e, "No se pudo aplicar la acción."),
+      },
+      () => accionCodigosOS({ obra_social_nro: os, nomenclador_ids: ids, accion: hecha }),
+    );
+    setAConfirmar(null);
+    if (r) {
       setAccion("");
       setSel(new Map());
       listado.refetch();
       if (r.resultados.some((x) => x.estado === "no_aplica")) setResultado(r);
-      else showToast("success", `${TEXTO_ACCION[aConfirmar.accion]}: ${r.aplicados} código${r.aplicados === 1 ? "" : "s"}.`);
-    } catch (e) {
-      setAConfirmar(null);
-      showToast("error", detalleError(e, "No se pudo aplicar la acción."));
-    } finally {
-      setEjecutando(false);
     }
+    setEjecutando(false);
   }
 
   return (

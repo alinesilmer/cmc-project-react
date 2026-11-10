@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { History } from "lucide-react";
+import { History, ListOrdered, LockKeyhole } from "lucide-react";
 
 import { useAppSnackbar } from "@/app/hooks/useAppSnackbar";
 import { listarCargaPorUsuario, listarCierresPorUsuario } from "../api";
@@ -7,7 +7,13 @@ import type { ObraSocialOption, CargaPorUsuario, CierresPorUsuario } from "../ty
 import { detailMessage } from "../types";
 import { formatMoney } from "../money";
 import ObraSocialAutocomplete from "../components/ObraSocialAutocomplete";
+import base from "../ListaFacturas.module.scss";
 import styles from "./RegistroFacturacion.module.scss";
+import lq from "@/app/pages/Pagos/Liquidacion.module.scss";
+import Franja, { Solapa } from "@/app/components/layout/Franja/Franja";
+import { Filtros } from "@/app/components/ui/Caja/Caja";
+import { filtroAncho } from "@/app/components/ui/Caja/filtroAncho";
+import Cargando from "@/app/components/ui/Cargando/Cargando";
 import CampoFecha from "@/app/components/ui/CampoFecha/CampoFecha";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
 import { comoErrorApi } from "@/app/shared/lib/httpErrors";
@@ -20,6 +26,7 @@ const periodoActual = (): string => {
 
 const RegistroFacturacion: React.FC = () => {
   const notify = useAppSnackbar();
+  const [vista, setVista] = useState<"carga" | "cierres">("carga");
 
   // ── Filtros globales: alimentan las dos secciones (carga/cierres por usuario) ──
   const [obraSocial, setObraSocial] = useState<ObraSocialOption | null>(null);
@@ -81,33 +88,34 @@ const RegistroFacturacion: React.FC = () => {
     return () => { if (rangosDebounce.current) clearTimeout(rangosDebounce.current); };
   }, [codObra, periodo, desde, hasta, notify]);
 
-  return (
-    <div className={styles.container}>
-      <div className={styles.header}>
-        <span className={styles.headerIcon}>
-          <History size={22} />
-        </span>
-        <div>
-          <h1 className={styles.title}>Registro de Facturación</h1>
-          <p className={styles.subtitle}>
-            Quién cerró cada factura y cuánto carga cada operador del Colegio — no incluye
-            la carga que hacen los médicos desde su propio portal.
-          </p>
-        </div>
-      </div>
+  const hayRango = !!periodo || (!!desde && !!hasta);
+  const cargando = vista === "carga" ? cargaLoading : cierresUsuarioLoading;
+  const filas = vista === "carga" ? cargaRows : cierresUsuarioRows;
+  const hayFiltros = !!obraSocial || !!desde || !!hasta || periodo !== periodoActual();
 
-      <div className={styles.globalFilters}>
-        <div className={`${styles.filterField} ${styles.filterFieldWide}`}>
-          <label className={styles.filterLabel}>Obra social</label>
+  return (
+    <div className={base.container}>
+      <Franja titulo="Registro de facturación" icono={History}>
+        <Solapa activa={vista === "carga"} onClick={() => setVista("carga")}>
+          <ListOrdered size={18} /> Carga por usuario
+        </Solapa>
+        <Solapa activa={vista === "cierres"} onClick={() => setVista("cierres")}>
+          <LockKeyhole size={18} /> Cierres por operador
+        </Solapa>
+      </Franja>
+
+      <Filtros className={base.filtros}>
+        <div className={`${lq.campo} ${filtroAncho}`}>
+          <span className={lq.rotulo}>Obra social</span>
           <ObraSocialAutocomplete
             value={obraSocial?.nro_obra_social ?? null}
             onChange={(_, os) => setObraSocial(os)}
           />
         </div>
-        <div className={styles.filterField}>
-          <label className={styles.filterLabel}>Período</label>
+        <div className={lq.campo}>
+          <span className={lq.rotulo}>Período</span>
           <input
-            className={styles.input}
+            className={lq.input}
             type="text"
             inputMode="numeric"
             maxLength={6}
@@ -116,89 +124,53 @@ const RegistroFacturacion: React.FC = () => {
             onChange={(e) => setPeriodo(e.target.value)}
           />
         </div>
-        <div className={styles.filterField}>
-          <label className={styles.filterLabel}>Desde</label>
+        <div className={lq.campo}>
+          <span className={lq.rotulo}>Desde</span>
           <CampoFecha value={desde} onChange={(valor) => setDesde(valor)} />
         </div>
-        <div className={styles.filterField}>
-          <label className={styles.filterLabel}>Hasta</label>
+        <div className={lq.campo}>
+          <span className={lq.rotulo}>Hasta</span>
           <CampoFecha value={hasta} onChange={(valor) => setHasta(valor)} />
         </div>
-        <BotonPlano type="button" className={styles.clearBtn} onClick={handleLimpiarGlobal}>
-          Limpiar filtros
-        </BotonPlano>
-      </div>
+        {hayFiltros && (
+          <BotonPlano type="button" className={base.limpiar} onClick={handleLimpiarGlobal}>
+            Limpiar
+          </BotonPlano>
+        )}
+      </Filtros>
 
-      {/* ── Carga por usuario ─────────────────────────────────────────────── */}
-      <div className={styles.section}>
-        <div className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle}>Carga por usuario</h2>
-        </div>
-        <div className={styles.tableWrap}>
-          <Tabla className={styles.table}>
+      <div className={base.tablaCaja}>
+        {cargando ? (
+          <div className={lq.cargando}><Cargando size={22} tono="marca" aria-label="Cargando" /></div>
+        ) : !hayRango ? (
+          <div className={lq.vacio}>Elegí un período o un rango de fechas para ver el ranking.</div>
+        ) : filas.length === 0 ? (
+          <div className={lq.vacio}>{vista === "carga" ? "Sin cargas administrativas en este rango." : "Sin cierres en este rango."}</div>
+        ) : (
+          <Tabla>
             <thead>
-              <tr><th>#</th><th>Usuario</th><th>Prestaciones cargadas</th><th>Importe total</th></tr>
+              <tr>
+                <th>#</th>
+                <th>Usuario</th>
+                <th>{vista === "carga" ? "Prestaciones cargadas" : "Facturas cerradas"}</th>
+                <th>Importe total</th>
+              </tr>
             </thead>
             <tbody>
-              {cargaLoading && <tr><td colSpan={4} className={styles.loadingCell}>Cargando…</td></tr>}
-              {!cargaLoading && !periodo && !(desde && hasta) && (
-                <tr><td colSpan={4} className={styles.emptyCell}>Elegí un período o un rango de fechas para ver el ranking.</td></tr>
-              )}
-              {!cargaLoading && (periodo || (desde && hasta)) && cargaRows.length === 0 && (
-                <tr><td colSpan={4} className={styles.emptyCell}>Sin cargas administrativas en este rango.</td></tr>
-              )}
-              {!cargaLoading && cargaRows.map((row, i) => (
+              {filas.map((row, i) => (
                 <tr key={row.usuario}>
-                  <td><span className={styles.rankCell}>{i + 1}</span></td>
+                  <td className={styles.puesto}>{i + 1}</td>
                   <td>
-                    <div className={styles.usuarioCell}>
-                      {row.nombre && <span className={styles.usuarioNombre}>{row.nombre}</span>}
-                      <span className={row.nombre ? styles.usuarioCodigo : styles.usuarioNombre}>{row.usuario}</span>
-                    </div>
+                    {row.nombre && <span className={styles.nombre}>{row.nombre}</span>}
+                    <span className={row.nombre ? styles.codigo : undefined}>{row.usuario}</span>
                   </td>
-                  <td>{row.cantidad_prestaciones}</td>
-                  <td><span className={styles.totalCell}>{formatMoney(row.importe_total)}</span></td>
+                  <td>{"cantidad_prestaciones" in row ? row.cantidad_prestaciones : row.cantidad_facturas}</td>
+                  <td className={lq.monto}>{formatMoney(row.importe_total)}</td>
                 </tr>
               ))}
             </tbody>
           </Tabla>
-        </div>
-      </div>
-
-      {/* ── Cierres por operador ──────────────────────────────────────────── */}
-      <div className={styles.section}>
-        <div className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle}>Cierres por operador</h2>
-        </div>
-        <div className={styles.tableWrap}>
-          <Tabla className={styles.table}>
-            <thead>
-              <tr><th>#</th><th>Usuario</th><th>Facturas cerradas</th><th>Importe total</th></tr>
-            </thead>
-            <tbody>
-              {cierresUsuarioLoading && <tr><td colSpan={4} className={styles.loadingCell}>Cargando…</td></tr>}
-              {!cierresUsuarioLoading && !periodo && !(desde && hasta) && (
-                <tr><td colSpan={4} className={styles.emptyCell}>Elegí un período o un rango de fechas para ver el ranking.</td></tr>
-              )}
-              {!cierresUsuarioLoading && (periodo || (desde && hasta)) && cierresUsuarioRows.length === 0 && (
-                <tr><td colSpan={4} className={styles.emptyCell}>Sin cierres en este rango.</td></tr>
-              )}
-              {!cierresUsuarioLoading && cierresUsuarioRows.map((row, i) => (
-                <tr key={row.usuario}>
-                  <td><span className={styles.rankCell}>{i + 1}</span></td>
-                  <td>
-                    <div className={styles.usuarioCell}>
-                      {row.nombre && <span className={styles.usuarioNombre}>{row.nombre}</span>}
-                      <span className={row.nombre ? styles.usuarioCodigo : styles.usuarioNombre}>{row.usuario}</span>
-                    </div>
-                  </td>
-                  <td>{row.cantidad_facturas}</td>
-                  <td><span className={styles.totalCell}>{formatMoney(row.importe_total)}</span></td>
-                </tr>
-              ))}
-            </tbody>
-          </Tabla>
-        </div>
+        )}
       </div>
     </div>
   );

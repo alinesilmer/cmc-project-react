@@ -1,17 +1,13 @@
 import { useState, useMemo, useRef } from "react";
-import { Search, AlertCircle, AlertTriangle } from "lucide-react";
-
-import styles from "../ConsultaShared/consulta.module.scss";
 import Combobox from "../ConsultaShared/Combobox";
-import ResultRegister from "../ConsultaShared/ResultRegister";
+import PaginaConsulta from "../ConsultaShared/PaginaConsulta";
+import TicketConsulta from "../ConsultaShared/TicketConsulta";
 import { useCopago } from "../ConsultaShared/useCopago";
 import { listNomenclador, getTablaValores } from "../nomenclador.api";
 import type { NomencladorOut, TablaValorItem, ViaPractica } from "../nomenclador.types";
 import type { ObraSocialListItem } from "../../ObrasSociales/obrasSociales.types";
 import { useObrasSociales } from "../../ObrasSociales/useObrasSociales";
 import { useAuth } from "@/app/auth/useAuth";
-import Cargando from "@/app/components/ui/Cargando/Cargando";
-import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 export default function ConsultaPrecios() {
   const { user } = useAuth();
@@ -131,22 +127,12 @@ export default function ConsultaPrecios() {
   const canSearch = Boolean(osNro && selectedNom);
 
   return (
-    <div className={styles.page}>
-      <div className={styles.inner}>
-        <div className={styles.pagehead}>
-          <h1 className={styles.pageTitle}>Consulta de precios</h1>
-          <p className={styles.pageSub}>
-            Valor vigente de una práctica según el convenio pactado con una obra
-            social.
-          </p>
-        </div>
-
-        <div className={styles.instrument}>
-          {/* ── Query column ── */}
-          <div className={styles.colQuery}>
-            <div className={styles.colTitle} />
-
+    <PaginaConsulta titulo="Consulta de precios">
+      <TicketConsulta
+        campos={
+          <>
             <Combobox<ObraSocialListItem>
+              variante="ticket"
               idx={1}
               label="Obra social"
               placeholder="Buscar por nombre o número…"
@@ -163,6 +149,7 @@ export default function ConsultaPrecios() {
             />
 
             <Combobox<NomencladorOut>
+              variante="ticket"
               idx={2}
               label="Práctica"
               hint="por código o por nombre"
@@ -185,78 +172,17 @@ export default function ConsultaPrecios() {
                     : "No hay prácticas que puedas facturar en esta obra social con ese código o nombre"
               }
             />
-
-            <div className={styles.viaToggle}>
-              {(
-                [
-                  ["T", "Tradicional"],
-                  ["L", "Laparoscópica"],
-                ] as const
-              ).map(([v, label]) => (
-                <label key={v} className={styles.viaOption}>
-                  <input
-                    type="radio"
-                    name="via"
-                    value={v}
-                    checked={via === v}
-                    onChange={() => { setVia(v); resetResult(); }}
-                  />
-                  {label}
-                </label>
-              ))}
-            </div>
-
-            <BotonPlano
-              type="button"
-              className={styles.cta}
-              onClick={handleSearch}
-              disabled={!canSearch || loading}
-            >
-              {loading ? <Cargando size={17} /> : <Search size={17} />}
-              Consultar precio
-            </BotonPlano>
-          </div>
-
-          {/* ── Result column ── */}
-          <div className={styles.colResult}>
-            {loading ? (
-              <div className={styles.loading}>
-                <span className={styles.pulse} />
-                Consultando precios…
-              </div>
-            ) : result ? (
-              <>
-                <ResultRegister result={result} showVigencia={false} copago={copago} />
-                {via === "L" && result.via_aplicada === "T" && (
-                  <div className={styles.viaDegradeNotice}>
-                    <AlertTriangle size={16} />
-                    Este código no admite vía laparoscópica; se muestra el precio tradicional.
-                  </div>
-                )}
-              </>
-            ) : searched && error ? (
-              <div className={styles.errorbox}>
-                <AlertCircle size={18} />
-                {error}
-              </div>
-            ) : (
-              <div className={styles.prompt}>
-                <div className={styles.promptLines} aria-hidden="true">
-                  <i /><i /><i /><i /><i /><i />
-                </div>
-                <div className={styles.promptInner}>
-                 
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className={styles.disclaimer}>
-          <AlertTriangle size={16} />
-          Los precios están sujetos a modificaciones por parte de las obras sociales.
-        </div>
-      </div>
-    </div>
+          </>
+        }
+        via={via}
+        onVia={(v) => { setVia(v); resetResult(); }}
+        puedeConsultar={canSearch}
+        consultando={loading}
+        onConsultar={handleSearch}
+        resultado={result}
+        error={searched ? error : null}
+        copago={copago}
+      />
+    </PaginaConsulta>
   );
 }

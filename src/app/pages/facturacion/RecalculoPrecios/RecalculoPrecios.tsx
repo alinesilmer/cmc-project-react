@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { motion } from "framer-motion";
 import { Calculator, Eye, RefreshCw } from "lucide-react";
 
 import { useAppSnackbar } from "@/app/hooks/useAppSnackbar";
@@ -9,12 +8,17 @@ import { mensajeDeError } from "@/app/shared/lib/httpErrors";
 import { formatMoney, parseMoney } from "../money";
 import ObraSocialAutocomplete from "../components/ObraSocialAutocomplete";
 import ConfirmActionModal from "../components/ConfirmActionModal";
-import base from "../CierrePeriodo/CierrePeriodo.module.scss";
 import styles from "./RecalculoPrecios.module.scss";
 import { ListaOmitidas, TablaCambios } from "./TablaCambios";
-import BackButton from "@/app/components/ui/BackButton/BackButton";
+import PaginaPasos from "@/app/components/layout/PaginaPasos/PaginaPasos";
+import Paso from "@/app/components/ui/Paso/Paso";
+import Bloque from "@/app/components/ui/Bloque/Bloque";
+import Cifras from "@/app/components/ui/Cifras/Cifras";
+import Aviso from "@/app/components/ui/Aviso/Aviso";
+import Button from "@/app/components/ui/Button/Button";
 import Cargando from "@/app/components/ui/Cargando/Cargando";
-import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
+import { ErrorAccion } from "@/app/components/ui/ResultadoAccion/ResultadoAccion";
+import c from "@/app/components/ui/Paso/Campos.module.scss";
 
 /** Recálculo de precios de una factura abierta (O.S. + período), o de un código de ella. */
 
@@ -130,149 +134,116 @@ const RecalculoPrecios: React.FC = () => {
   const diferencia = resultado ? parseMoney(resultado.diferencia) : 0;
 
   return (
-    <div className={base.container}>
-      <div className={base.header}>
-        <span className={base.headerIcon}>
-          <Calculator size={22} />
-        </span>
-        <div>
-          <h1 className={base.title}>Recalcular precios</h1>
-          <p className={base.subtitle}>
-            Recotiza las prestaciones automáticas de una factura abierta con el precio vigente.
+    <PaginaPasos titulo="Recalcular precios" icono={Calculator} ancha>
+      <Paso numero={1} titulo="Factura">
+        <div className={c.formulario}>
+          <label className={c.campo}>
+            <span className={c.rotulo}>Obra social</span>
+            <ObraSocialAutocomplete
+              value={obraSocial?.nro_obra_social ?? null}
+              onChange={(_, os) => setObraSocial(os)}
+              disabled={!!trabajando}
+            />
+          </label>
+          <label className={c.campo}>
+            <span className={c.rotulo}>Período</span>
+            <input
+              className={c.entrada}
+              type="text"
+              inputMode="numeric"
+              maxLength={6}
+              value={periodo}
+              onChange={(e) => setPeriodo(e.target.value.replace(/\D/g, ""))}
+              placeholder="Ej. 202609"
+              disabled={!obraSocial || !!trabajando}
+            />
+          </label>
+          <label className={c.campo}>
+            <span className={c.rotulo}>Código</span>
+            <input
+              className={c.entrada}
+              type="text"
+              inputMode="numeric"
+              value={codigo}
+              onChange={(e) => setCodigo(e.target.value.trim())}
+              placeholder="Vacío: todas las prestaciones"
+              disabled={!obraSocial || !!trabajando}
+            />
+          </label>
+        </div>
+
+        {facturaError && <ErrorAccion>{facturaError}</ErrorAccion>}
+        {factura && (
+          <Cifras
+            items={[
+              { valor: factura.cantidad, rotulo: factura.cantidad !== 1 ? "prestaciones" : "prestación" },
+              { valor: formatMoney(factura.importe_total), rotulo: "total" },
+              { valor: cerrada ? "Cerrada" : "Abierta", rotulo: "estado", tono: cerrada ? "apagada" : undefined },
+            ]}
+          />
+        )}
+        {cerrada && <Aviso>La factura de este período ya está cerrada: sus precios no se pueden recalcular.</Aviso>}
+        <Aviso tono="info">
+          Se usa la fecha de cada práctica (sin fecha, la de hoy) y la especialidad principal del médico. Las manuales,
+          las que no tienen precio y las que darían $0 no se tocan.
+        </Aviso>
+      </Paso>
+
+      <Paso numero={2} titulo="Revisar y aplicar">
+        <div className={c.acciones}>
+          <Button
+            variant="ghost"
+            leftIcon={<Eye size={16} aria-hidden="true" />}
+            disabled={!listo}
+            isLoading={trabajando === "previa"}
+            onClick={() => void correr(true)}
+          >
+            {resultado?.dry_run ? "Actualizar vista previa" : "Vista previa"}
+          </Button>
+          <Button
+            variant="danger"
+            leftIcon={<RefreshCw size={16} aria-hidden="true" />}
+            disabled={!puedeAplicar}
+            onClick={() => setConfirmOpen(true)}
+            title={!resultado?.dry_run ? "Primero generá la vista previa" : undefined}
+          >
+            Aplicar recálculo
+          </Button>
+        </div>
+
+        {trabajando && (
+          <p className={styles.cargando}>
+            <Cargando size={20} tono="marca" />
+            {trabajando === "previa"
+              ? "Calculando la vista previa… puede tardar en facturas grandes."
+              : `Recalculando ${resultado?.cambian ?? ""} prestaciones… no cierres esta pantalla.`}
           </p>
-        </div>
-        <div className={base.headerRight}>
-          <BackButton to="/panel/facturacion/periodos" />
-        </div>
-      </div>
-
-      <motion.div
-        className={`${base.layout} ${styles.anchoCompleto}`}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-      >
-        <div className={`${base.section} ${styles.relativo}`}>
-          <span className={base.sectionTitle}>Factura</span>
-          <div className={base.fieldsRow}>
-            <div className={base.filterField}>
-              <label className={base.filterLabel}>Obra social</label>
-              <ObraSocialAutocomplete
-                value={obraSocial?.nro_obra_social ?? null}
-                onChange={(_, os) => setObraSocial(os)}
-                disabled={!!trabajando}
-              />
-            </div>
-            <div className={base.filterField}>
-              <label className={base.filterLabel}>Período (YYYYMM)</label>
-              <input
-                className={base.input}
-                type="text"
-                inputMode="numeric"
-                maxLength={6}
-                value={periodo}
-                onChange={(e) => setPeriodo(e.target.value.replace(/\D/g, ""))}
-                placeholder="Ej. 202609"
-                disabled={!obraSocial || !!trabajando}
-              />
-            </div>
-            <div className={base.filterField}>
-              <label className={base.filterLabel}>Código (opcional)</label>
-              <input
-                className={base.input}
-                type="text"
-                inputMode="numeric"
-                value={codigo}
-                onChange={(e) => setCodigo(e.target.value.trim())}
-                placeholder="Vacío = todas las prestaciones"
-                disabled={!obraSocial || !!trabajando}
-              />
-            </div>
-          </div>
-
-          {facturaError && <div className={base.errorBox}>{facturaError}</div>}
-          {factura && (
-            <div className={base.previewRow}>
-              <span className={`${base.infoChip} ${base.chipNeutral}`}>
-                {factura.cantidad} prestación{factura.cantidad !== 1 ? "es" : ""}
-              </span>
-              <span className={`${base.infoChip} ${base.chipTotal}`}>Total: {formatMoney(factura.importe_total)}</span>
-              <span className={`${base.infoChip} ${cerrada ? base.chipCerrada : base.chipAbierta}`}>
-                {cerrada ? "Cerrada" : "Abierta"}
-              </span>
-            </div>
-          )}
-          {cerrada && (
-            <p className={base.mutedText}>
-              La factura de este período ya está cerrada: sus precios no se pueden recalcular.
-            </p>
-          )}
-
-          <p className={base.mutedText}>
-            Se usa la fecha de cada práctica (sin fecha, la de hoy) y la especialidad principal del médico.
-            Se respeta cantidad, sesión, porcentaje y coseguro, y el total se guarda con la misma fórmula
-            que ya tenía cada prestación. Las manuales, las que no tienen precio y las que darían $0 no se tocan.
-          </p>
-
-          {trabajando && (
-            <div className={styles.cargando}>
-              <Cargando size={22} />
-              <span>
-                {trabajando === "previa"
-                  ? "Calculando la vista previa… puede tardar en facturas grandes."
-                  : `Recalculando ${resultado?.cambian ?? ""} prestaciones… no cierres esta pantalla.`}
-              </span>
-            </div>
-          )}
-        </div>
-
-        {error && <div className={base.errorBox}>{error}</div>}
+        )}
+        {error && <ErrorAccion>{error}</ErrorAccion>}
 
         {resultado && (
-          <div className={base.section}>
-            <span className={base.sectionTitle}>
-              {resultado.dry_run ? "Vista previa (no se grabó nada)" : "Resultado"}
+          <Bloque>
+            <h3 className={c.subtitulo}>
+              {resultado.dry_run ? "Vista previa: no se grabó nada" : "Resultado"}
               {resultado.codigo ? ` · código ${resultado.codigo}` : ""}
-            </span>
-            <div className={base.previewRow}>
-              <span className={`${base.infoChip} ${base.chipNeutral}`}>
-                {resultado.cambian} {resultado.dry_run ? "cambian" : "recalculadas"}
-              </span>
-              <span className={`${base.infoChip} ${styles.chipGris}`}>{resultado.sin_cambios} sin cambios</span>
-              <span className={`${base.infoChip} ${base.chipAbierta}`}>{resultado.omitidas} no se tocan</span>
-              <span className={`${base.infoChip} ${styles.chipGris}`}>
-                {formatMoney(resultado.importe_antes)} → {formatMoney(resultado.importe_despues)}
-              </span>
-              <span className={`${base.infoChip} ${diferencia < 0 ? styles.chipBaja : styles.chipSube}`}>
-                Diferencia: {diferencia > 0 ? "+" : ""}{formatMoney(resultado.diferencia)}
-              </span>
-              {resultado.publicadas_afectadas > 0 && (
-                <span className={`${base.infoChip} ${base.chipAbierta}`}>
-                  {resultado.publicadas_afectadas} ya publicadas al médico
-                </span>
-              )}
-            </div>
-
+            </h3>
+            <Cifras
+              items={[
+                { valor: resultado.cambian, rotulo: resultado.dry_run ? "cambian" : "recalculadas" },
+                { valor: resultado.sin_cambios, rotulo: "sin cambios", tono: "apagada" },
+                { valor: resultado.omitidas, rotulo: "no se tocan", tono: "apagada" },
+                { valor: `${formatMoney(resultado.importe_antes)} → ${formatMoney(resultado.importe_despues)}`, rotulo: "total antes y después" },
+                { valor: `${diferencia > 0 ? "+" : ""}${formatMoney(resultado.diferencia)}`, rotulo: "diferencia", tono: diferencia < 0 ? "error" : undefined },
+                ...(resultado.publicadas_afectadas > 0
+                  ? [{ valor: resultado.publicadas_afectadas, rotulo: "ya publicadas al médico" }]
+                  : []),
+              ]}
+            />
             {filasOrdenadas.length > 0 && <TablaCambios filas={filasOrdenadas} />}
             {resultado.omitidas_detalle.length > 0 && <ListaOmitidas omitidas={resultado.omitidas_detalle} />}
-          </div>
+          </Bloque>
         )}
-
-        <div className={base.formFooter}>
-          <BotonPlano type="button" className={base.btnGhost} onClick={() => void correr(true)} disabled={!listo}>
-            <Eye size={15} /> {trabajando === "previa" ? "Calculando…" : "Previsualizar"}
-          </BotonPlano>
-          <BotonPlano
-            type="button"
-            className={base.btnDanger}
-            onClick={() => setConfirmOpen(true)}
-            disabled={!puedeAplicar}
-            title={!resultado?.dry_run ? "Previsualizá antes de aplicar" : undefined}
-          >
-            <RefreshCw size={15} /> Aplicar recálculo
-          </BotonPlano>
-        </div>
-      </motion.div>
+      </Paso>
 
       {resultado && (
         <ConfirmActionModal
@@ -301,7 +272,7 @@ const RecalculoPrecios: React.FC = () => {
           loading={trabajando === "aplicar"}
         />
       )}
-    </div>
+    </PaginaPasos>
   );
 };
 

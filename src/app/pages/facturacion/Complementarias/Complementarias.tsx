@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { Layers, Search, Plus, FilePlus2, FileCheck2 } from "lucide-react";
+import { CheckCircle2, FileCheck2, FilePlus2, Layers, ListFilter, LockKeyhole, Plus } from "lucide-react";
 
 import { useAppSnackbar } from "@/app/hooks/useAppSnackbar";
 import { listarFacturas } from "../api";
@@ -10,31 +9,32 @@ import { detailMessage, versionLabel } from "../types";
 import { formatMoney } from "../money";
 import ObraSocialAutocomplete from "../components/ObraSocialAutocomplete";
 import NuevaComplementariaModal from "./NuevaComplementariaModal";
-import styles from "./Complementarias.module.scss";
+import styles from "../ListaFacturas.module.scss";
+import lq from "@/app/pages/Pagos/Liquidacion.module.scss";
+import Franja, { Solapa } from "@/app/components/layout/Franja/Franja";
+import { Filtros } from "@/app/components/ui/Caja/Caja";
+import { filtroAncho } from "@/app/components/ui/Caja/filtroAncho";
+import Button from "@/app/components/ui/Button/Button";
+import SearchField from "@/app/components/ui/SearchField/SearchField";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
 import BotonVer from "@/app/components/ui/BotonVer/BotonVer";
-import { estadoLabel } from "@/app/pages/facturacion/utiles";
-import { fmtFecha } from "@/app/pages/facturacion/utiles";
+import BotonAccion from "@/app/components/ui/BotonAccion/BotonAccion";
+import Cargando from "@/app/components/ui/Cargando/Cargando";
 import Paginador from "@/app/components/ui/Paginador/Paginador";
-import { comoErrorApi } from "@/app/shared/lib/httpErrors";
 import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
+import { estadoLabel, fmtFecha } from "@/app/pages/facturacion/utiles";
+import { comoErrorApi } from "@/app/shared/lib/httpErrors";
 
 const PAGE_SIZES = [25, 50, 100, 200];
 const DEFAULT_LIMIT = 50;
 
-const ESTADOS: Array<{ value: string; label: string }> = [
-  { value: "", label: "Todos" },
-  { value: "A", label: "Abierta" },
-  { value: "C", label: "Cerrada" },
+const SOLAPAS: Array<{ value: string; titulo: string; icono: typeof Layers }> = [
+  { value: "", titulo: "Todas", icono: ListFilter },
+  { value: "A", titulo: "Abiertas", icono: CheckCircle2 },
+  { value: "C", titulo: "Cerradas", icono: LockKeyhole },
 ];
 
-const estadoBadgeClass = (estado: string | null): string => {
-  switch (estado) {
-    case "A": return styles.estadoAbierta;
-    case "C": return styles.estadoCerrada;
-    default:  return styles.estadoDefault;
-  }
-};
+const estadoClase = (estado: string | null): string => (estado === "A" ? lq.abierto : lq.cerrado);
 
 const Complementarias: React.FC = () => {
   const navigate = useNavigate();
@@ -81,9 +81,15 @@ const Complementarias: React.FC = () => {
     set({ cod_obra: nro ? String(nro) : undefined });
   };
 
+  // La solapa (estado) no se limpia: es la vista elegida, no un filtro.
   const handleLimpiar = () => {
     setObraSocial(null);
-    setFiltros({ limit: filtros.limit ?? DEFAULT_LIMIT, offset: 0, solo_complementos: true });
+    setFiltros({
+      limit: filtros.limit ?? DEFAULT_LIMIT,
+      offset: 0,
+      solo_complementos: true,
+      estado: filtros.estado,
+    });
   };
 
   const handleCreated = (factura: FacturaRead) => {
@@ -92,6 +98,8 @@ const Complementarias: React.FC = () => {
     navigate(`/panel/facturacion/complementarias/${factura.id_prestaciones}/cargar`);
   };
 
+  const hayFiltros = Boolean(obraSocial || filtros.periodo || filtros.usuario || filtros.q);
+
   const limit = filtros.limit ?? DEFAULT_LIMIT;
   const offset = filtros.offset ?? 0;
   const page = Math.floor(offset / limit) + 1;
@@ -99,94 +107,76 @@ const Complementarias: React.FC = () => {
 
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
-        <span className={styles.headerIcon}>
-          <Layers size={22} />
-        </span>
-        <div>
-          <h1 className={styles.title}>Lista de facturas complementarias</h1>
-          <p className={styles.subtitle}>Facturas adicionales para períodos ya cerrados y enviados.</p>
-        </div>
-        <div className={styles.headerRight}>
-          <BotonPlano type="button" className={styles.btnPrimary} onClick={() => setModalOpen(true)}>
-            <Plus size={15} /> Nueva complementaria
-          </BotonPlano>
-        </div>
+      <Franja titulo="Complementarias" icono={Layers}>
+        {SOLAPAS.map(({ value, titulo, icono: Icono }) => (
+          <Solapa key={value} activa={(filtros.estado ?? "") === value} onClick={() => set({ estado: value || undefined })}>
+            <Icono size={18} /> {titulo}
+          </Solapa>
+        ))}
+      </Franja>
+
+      <div className={styles.barra}>
+        <SearchField
+          className={styles.buscador}
+          fullWidth
+          placeholder="Buscar por número de factura…"
+          value={filtros.q ?? ""}
+          onChange={(e) => set({ q: e.target.value || undefined })}
+          onClear={() => set({ q: undefined })}
+        />
+        <Button
+          variant="secondary"
+          leftIcon={<Plus size={17} aria-hidden="true" />}
+          onClick={() => setModalOpen(true)}
+        >
+          Nueva complementaria
+        </Button>
       </div>
 
-      <div className={styles.layout}>
-        <div className={styles.toolbar}>
-          <div className={`${styles.filterField} ${styles.filterFieldWide}`}>
-            <label className={styles.filterLabel}>Obra social</label>
-            <ObraSocialAutocomplete
-              value={obraSocial?.nro_obra_social ?? null}
-              onChange={handleObraSocialChange}
-            />
-          </div>
-
-          <div className={styles.filterField}>
-            <label className={styles.filterLabel}>Período</label>
-            <input
-              className={styles.input}
-              type="text"
-              inputMode="numeric"
-              maxLength={6}
-              placeholder="Ej. 202607"
-              value={filtros.periodo ?? ""}
-              onChange={(e) => set({ periodo: e.target.value || undefined })}
-            />
-          </div>
-
-          <div className={styles.filterField}>
-            <label className={styles.filterLabel}>Operador</label>
-            <input
-              className={styles.input}
-              type="text"
-              placeholder="Usuario"
-              value={filtros.usuario ?? ""}
-              onChange={(e) => set({ usuario: e.target.value || undefined })}
-            />
-          </div>
-
-          <div className={styles.filterField}>
-            <label className={styles.filterLabel}>Estado</label>
-            <select
-              className={styles.select}
-              value={filtros.estado ?? ""}
-              onChange={(e) => set({ estado: e.target.value || undefined })}
-            >
-              {ESTADOS.map((e) => (
-                <option key={e.value} value={e.value}>{e.label}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className={`${styles.filterField} ${styles.filterFieldWide}`}>
-            <label className={styles.filterLabel}>Nº de factura</label>
-            <div className={styles.searchWrap}>
-              <Search className={styles.searchIcon} size={16} />
-              <input
-                className={`${styles.input} ${styles.searchInput}`}
-                type="text"
-                placeholder="Buscar por número de factura…"
-                value={filtros.q ?? ""}
-                onChange={(e) => set({ q: e.target.value || undefined })}
-              />
-            </div>
-          </div>
-
-          <BotonPlano type="button" className={styles.clearBtn} onClick={handleLimpiar} disabled={loading}>
-            Limpiar filtros
-          </BotonPlano>
+      <Filtros className={styles.filtros}>
+        <div className={`${lq.campo} ${filtroAncho}`}>
+          <span className={lq.rotulo}>Obra social</span>
+          <ObraSocialAutocomplete
+            value={obraSocial?.nro_obra_social ?? null}
+            onChange={handleObraSocialChange}
+          />
         </div>
+        <div className={lq.campo}>
+          <span className={lq.rotulo}>Período</span>
+          <input
+            className={lq.input}
+            type="text"
+            inputMode="numeric"
+            maxLength={6}
+            placeholder="Ej. 202607"
+            value={filtros.periodo ?? ""}
+            onChange={(e) => set({ periodo: e.target.value || undefined })}
+          />
+        </div>
+        <div className={lq.campo}>
+          <span className={lq.rotulo}>Operador</span>
+          <input
+            className={lq.input}
+            type="text"
+            placeholder="Usuario"
+            value={filtros.usuario ?? ""}
+            onChange={(e) => set({ usuario: e.target.value || undefined })}
+          />
+        </div>
+        {hayFiltros && (
+          <BotonPlano type="button" className={styles.limpiar} onClick={handleLimpiar} disabled={loading}>
+            Limpiar
+          </BotonPlano>
+        )}
+      </Filtros>
 
-        <motion.div
-          className={styles.tableWrap}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3 }}
-        >
-          <Tabla className={styles.table}>
+      <div className={`${styles.tablaCaja} ${loading && rows.length > 0 ? styles.tablaVieja : ""}`}>
+        {loading && rows.length === 0 ? (
+          <div className={lq.cargando}><Cargando size={22} tono="marca" aria-label="Cargando" /></div>
+        ) : rows.length === 0 ? (
+          <div className={lq.vacio}>No hay complementarias para los filtros actuales.</div>
+        ) : (
+          <Tabla>
             <thead>
               <tr>
                 <th>Obra social</th>
@@ -194,112 +184,87 @@ const Complementarias: React.FC = () => {
                 <th>Versión</th>
                 <th>Operador</th>
                 <th>Estado</th>
-                <th>Fecha de cierre</th>
+                <th>Cierre</th>
                 <th>Factura</th>
                 <th>Nº Exp.</th>
                 <th>Total</th>
-                <th className={styles.thActions}>Acciones</th>
+                <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
-              {loading && (
-                <tr><td colSpan={10} className={styles.loadingCell}>Cargando…</td></tr>
-              )}
-              {!loading && rows.length === 0 && (
-                <tr>
-                  <td colSpan={10} className={styles.emptyCell}>
-                    No hay facturas complementarias.
-                  </td>
-                </tr>
-              )}
-              {!loading && rows.map((row) => (
+              {rows.map((row) => (
                 <tr key={row.id_prestaciones}>
-                  <td><span className={styles.osCell}>{row.cod_obr || "—"}</span></td>
+                  <td className={styles.os}>{row.cod_obr || "—"}</td>
                   <td>
-                    <span className={styles.periodoLabel}>{row.periodo_label || row.periodo}</span>
-                    {row.periodo_label && <span className={styles.periodoCode}>{row.periodo}</span>}
+                    {row.periodo_label || row.periodo}
+                    {row.periodo_label && <span className={styles.codigo}>{row.periodo}</span>}
                   </td>
-                  <td>
-                    <span className={styles.versionBadge}>{versionLabel(row.version)}</span>
-                  </td>
-                  <td>{row.usuario || <span className={styles.mutedText}>—</span>}</td>
-                  <td>
-                    <span className={`${styles.estadoBadge} ${estadoBadgeClass(row.estado)}`}>
-                      {estadoLabel(row.estado)}
-                    </span>
-                  </td>
+                  <td><span className={styles.version}>{versionLabel(row.version)}</span></td>
+                  <td>{row.usuario || <span className={lq.tenue}>—</span>}</td>
+                  <td><span className={`${lq.estado} ${estadoClase(row.estado)}`}>{estadoLabel(row.estado)}</span></td>
                   <td>{fmtFecha(row.fecha)}</td>
                   <td>
                     {row.nro_factura ? (
-                      <span className={styles.facturaCell}>
-                        <span className={styles.facturaNro}>{row.nro_factura}</span>
-                        {row.tipo_factura && (
-                          <span className={styles.versionBadge}>{row.tipo_factura}</span>
-                        )}
+                      <span className={styles.factura}>
+                        <span className={lq.mono}>{row.nro_factura}</span>
+                        {row.tipo_factura && <span className={styles.version}>{row.tipo_factura}</span>}
                       </span>
                     ) : (
-                      <span className={styles.mutedText}>Sin factura</span>
+                      <span className={lq.tenue}>Sin factura</span>
                     )}
                   </td>
-                  <td><span className={styles.facturaNro}>{row.id_prestaciones}</span></td>
-                  <td><span className={styles.totalCell}>{formatMoney(row.importe)}</span></td>
+                  <td className={lq.mono}>{row.id_prestaciones}</td>
+                  <td className={lq.monto}>{formatMoney(row.importe)}</td>
                   <td>
-                    <div className={styles.actionsCell}>
+                    <div className={lq.accionesFila}>
                       {row.estado === "A" && (
                         <>
-                          <BotonPlano
-                            type="button"
-                            className={styles.btnGhostAction}
+                          <BotonAccion
+                            icono={FilePlus2}
+                            etiqueta="Cargar prestaciones"
                             onClick={() => navigate(`/panel/facturacion/complementarias/${row.id_prestaciones}/cargar`)}
-                          >
-                            <FilePlus2 size={14} /> Cargar
-                          </BotonPlano>
-                          <BotonPlano
-                            type="button"
-                            className={styles.btnGhostAction}
+                          />
+                          <BotonAccion
+                            icono={FileCheck2}
+                            etiqueta="Cerrar período"
                             onClick={() => navigate("/panel/facturacion/cierre")}
-                          >
-                            <FileCheck2 size={14} /> Cerrar
-                          </BotonPlano>
+                          />
                         </>
                       )}
-                      <BotonVer
-                        onClick={() => navigate(`/panel/facturacion/periodos/${row.id_prestaciones}`)}
-                      />
+                      <BotonVer onClick={() => navigate(`/panel/facturacion/periodos/${row.id_prestaciones}`)} />
                     </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </Tabla>
-        </motion.div>
+        )}
+      </div>
 
-        <div className={styles.pagination}>
-          <span className={styles.pageInfo}>
-            {totalCount !== undefined
+      <div className={styles.pie}>
+        <select
+          className={lq.select}
+          value={limit}
+          onChange={(e) => setFiltros((f) => ({ ...f, limit: Number(e.target.value), offset: 0 }))}
+          disabled={loading}
+          aria-label="Filas por página"
+        >
+          {PAGE_SIZES.map((s) => (
+            <option key={s} value={s}>{s} por página</option>
+          ))}
+        </select>
+        <Paginador
+          pagina={page}
+          totalPaginas={totalPages}
+          hayMas={!((totalCount !== undefined && offset + limit >= totalCount) || rows.length < limit)}
+          onCambiar={(p) => setFiltros((f) => ({ ...f, offset: (p - 1) * limit }))}
+          ocupado={loading}
+          resumen={
+            totalCount !== undefined
               ? `${totalCount} complementaria${totalCount !== 1 ? "s" : ""}`
-              : "—"}
-          </span>
-          <div className={styles.pageControls}>
-            <select
-              className={styles.pageSelect}
-              value={limit}
-              onChange={(e) => setFiltros((f) => ({ ...f, limit: Number(e.target.value), offset: 0 }))}
-              disabled={loading}
-            >
-              {PAGE_SIZES.map((s) => (
-                <option key={s} value={s}>{s} por página</option>
-              ))}
-            </select>
-            <Paginador
-              pagina={page}
-              totalPaginas={totalPages}
-              hayMas={!((totalCount !== undefined && offset + limit >= totalCount) || rows.length < limit)}
-              onCambiar={(p) => setFiltros((f) => ({ ...f, offset: (p - 1) * limit }))}
-              ocupado={loading}
-            />
-          </div>
-        </div>
+              : undefined
+          }
+        />
       </div>
 
       <NuevaComplementariaModal

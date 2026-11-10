@@ -2,13 +2,15 @@ import { Download, ExternalLink } from "lucide-react";
 import Button from "../../UI/Button/Button";
 import IconoArchivo from "../../UI/IconoArchivo/IconoArchivo";
 import { agruparPorTipo, nombreVisible } from "@/website/lib/documentos";
+import { urlSegura } from "@/app/shared/lib/urlSegura";
 import type { DocumentoNoticia } from "@/website/types";
 import styles from "./DocumentosPublicacion.module.scss";
 
 type Props = { documentos: DocumentoNoticia[] };
 
 /** Los adjuntos de una publicación: el primer PDF se muestra embebido (suele ser la norma o el programa del curso). */
-export default function DocumentosPublicacion({ documentos }: Props) {
+export default function DocumentosPublicacion({ documentos: todos }: Props) {
+  const documentos = todos.filter((d) => urlSegura(d.path));
   const { pdf, imagen, otro } = agruparPorTipo(documentos);
   const [destacado, ...otrosPdf] = pdf;
   const lista = [...otrosPdf, ...otro];

@@ -4,27 +4,42 @@
 // Mismo lenguaje visual que VerPeriodos / NomencladorPorOS ("Valores y nomencladores").
 
 .container {
+  // En variables porque la franja las necesita para salirse del relleno.
+  --lado: #{$spacing-12};
+  --arriba: #{$spacing-8};
+
   min-height: 100vh;
-  background: linear-gradient(135deg, $gray-100 0%, $gray-50 60%, $secondary-blue 100%);
-  padding: 1.8rem;
+  padding: $spacing-8 $spacing-12 $spacing-12;
+  background: $gray-50;
   font-family: inherit;
+
+  @media (max-width: 1200px) {
+    --lado: #{$spacing-8};
+    padding-right: $spacing-8;
+    padding-left: $spacing-8;
+  }
+
+  @media (max-width: $breakpoint-md) {
+    --lado: #{$spacing-4};
+    --arriba: #{$spacing-4};
+    padding: $spacing-4;
+  }
 }
 
 .infoChip {
-  font-size: 0.75rem;
-  font-weight: 600;
-  border-radius: 20px;
-  padding: 3px 0.75rem;
+  font-size: $font-size-sm;
+  border-radius: 999px;
+  padding: 0.2rem 0.8rem;
   white-space: nowrap;
+  color: $franja-azul;
+  background: $secondary-blue;
 }
 
-// Sin margen externo: la tarjeta (toolbar + tabla) anula el padding lateral de `.container` (1.8rem) y va de borde a borde.
+// La caja blanca con el resumen y la tabla, dentro del relleno de la página.
 .layout {
-  margin: 0 -1.8rem;
   background: $white;
-  border-top: 1px solid $gray-200;
-  border-bottom: 1px solid $gray-200;
-  box-shadow: 0 1px 4px rgba($black, .06);
+  border: 1px solid $gray-200;
+  border-radius: $radio-lg;
   // `clip` y no `hidden`: recorta igual, pero no crea un contenedor de scroll.
   overflow: clip;
 }
@@ -68,7 +83,6 @@
   text-align: center;
   color: $tono-azul-400;
   padding: 2.5rem 0.875rem !important;
-  font-style: italic;
   white-space: normal;
 }
 
@@ -92,30 +106,4 @@ tr[data-resaltada] td {
 
 @media (prefers-reduced-motion: reduce) {
   tr[data-resaltada] td { animation: none; background-color: $tono-naranja-100; }
-}
-
-// Detalle | Documentación (sólo en las obras sociales con documentación digital).
-.tabs {
-  display: flex;
-  gap: 0.25rem;
-  margin-top: 0.75rem;
-  border-bottom: 1px solid $tono-azul-100-c;
-}
-
-.tab {
-  padding: 0.7rem 1.1rem;
-  font-size: 0.95rem;
-  color: $tono-azul-650-b;
-  background: none;
-  border: 0;
-  border-bottom: 3px solid transparent;
-  cursor: pointer;
-
-  &:hover { color: $tono-azul-500-b; }
-}
-
-.tabActiva {
-  font-weight: 700;
-  color: $tono-azul-500-b;
-  border-bottom-color: $tono-azul-500-b;
 }

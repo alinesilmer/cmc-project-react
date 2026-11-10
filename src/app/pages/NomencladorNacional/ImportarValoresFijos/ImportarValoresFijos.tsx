@@ -12,6 +12,7 @@ import { useObrasSociales } from "../../ObrasSociales/useObrasSociales";
 import { getEspecialidades } from "../../Especialidades/especialidades.api";
 import { readExcel } from "@/app/shared/lib/precios/readExcel";
 import { mensajeDeError } from "@/app/shared/lib/httpErrors";
+import { conProceso } from "@/app/hooks/proceso";
 import { aplicarValoresFijos, getFamiliaObraSocial, previsualizarValoresFijos } from "../nomenclador.api";
 import type {
   AccionFija,
@@ -333,42 +334,48 @@ export default function ImportarValoresFijos() {
     if (!previa || !archivo || os == null) return;
     setAplicando(true);
     setErrorAplicar(null);
-    try {
-      const r = await aplicarValoresFijos({
-        obra_social_nro: os,
-        vigencia_desde: vigencia,
-        encabezado: archivo.encabezado,
-        filas: archivo.filas,
-        replicar_en: destinos,
-        decisiones: filas.map((f) => {
-          const d = decisiones.get(f.fila)!;
-          return {
-            fila: f.fila,
-            estado_visto: f.estado,
-            accion: d.accion as AccionFija,
-            especialidades: d.sinRestriccion ? null : d.especialidades,
-            sin_restriccion: d.sinRestriccion || null,
-            categoria: f.estado === "sin_catalogo" ? d.categoria : null,
-          };
-        }),
-      });
+    const r = await conProceso(
+      { haciendo: "Cargando los valores", listo: "Valores cargados", fallo: "No se pudo cargar" },
+      async () => {
+        try {
+          return await aplicarValoresFijos({
+            obra_social_nro: os,
+            vigencia_desde: vigencia,
+            encabezado: archivo.encabezado,
+            filas: archivo.filas,
+            replicar_en: destinos,
+            decisiones: filas.map((f) => {
+              const d = decisiones.get(f.fila)!;
+              return {
+                fila: f.fila,
+                estado_visto: f.estado,
+                accion: d.accion as AccionFija,
+                especialidades: d.sinRestriccion ? null : d.especialidades,
+                sin_restriccion: d.sinRestriccion || null,
+                categoria: f.estado === "sin_catalogo" ? d.categoria : null,
+              };
+            }),
+          });
+        } catch (e) {
+          const status = (e as { response?: { status?: number } })?.response?.status;
+          const detail = (e as { response?: { data?: { detail?: { mensaje?: string; errores?: string[] } } } })?.response?.data?.detail;
+          const mensaje =
+            detail && typeof detail === "object" && detail.errores
+              ? `${detail.mensaje ?? "No se pudo cargar"}: ${detail.errores.slice(0, 5).join(" · ")}`
+              : status === 409
+                ? `${mensajeDeError(e)} Tocá «Previsualizar» otra vez.`
+                : mensajeDeError(e, "No se pudo cargar. No se guardó nada.");
+          setErrorAplicar(mensaje);
+          throw new Error(mensaje);
+        }
+      },
+    );
+    setConfirmando(false);
+    if (r) {
       setResultado(r);
       setPrevia(null);
-      setConfirmando(false);
-    } catch (e) {
-      const status = (e as { response?: { status?: number } })?.response?.status;
-      const detail = (e as { response?: { data?: { detail?: { mensaje?: string; errores?: string[] } } } })?.response?.data?.detail;
-      setErrorAplicar(
-        detail && typeof detail === "object" && detail.errores
-          ? `${detail.mensaje ?? "No se pudo cargar"}: ${detail.errores.slice(0, 5).join(" · ")}`
-          : status === 409
-            ? `${mensajeDeError(e)} Tocá «Previsualizar» otra vez.`
-            : mensajeDeError(e, "No se pudo cargar. No se guardó nada."),
-      );
-      setConfirmando(false);
-    } finally {
-      setAplicando(false);
     }
+    setAplicando(false);
   }
 
   const puedePrevisualizar = os != null && !!vigencia && !!archivo && !previsualizando && !leyendo;

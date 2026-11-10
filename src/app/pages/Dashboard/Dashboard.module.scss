@@ -6,61 +6,6 @@
   padding-bottom: $spacing-10;
 }
 
-// ── Saludo ───────────────────────────────────────────────────────────────────
-
-.hero {
-  position: relative;
-  // De borde a borde: el margen negativo deshace el relleno que `AppLayout` le pone a todas las pantallas (0,5rem × 1rem).
-  margin: -0.5rem -1rem 0;
-  // Del mismo alto que la franja de Validaciones, con el saludo centrado.
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  min-height: $franja-alto;
-  padding: $spacing-10 $spacing-12;
-  color: $white;
-  background: $primary-blue-darker;
-  overflow: hidden;
-  isolation: isolate;
-
-  &::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    @include trama-cruces;
-  }
-
-  @media (max-width: 1200px) {
-    padding: $spacing-8;
-  }
-
-  @media (max-width: $breakpoint-md) {
-    padding: $spacing-6 $spacing-4;
-  }
-
-  // En el teléfono el relleno de `AppLayout` es la mitad.
-  @media (max-width: 640px) {
-    margin: -0.25rem -0.5rem 0;
-  }
-}
-
-.fecha {
-  margin: 0 0 $spacing-2;
-  font-size: $font-size-sm;
-  font-weight: $font-weight-semibold;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--franja-rotulo, #{$primary-yellow});
-}
-
-.saludo {
-  margin: 0;
-  @include titulo-franja;
-  color: var(--franja-titulo, #{$franja-crema});
-  overflow-wrap: anywhere;
-}
-
 // ── Estructura ───────────────────────────────────────────────────────────────
 
 .cuerpo {
@@ -100,9 +45,4 @@
 
 .lateral {
   min-width: 0;
-}
-
-// En oscuro la franja no usa el azul del Colegio: va en el azul casi negro que comparten todas las franjas del panel.
-:global(:root[data-tema="oscuro"]) .hero {
-  background: $franja-noche;
 }

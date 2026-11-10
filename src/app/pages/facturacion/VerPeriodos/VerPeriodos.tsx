@@ -1,19 +1,28 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { Receipt, Search, Eye, EyeOff, FileText } from "lucide-react";
+import { CheckCircle2, Eye, EyeOff, FileText, ListFilter, LockKeyhole, Receipt } from "lucide-react";
 
 import { useAppSnackbar } from "@/app/hooks/useAppSnackbar";
+import { conProceso } from "@/app/hooks/proceso";
 import { abrirAdjunto } from "@/app/shared/lib/archivos";
 import { listarFacturas, publicarPeriodo } from "../api";
 import type { FacturaRead, ListarFacturasParams, ObraSocialOption } from "../types";
 import { detailMessage } from "../types";
 import { formatMoney } from "../money";
+import { estadoLabel } from "../utiles";
 import ObraSocialAutocomplete from "../components/ObraSocialAutocomplete";
 import ConfirmActionModal from "../components/ConfirmActionModal";
-import styles from "./VerPeriodos.module.scss";
+import styles from "../ListaFacturas.module.scss";
+import vp from "./VerPeriodos.module.scss";
+import lq from "@/app/pages/Pagos/Liquidacion.module.scss";
+import Franja, { Solapa } from "@/app/components/layout/Franja/Franja";
+import { Filtros } from "@/app/components/ui/Caja/Caja";
+import { filtroAncho } from "@/app/components/ui/Caja/filtroAncho";
+import SearchField from "@/app/components/ui/SearchField/SearchField";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
 import BotonVer from "@/app/components/ui/BotonVer/BotonVer";
+import BotonAccion from "@/app/components/ui/BotonAccion/BotonAccion";
+import Cargando from "@/app/components/ui/Cargando/Cargando";
 import Paginador from "@/app/components/ui/Paginador/Paginador";
 import { comoErrorApi } from "@/app/shared/lib/httpErrors";
 import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
@@ -24,27 +33,13 @@ const ESTADOS_CERRADOS = new Set(["C", "L", "LC"]);
 const PAGE_SIZES = [25, 50, 100, 200];
 const DEFAULT_LIMIT = 50;
 
-const ESTADOS: Array<{ value: string; label: string }> = [
-  { value: "", label: "Todos" },
-  { value: "A", label: "Abierta" },
-  { value: "C", label: "Cerrada" },
+const SOLAPAS: Array<{ value: string; titulo: string; icono: typeof Receipt }> = [
+  { value: "", titulo: "Todos", icono: ListFilter },
+  { value: "A", titulo: "Abiertos", icono: CheckCircle2 },
+  { value: "C", titulo: "Cerrados", icono: LockKeyhole },
 ];
 
-const estadoBadgeClass = (estado: string | null): string => {
-  switch (estado) {
-    case "A": return styles.estadoAbierta;
-    case "C": return styles.estadoCerrada;
-    default:  return styles.estadoDefault;
-  }
-};
-
-const estadoLabel = (estado: string | null): string => {
-  switch (estado) {
-    case "A": return "Abierta";
-    case "C": return "Cerrada";
-    default:  return estado || "—";
-  }
-};
+const estadoClase = (estado: string | null): string => (estado === "A" ? lq.abierto : lq.cerrado);
 
 const VerPeriodos: React.FC = () => {
   const navigate = useNavigate();
@@ -93,10 +88,18 @@ const VerPeriodos: React.FC = () => {
     set({ cod_obra: nro ? String(nro) : undefined });
   };
 
+  // La solapa (estado) no se limpia: es la vista elegida, no un filtro.
   const handleLimpiar = () => {
     setObraSocial(null);
-    setFiltros({ limit: filtros.limit ?? DEFAULT_LIMIT, offset: 0, solo_complementos: false });
+    setFiltros({
+      limit: filtros.limit ?? DEFAULT_LIMIT,
+      offset: 0,
+      solo_complementos: false,
+      estado: filtros.estado,
+    });
   };
+
+  const hayFiltros = Boolean(obraSocial || filtros.periodo || filtros.usuario || filtros.q);
 
   const handleVer = (row: FacturaRead) => {
     navigate(`/panel/facturacion/periodos/${row.id_prestaciones}`);
@@ -109,20 +112,23 @@ const VerPeriodos: React.FC = () => {
   const handleConfirmarPublicar = async () => {
     if (!aPublicar) return;
     setPublicando(true);
-    try {
-      const nuevoEstado = !aPublicar.publicado;
-      await publicarPeriodo({
-        cod_obra: aPublicar.cod_obr, periodo: aPublicar.periodo, publicado: nuevoEstado,
-      });
-      notify(`Período ${nuevoEstado ? "publicado" : "despublicado"}.`, "success");
-      setAPublicar(null);
-      await fetchData(filtros);
-    } catch (e) {
-      const err = comoErrorApi(e);
-      notify(detailMessage(err?.response?.data?.detail) || "No pudimos actualizar la publicación.", "error");
-    } finally {
-      setPublicando(false);
-    }
+    const nuevoEstado = !aPublicar.publicado;
+    await conProceso(
+      {
+        haciendo: nuevoEstado ? "Publicando el período" : "Despublicando el período",
+        listo: nuevoEstado ? "Período publicado" : "Período despublicado",
+        fallo: "No se pudo actualizar",
+        detalleFallo: (e) => detailMessage(comoErrorApi(e).response?.data?.detail) || undefined,
+      },
+      async () => {
+        await publicarPeriodo({
+          cod_obra: aPublicar.cod_obr, periodo: aPublicar.periodo, publicado: nuevoEstado,
+        });
+        setAPublicar(null);
+        await fetchData(filtros);
+      },
+    );
+    setPublicando(false);
   };
 
   const limit = filtros.limit ?? DEFAULT_LIMIT;
@@ -132,89 +138,69 @@ const VerPeriodos: React.FC = () => {
 
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
-        <span className={styles.headerIcon}>
-          <Receipt size={22} />
-        </span>
-        <div>
-          <h1 className={styles.title}>Ver períodos</h1>
-          <p className={styles.subtitle}>Facturas generadas por cierre de período.</p>
-        </div>
+      <Franja titulo="Períodos" icono={Receipt}>
+        {SOLAPAS.map(({ value, titulo, icono: Icono }) => (
+          <Solapa key={value} activa={(filtros.estado ?? "") === value} onClick={() => set({ estado: value || undefined })}>
+            <Icono size={18} /> {titulo}
+          </Solapa>
+        ))}
+      </Franja>
+
+      <div className={styles.barra}>
+        <SearchField
+          className={styles.buscador}
+          fullWidth
+          placeholder="Buscar por número de factura…"
+          value={filtros.q ?? ""}
+          onChange={(e) => set({ q: e.target.value || undefined })}
+          onClear={() => set({ q: undefined })}
+        />
       </div>
 
-      <div className={styles.layout}>
-        <div className={styles.toolbar}>
-          <div className={`${styles.filterField} ${styles.filterFieldWide}`}>
-            <label className={styles.filterLabel}>Obra social</label>
-            <ObraSocialAutocomplete
-              value={obraSocial?.nro_obra_social ?? null}
-              onChange={handleObraSocialChange}
-            />
-          </div>
-
-          <div className={styles.filterField}>
-            <label className={styles.filterLabel}>Período</label>
-            <input
-              className={styles.input}
-              type="text"
-              inputMode="numeric"
-              maxLength={6}
-              placeholder="Ej. 202607"
-              value={filtros.periodo ?? ""}
-              onChange={(e) => set({ periodo: e.target.value || undefined })}
-            />
-          </div>
-
-          <div className={styles.filterField}>
-            <label className={styles.filterLabel}>Operador</label>
-            <input
-              className={styles.input}
-              type="text"
-              placeholder="Usuario"
-              value={filtros.usuario ?? ""}
-              onChange={(e) => set({ usuario: e.target.value || undefined })}
-            />
-          </div>
-
-          <div className={styles.filterField}>
-            <label className={styles.filterLabel}>Estado</label>
-            <select
-              className={styles.select}
-              value={filtros.estado ?? ""}
-              onChange={(e) => set({ estado: e.target.value || undefined })}
-            >
-              {ESTADOS.map((e) => (
-                <option key={e.value} value={e.value}>{e.label}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className={`${styles.filterField} ${styles.filterFieldWide}`}>
-            <label className={styles.filterLabel}>Nº de factura</label>
-            <div className={styles.searchWrap}>
-              <Search className={styles.searchIcon} size={16} />
-              <input
-                className={`${styles.input} ${styles.searchInput}`}
-                type="text"
-                placeholder="Buscar por número de factura…"
-                value={filtros.q ?? ""}
-                onChange={(e) => set({ q: e.target.value || undefined })}
-              />
-            </div>
-          </div>
-
-          <BotonPlano type="button" className={styles.clearBtn} onClick={handleLimpiar} disabled={loading}>
-            Limpiar filtros
-          </BotonPlano>
+      <Filtros className={styles.filtros}>
+        <div className={`${lq.campo} ${filtroAncho}`}>
+          <span className={lq.rotulo}>Obra social</span>
+          <ObraSocialAutocomplete
+            value={obraSocial?.nro_obra_social ?? null}
+            onChange={handleObraSocialChange}
+          />
         </div>
+        <div className={lq.campo}>
+          <span className={lq.rotulo}>Período</span>
+          <input
+            className={lq.input}
+            type="text"
+            inputMode="numeric"
+            maxLength={6}
+            placeholder="Ej. 202607"
+            value={filtros.periodo ?? ""}
+            onChange={(e) => set({ periodo: e.target.value || undefined })}
+          />
+        </div>
+        <div className={lq.campo}>
+          <span className={lq.rotulo}>Operador</span>
+          <input
+            className={lq.input}
+            type="text"
+            placeholder="Usuario"
+            value={filtros.usuario ?? ""}
+            onChange={(e) => set({ usuario: e.target.value || undefined })}
+          />
+        </div>
+        {hayFiltros && (
+          <BotonPlano type="button" className={styles.limpiar} onClick={handleLimpiar} disabled={loading}>
+            Limpiar
+          </BotonPlano>
+        )}
+      </Filtros>
 
-        <motion.div
-          className={styles.tableWrap}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3 }}
-        >
-          <Tabla className={styles.table}>
+      <div className={`${styles.tablaCaja} ${loading && rows.length > 0 ? styles.tablaVieja : ""}`}>
+        {loading && rows.length === 0 ? (
+          <div className={lq.cargando}><Cargando size={22} tono="marca" aria-label="Cargando" /></div>
+        ) : rows.length === 0 ? (
+          <div className={lq.vacio}>No hay facturas para los filtros actuales.</div>
+        ) : (
+          <Tabla>
             <thead>
               <tr>
                 <th>Nº Exp.</th>
@@ -223,59 +209,45 @@ const VerPeriodos: React.FC = () => {
                 <th>Estado</th>
                 <th>Factura</th>
                 <th>Total</th>
-                <th className={styles.thActions}>Acciones</th>
+                <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
-              {loading && (
-                <tr><td colSpan={7} className={styles.loadingCell}>Cargando…</td></tr>
-              )}
-              {!loading && rows.length === 0 && (
-                <tr><td colSpan={7} className={styles.emptyCell}>No se encontraron facturas.</td></tr>
-              )}
-              {!loading && rows.map((row) => (
+              {rows.map((row) => (
                 <tr key={row.id_prestaciones}>
-                  <td><span className={styles.facturaNro}>{row.id_prestaciones}</span></td>
+                  <td className={lq.mono}>{row.id_prestaciones}</td>
                   <td>
-                    <span className={styles.osCell}>{row.cod_obr || "—"}</span>
-                    {row.nombre_obra_social && <span className={styles.osNombre}>{row.nombre_obra_social}</span>}
+                    <span className={styles.os}>{row.cod_obr || "—"}</span>
+                    {row.nombre_obra_social && <span className={vp.osNombre}>{row.nombre_obra_social}</span>}
                   </td>
                   <td>
-                    <span className={styles.periodoLabel}>{row.periodo_label || row.periodo}</span>
-                    {row.periodo_label && <span className={styles.periodoCode}>{row.periodo}</span>}
+                    {row.periodo_label || row.periodo}
+                    {row.periodo_label && <span className={styles.codigo}>{row.periodo}</span>}
                   </td>
-                  <td>
-                    <span className={`${styles.estadoBadge} ${estadoBadgeClass(row.estado)}`}>
-                      {estadoLabel(row.estado)}
-                    </span>
-                  </td>
+                  <td><span className={`${lq.estado} ${estadoClase(row.estado)}`}>{estadoLabel(row.estado)}</span></td>
                   <td>
                     {row.nro_factura ? (
-                      <span className={styles.facturaCell}>
-                        <span className={styles.facturaNro}>{row.nro_factura}</span>
-                        {row.tipo_factura && (
-                          <span className={styles.tipoBadge}>{row.tipo_factura}</span>
-                        )}
+                      <span className={styles.factura}>
+                        <span className={lq.mono}>{row.nro_factura}</span>
+                        {row.tipo_factura && <span className={styles.version}>{row.tipo_factura}</span>}
                       </span>
                     ) : (
-                      <span className={styles.mutedText}>Sin factura</span>
+                      <span className={lq.tenue}>Sin factura</span>
                     )}
                   </td>
-                  <td><span className={styles.totalCell}>{formatMoney(row.importe)}</span></td>
+                  <td className={lq.monto}>{formatMoney(row.importe)}</td>
                   <td>
-                    <div className={styles.actionsCell}>
+                    <div className={lq.accionesFila}>
                       <BotonVer onClick={() => handleVer(row)} />
                       {row.estado && ESTADOS_CERRADOS.has(row.estado) && row.documento_url && (
-                        <BotonPlano type="button" className={styles.btnFactura} onClick={() => handleVerFactura(row)}>
-                          <FileText size={14} /> Ver factura
-                        </BotonPlano>
+                        <BotonAccion icono={FileText} etiqueta="Ver factura" onClick={() => handleVerFactura(row)} />
                       )}
                       <BotonPlano
                         type="button"
-                        className={`${styles.btnPublicar} ${row.publicado ? styles.btnPublicarOn : ""}`}
+                        className={`${vp.publicar} ${row.publicado ? vp.publicado : ""}`}
                         onClick={() => setAPublicar(row)}
                       >
-                        {row.publicado ? <Eye size={14} /> : <EyeOff size={14} />}
+                        {row.publicado ? <Eye size={15} /> : <EyeOff size={15} />}
                         {row.publicado ? "Publicado" : "No publicado"}
                       </BotonPlano>
                     </div>
@@ -284,34 +256,33 @@ const VerPeriodos: React.FC = () => {
               ))}
             </tbody>
           </Tabla>
-        </motion.div>
+        )}
+      </div>
 
-        <div className={styles.pagination}>
-          <span className={styles.pageInfo}>
-            {totalCount !== undefined
+      <div className={styles.pie}>
+        <select
+          className={lq.select}
+          value={limit}
+          onChange={(e) => setFiltros((f) => ({ ...f, limit: Number(e.target.value), offset: 0 }))}
+          disabled={loading}
+          aria-label="Filas por página"
+        >
+          {PAGE_SIZES.map((s) => (
+            <option key={s} value={s}>{s} por página</option>
+          ))}
+        </select>
+        <Paginador
+          pagina={page}
+          totalPaginas={totalPages}
+          hayMas={!((totalCount !== undefined && offset + limit >= totalCount) || rows.length < limit)}
+          onCambiar={(p) => setFiltros((f) => ({ ...f, offset: (p - 1) * limit }))}
+          ocupado={loading}
+          resumen={
+            totalCount !== undefined
               ? `${totalCount} factura${totalCount !== 1 ? "s" : ""}`
-              : "—"}
-          </span>
-          <div className={styles.pageControls}>
-            <select
-              className={styles.pageSelect}
-              value={limit}
-              onChange={(e) => setFiltros((f) => ({ ...f, limit: Number(e.target.value), offset: 0 }))}
-              disabled={loading}
-            >
-              {PAGE_SIZES.map((s) => (
-                <option key={s} value={s}>{s} por página</option>
-              ))}
-            </select>
-            <Paginador
-              pagina={page}
-              totalPaginas={totalPages}
-              hayMas={!((totalCount !== undefined && offset + limit >= totalCount) || rows.length < limit)}
-              onCambiar={(p) => setFiltros((f) => ({ ...f, offset: (p - 1) * limit }))}
-              ocupado={loading}
-            />
-          </div>
-        </div>
+              : undefined
+          }
+        />
       </div>
 
       <ConfirmActionModal

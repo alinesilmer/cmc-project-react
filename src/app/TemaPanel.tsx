@@ -4,6 +4,7 @@ import { ThemeProvider, createTheme } from "@mui/material/styles";
 
 import Avisos from "@/app/components/layout/Avisos/Avisos";
 import ModalDescarga from "@/app/components/ui/ModalDescarga/ModalDescarga";
+import ModalProceso from "@/app/components/ui/ModalProceso/ModalProceso";
 import { TEMA_OSCURO_DISPONIBLE, useTema } from "@/app/hooks/tema";
 import "@/app/styles/tema.scss";
 
@@ -42,6 +43,7 @@ export default function TemaPanel() {
     <ThemeProvider theme={tema}>
       <Outlet />
       <ModalDescarga />
+      <ModalProceso />
       <Avisos />
     </ThemeProvider>
   );

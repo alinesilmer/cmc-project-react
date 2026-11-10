@@ -1,10 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  UserSearch,
-  Search,
-  AlertTriangle,
-} from "lucide-react";
+import { AlertTriangle, Search, UserSearch } from "lucide-react";
 
 import { useAppSnackbar } from "@/app/hooks/useAppSnackbar";
 import { listarPrestaciones, fetchMedicos, fetchMedicosTodos, descargarExportPorMedico } from "../api";
@@ -15,10 +11,18 @@ import { saveAs } from "@/app/shared/lib/fileSaver";
 import TablaPorObraSocial from "../components/TablaPorObraSocial";
 import MedicoAutocomplete from "../components/MedicoAutocomplete";
 import { dedupePorId } from "../components/localSearch";
+import base from "../ListaFacturas.module.scss";
 import styles from "./DetallePorMedico.module.scss";
+import lq from "@/app/pages/Pagos/Liquidacion.module.scss";
+import Franja from "@/app/components/layout/Franja/Franja";
+import { Filtros } from "@/app/components/ui/Caja/Caja";
+import { filtroAncho } from "@/app/components/ui/Caja/filtroAncho";
+import Button from "@/app/components/ui/Button/Button";
+import Cifras from "@/app/components/ui/Cifras/Cifras";
+import Cargando from "@/app/components/ui/Cargando/Cargando";
 import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
-import { comoErrorApi } from "@/app/shared/lib/httpErrors";
 import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
+import { comoErrorApi } from "@/app/shared/lib/httpErrors";
 
 // Tope del backend por request (GET /prestaciones: limit <= 200) y freno de seguridad para no traer indefinidamente si un médico tuviera muchísimas filas.
 const PAGE_LIMIT = 200;
@@ -134,8 +138,6 @@ const DetallePorMedico: React.FC = () => {
     setTruncado(false);
   };
 
-  const onKeyDown = (e: React.KeyboardEvent) => { if (e.key === "Enter") buscar(); };
-
   const exportar = async (formato: "pdf" | "xlsx") => {
     if (!busqueda) return;
     setExportando(formato);
@@ -173,189 +175,140 @@ const DetallePorMedico: React.FC = () => {
   }, [rows]);
 
   const hayResultados = !!busqueda && !!rows;
+  const tiposPresentes = TIPOS_ORDEN.filter((t) => resumen.porTipo[t]);
 
   if (!medicosPrecargados) {
     return (
-      <div className={styles.container}>
-        <div className={styles.header}>
-          <span className={styles.headerIcon}>
-            <UserSearch size={22} />
-          </span>
-          <div>
-            <h1 className={styles.title}>Detalle por médico</h1>
-          </div>
+      <div className={base.container}>
+        <Franja titulo="Detalle por médico" icono={UserSearch} />
+        <div className={styles.vacio}>
+          {errorPrecarga ? (
+            <>
+              <p><AlertTriangle size={16} aria-hidden="true" /> No se pudieron cargar los médicos.</p>
+              <Button variant="ghost" onClick={() => setReintentoPrecarga((k) => k + 1)}>Reintentar</Button>
+            </>
+          ) : (
+            <Cargando size={22} tono="marca" aria-label="Cargando" />
+          )}
         </div>
-        {errorPrecarga ? (
-          <div className={styles.emptyState}>
-            <p className={styles.emptyTextStrong}><AlertTriangle size={14} style={{ verticalAlign: "-2px" }} aria-hidden="true" /> No se pudieron cargar los médicos.</p>
-            <BotonPlano type="button" className={styles.searchBtn} onClick={() => setReintentoPrecarga((k) => k + 1)}>
-              Reintentar
-            </BotonPlano>
-          </div>
-        ) : (
-          <div className={styles.emptyState}>
-            <p className={styles.emptyText}>Cargando formulario, esperá…</p>
-          </div>
-        )}
       </div>
     );
   }
 
   return (
-    <div className={styles.container}>
-      <div className={styles.header}>
-        <span className={styles.headerIcon}>
-          <UserSearch size={22} />
-        </span>
-        <div>
-          <h1 className={styles.title}>Detalle por médico</h1>
-          <p className={styles.subtitle}>
-            Todas las prestaciones de un socio en un período, en cualquier obra social.
-          </p>
+    <div className={base.container}>
+      <Franja titulo="Detalle por médico" icono={UserSearch} />
+
+      <Filtros
+        className={base.filtros}
+        onSubmit={(e) => {
+          e.preventDefault();
+          void buscar();
+        }}
+      >
+        <div className={`${lq.campo} ${filtroAncho}`}>
+          <span className={lq.rotulo}>Socio</span>
+          <MedicoAutocomplete
+            value={medicoElegido?.cod ?? null}
+            onChange={(_cod, m) => setMedicoElegido(m)}
+            blurOnSelect={false}
+            medicosPrecargados={medicosPrecargados}
+          />
         </div>
-      </div>
-
-      <div className={styles.layout}>
-        <div className={styles.toolbar}>
-          <div className={styles.filterField} style={{ minWidth: 260 }}>
-            <label className={styles.filterLabel}>Socio</label>
-            <MedicoAutocomplete
-              value={medicoElegido?.cod ?? null}
-              onChange={(_cod, m) => setMedicoElegido(m)}
-              blurOnSelect={false}
-              medicosPrecargados={medicosPrecargados}
-            />
-          </div>
-
-          <div className={styles.filterField}>
-            <label className={styles.filterLabel}>Período</label>
-            <input
-              className={styles.input}
-              type="text"
-              inputMode="numeric"
-              maxLength={6}
-              placeholder="Ej. 202607"
-              value={periodoInput}
-              onChange={(e) => setPeriodoInput(e.target.value)}
-              onKeyDown={onKeyDown}
-            />
-          </div>
-
-          <BotonPlano type="button" className={styles.searchBtn} onClick={buscar} disabled={loading}>
-            <Search size={16} /> {loading ? "Buscando…" : "Ver detalle"}
-          </BotonPlano>
-          <BotonPlano type="button" className={styles.clearBtn} onClick={limpiar} disabled={loading}>
+        <div className={lq.campo}>
+          <span className={lq.rotulo}>Período</span>
+          <input
+            className={lq.input}
+            type="text"
+            inputMode="numeric"
+            maxLength={6}
+            placeholder="Ej. 202607"
+            value={periodoInput}
+            onChange={(e) => setPeriodoInput(e.target.value)}
+          />
+        </div>
+        <Button type="submit" variant="secondary" leftIcon={<Search size={17} aria-hidden="true" />} isLoading={loading}>
+          Ver detalle
+        </Button>
+        {(medicoElegido || periodoInput || busqueda) && (
+          <BotonPlano type="button" className={base.limpiar} onClick={limpiar} disabled={loading}>
             Limpiar
           </BotonPlano>
-        </div>
+        )}
+      </Filtros>
 
-        {/* Resumen + banner del médico */}
-        {hayResultados && rows!.length > 0 && (
-          <div className={styles.summaryBar}>
-            <div className={styles.medicoInfo}>
-              <span className={styles.medicoNombre}>
-                {medico?.nombre ?? `Socio ${busqueda!.socio}`}
-              </span>
-              <span className={styles.medicoSub}>
+      {hayResultados && rows!.length > 0 && (
+        <section className={styles.resumen}>
+          <div className={styles.cabecera}>
+            <div className={styles.medico}>
+              <h2 className={styles.nombre}>{medico?.nombre ?? `Socio ${busqueda!.socio}`}</h2>
+              <p className={styles.sub}>
                 Socio {medico?.cod ?? busqueda!.socio}
                 {medico?.matricula != null && ` · Matrícula ${medico.matricula}`}
                 {` · Período ${busqueda!.periodo}`}
-              </span>
+              </p>
             </div>
-
-            <span className={`${styles.chip} ${styles.chipCount}`}>
-              {resumen.vigentes} prestación{resumen.vigentes !== 1 ? "es" : ""}
-            </span>
-            {TIPOS_ORDEN.filter((t) => resumen.porTipo[t]).map((t) => (
-              <span key={t} className={styles.chip}>
-                {TIPO_LABEL_CORTO[t]}: {resumen.porTipo[t]}
-              </span>
-            ))}
-            {resumen.anuladas > 0 && (
-              <span className={`${styles.chip} ${styles.chipWarn}`}>
-                {resumen.anuladas} anulada{resumen.anuladas !== 1 ? "s" : ""}
-              </span>
-            )}
-            <span className={`${styles.chip} ${styles.chipMoney}`}>
-              Honorarios: {formatMoney(resumen.honorarios)}
-            </span>
-            <span className={`${styles.chip} ${styles.chipMoney}`}>
-              Gastos: {formatMoney(resumen.gastos)}
-            </span>
-            {resumen.coseguro > 0 && (
-              <span className={`${styles.chip} ${styles.chipMoney}`}>
-                Coseguro: {formatMoney(resumen.coseguro)}
-              </span>
-            )}
-            <span className={`${styles.chip} ${styles.chipMoney}`}>
-              Total: {formatMoney(resumen.subtotal)}
-            </span>
-
-            <div className={styles.exportGroup}>
-              <BotonDescarga
-                formato="excel"
-                onClick={() => exportar("xlsx")}
-                disabled={exportando !== null}
-                cargando={exportando === "xlsx"}
-              />
-              <BotonDescarga
-                formato="pdf"
-                onClick={() => exportar("pdf")}
-                disabled={exportando !== null}
-                cargando={exportando === "pdf"}
-              />
+            <div className={styles.descargas}>
+              <BotonDescarga formato="excel" onClick={() => exportar("xlsx")} disabled={exportando !== null} cargando={exportando === "xlsx"} />
+              <BotonDescarga formato="pdf" onClick={() => exportar("pdf")} disabled={exportando !== null} cargando={exportando === "pdf"} />
             </div>
           </div>
-        )}
 
-        {truncado && (
-          <div className={styles.summaryBar}>
-            <span className={`${styles.chip} ${styles.chipWarn}`}>
-              <AlertTriangle size={13} /> Se muestran las primeras {MAX_FILAS} filas — afiná por período.
-            </span>
-          </div>
-        )}
-
-        {/* Estado inicial */}
-        {!busqueda && !loading && (
-          <div className={styles.emptyState}>
-            <span className={styles.emptyIcon}><UserSearch size={24} /></span>
-            <p className={styles.emptyText}>
-              Buscá al socio por número o por nombre y completá el período (AAAAMM)
-              para ver el detalle completo de las prestaciones de ese médico.
-            </p>
-          </div>
-        )}
-
-        {loading && (
-          <div className={styles.emptyState}>
-            <p className={styles.emptyText}>Cargando detalle…</p>
-          </div>
-        )}
-
-        {/* Sin resultados */}
-        {hayResultados && rows!.length === 0 && !loading && (
-          <div className={styles.emptyState}>
-            <span className={styles.emptyIcon}><AlertTriangle size={24} /></span>
-            <p className={styles.emptyTextStrong}>
-              No se encontraron prestaciones para el socio {busqueda!.socio} en el período {busqueda!.periodo}.
-            </p>
-            <p className={styles.emptyText}>
-              Revisá el número de socio y el período (AAAAMM).
-            </p>
-          </div>
-        )}
-
-        {/* Tabla de detalle, agrupada por obra social */}
-        {hayResultados && rows!.length > 0 && !loading && (
-          <TablaPorObraSocial
-            prestaciones={rows!}
-            cargando={false}
-            onRowClick={(p) => verFicha(p.id)}
-            mostrarCodigoOS
+          <Cifras
+            items={[
+              { valor: resumen.vigentes, rotulo: resumen.vigentes !== 1 ? "prestaciones" : "prestación" },
+              { valor: formatMoney(resumen.honorarios), rotulo: "honorarios" },
+              { valor: formatMoney(resumen.gastos), rotulo: "gastos" },
+              ...(resumen.coseguro > 0 ? [{ valor: formatMoney(resumen.coseguro), rotulo: "coseguro" }] : []),
+              { valor: formatMoney(resumen.subtotal), rotulo: "total" },
+              ...(resumen.anuladas > 0
+                ? [{ valor: resumen.anuladas, rotulo: resumen.anuladas !== 1 ? "anuladas" : "anulada", tono: "apagada" as const }]
+                : []),
+            ]}
           />
-        )}
-      </div>
+
+          {tiposPresentes.length > 0 && (
+            <p className={styles.tipos}>
+              {tiposPresentes.map((t) => `${TIPO_LABEL_CORTO[t]}: ${resumen.porTipo[t]}`).join(" · ")}
+            </p>
+          )}
+        </section>
+      )}
+
+      {truncado && (
+        <p className={styles.aviso} role="alert">
+          <AlertTriangle size={16} aria-hidden="true" /> Se muestran las primeras {MAX_FILAS} filas: afiná por período.
+        </p>
+      )}
+
+      {!busqueda && !loading && (
+        <div className={styles.vacio}>
+          <UserSearch size={28} aria-hidden="true" />
+          <p>Elegí un socio y un período para ver todas sus prestaciones.</p>
+        </div>
+      )}
+
+      {loading && (
+        <div className={styles.vacio}>
+          <Cargando size={22} tono="marca" aria-label="Cargando el detalle" />
+        </div>
+      )}
+
+      {hayResultados && rows!.length === 0 && !loading && (
+        <div className={styles.vacio}>
+          <AlertTriangle size={28} aria-hidden="true" />
+          <p>No hay prestaciones del socio {busqueda!.socio} en el período {busqueda!.periodo}.</p>
+        </div>
+      )}
+
+      {hayResultados && rows!.length > 0 && !loading && (
+        <TablaPorObraSocial
+          prestaciones={rows!}
+          cargando={false}
+          onRowClick={(p) => verFicha(p.id)}
+          mostrarCodigoOS
+        />
+      )}
     </div>
   );
 };

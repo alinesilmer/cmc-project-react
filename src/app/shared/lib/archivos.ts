@@ -1,6 +1,7 @@
 // src/app/shared/lib/archivos.ts Abre un adjunto respetando lo que devuelve la API (§8 del doc de backend).
 import { http } from "./http";
 import { comoErrorApi } from "./httpErrors";
+import { urlSegura } from "./urlSegura";
 
 const ARCHIVOS_PREFIX = "/api/archivos/";
 
@@ -34,6 +35,7 @@ async function detalleDeBlobError(err: unknown): Promise<string | undefined> {
 
 export async function abrirAdjunto(ruta?: string | null): Promise<void> {
   if (!ruta) return;
+  if (!urlSegura(ruta)) throw new Error("El enlace del adjunto no es válido.");
 
   const esAbsoluta = /^https?:\/\//i.test(ruta);
   if (esAbsoluta || !ruta.startsWith(ARCHIVOS_PREFIX)) {

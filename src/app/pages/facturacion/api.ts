@@ -1,4 +1,5 @@
 import { getJSON, postJSON, patchJSON, delJSON, getJSONWithHeaders, postForm, getBlobLong, http } from "@/app/shared/lib/http";
+import { comoErrorApi } from "@/app/shared/lib/httpErrors";
 import type {
   AutorizacionExistente,
   MedicoOption, ObraSocialOption, NomencladorOption, ClinicaOption,
@@ -18,7 +19,7 @@ import type { VistaOpciones, VistaPreset } from "./FacturaDetalle/vista/types";
 
 const BASE = "/api/facturacion";
 
-// Traza de llamadas solo en desarrollo; los errores se registran siempre.
+// Traza de llamadas solo en desarrollo; en producción un error deja solo la llamada y el código HTTP.
 const log = (label: string, params: unknown, data: unknown) => {
   if (!import.meta.env.DEV) return;
   console.groupCollapsed(`%c[facturacion] ${label}`, "color:#0c2a52;font-weight:600");
@@ -28,6 +29,10 @@ const log = (label: string, params: unknown, data: unknown) => {
 };
 
 const logError = (label: string, params: unknown, err: unknown) => {
+  if (!import.meta.env.DEV) {
+    console.error(`[facturacion] ${label} (error ${comoErrorApi(err).response?.status ?? "sin respuesta"})`);
+    return;
+  }
   console.groupCollapsed(`%c[facturacion] ${label} (error)`, "color:#cc2a2a;font-weight:600");
   console.log("params →", params);
   console.error("error →", err);

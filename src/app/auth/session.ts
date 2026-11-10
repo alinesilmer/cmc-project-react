@@ -151,7 +151,6 @@ export function refreshSession(): Promise<string> {
 
 export function forceLogout(motivo: LogoutMotivo) {
   setAccessToken(null);
-  sessionStorage.removeItem("me");
   delete http.defaults.headers.common["Authorization"];
   postMessage({ type: "logout", motivo });
   window.dispatchEvent(new CustomEvent<LogoutMotivo>("auth:logout", { detail: motivo }));

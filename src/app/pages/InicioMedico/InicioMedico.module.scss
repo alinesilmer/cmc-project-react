@@ -1,189 +1,89 @@
 @use "@/app/styles/all.scss" as *;
 
-// Portal del socio. Hoja propia (antes reusaba Dashboard.module.scss): el Inicio del médico dejó de ser un tablero de accesos para ser una vidriera.
+// Inicio del socio: el banner con el saludo y debajo accesos, beneficios, convenios, tutoriales y soporte. Mismo sistema que el Inicio del personal.
 
-// Radio único de la pantalla: cantos vivos.
-
-// Mismo shell y misma escala de padding que el resto del panel (ver Dashboard.module.scss).
-.page {
-  display: flex;
-  min-height: 100vh;
-
-  @media (max-width: $breakpoint-md) {
-    min-height: 100dvh;
-  }
-
-  @media (max-width: 768px) {
-    display: block;
-  }
+.pagina {
+  padding-bottom: $spacing-10;
 }
 
-.content {
-  flex: 1;
-  // Sin esto el item flex toma `min-width: auto` = su ancho min-content, y la tira de logos (`width.
-  min-width: 0;
-  padding: $spacing-10;
+.cuerpo {
   display: flex;
   flex-direction: column;
-  gap: $spacing-12;
-  // Sin fondo propio: hereda el $gray-50 del body, igual que el resto del panel.
+  gap: $spacing-16;
+  min-width: 0;
+  margin-top: $spacing-10;
+  padding: 0 $spacing-12;
 
   @media (max-width: 1200px) {
-    padding: $spacing-8;
-    gap: $spacing-10;
+    padding: 0 $spacing-8;
   }
 
   @media (max-width: $breakpoint-md) {
-    padding: $spacing-5;
-    gap: $spacing-8;
-  }
-
-  @media (max-width: 480px) {
-    padding: $spacing-4;
+    gap: $spacing-12;
+    margin-top: $spacing-6;
+    padding: 0 $spacing-4;
   }
 }
 
-// ─── Hero ─────────────────────────────────────────────────────────────────────
-// Deliberadamente bajo: es un saludo y dos botones, no una portada.
-
-.hero {
-  position: relative;
-  overflow: hidden;
-  border-radius: 0;
-  padding: $spacing-10 $spacing-12;
-  color: $white;
-  background:
-    linear-gradient(120deg, rgba(12, 42, 82, 0.94) 0%, rgba(23, 63, 112, 0.9) 46%, rgba(52, 85, 193, 0.82) 100%),
-    var(--hero-image) center / cover no-repeat;
-  box-shadow: $shadow-lg;
-
-  @media (max-width: $breakpoint-md) {
-    padding: $spacing-8 $spacing-6;
-  }
-}
-
-// Velo de trama para que el texto no se apoye directo sobre la foto.
-.heroGlow {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background:
-    radial-gradient(circle at 82% 18%, rgba(247, 233, 170, 0.22), transparent 42%),
-    radial-gradient(circle at 8% 92%, rgba(90, 121, 225, 0.28), transparent 46%);
-}
-
-.heroInner {
-  position: relative;
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: $spacing-8;
-
-  @media (max-width: $breakpoint-md) {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: $spacing-5;
-  }
-}
-
-.heroText {
-  max-width: 34rem;
-}
-
-.greeting {
-  margin: 0;
-  font-family: $fuente-titulos;
-  font-size: $font-size-4xl;
-  font-weight: $font-weight-bold;
-  letter-spacing: -0.015em;
-  line-height: 1.2;
-}
-
-.heroSub {
-  margin: $spacing-3 0 0;
-  font-size: $font-size-lg;
-  line-height: 1.5;
-  color: rgba($white, 0.84);
-}
-
-.heroActions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: $spacing-3;
-  margin-top: $spacing-6;
-}
-
-.heroBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: $spacing-2;
-  padding: $spacing-3 $spacing-5;
-  border-radius: 0;
-  font-size: $font-size-base;
-  font-weight: $font-weight-semibold;
-  text-decoration: none;
-  transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
-
-  &:hover {
-    transform: translateY(-1px);
-  }
-}
-
-.heroBtnPrimary {
-  background: $primary-yellow;
-  color: $primary-blue-darker;
-  box-shadow: 0 6px 16px rgba($tono-amarillo-50, 0.28);
-
-  &:hover {
-    background: $primary-yellow-light;
-  }
-}
-
-.heroBtnGhost {
-  background: rgba($white, 0.12);
-  color: $white;
-  border: 1px solid rgba($white, 0.32);
-
-  &:hover {
-    background: rgba($white, 0.2);
-  }
-}
-
-// ─── Section chrome ───────────────────────────────────────────────────────────
-
-.section {
+// ── Estructura de cada sección ────────────────────────────────────────────────
+.seccion {
   display: flex;
   flex-direction: column;
   gap: $spacing-5;
+  min-width: 0;
 }
 
-.sectionHead {
+
+.cabeza {
   display: flex;
-  align-items: flex-end;
+  flex-wrap: wrap;
+  align-items: center;
   justify-content: space-between;
-  gap: $spacing-4;
+  gap: $spacing-3 $spacing-4;
 }
 
-.sectionTitle {
+.titulo {
   margin: 0;
   font-family: $fuente-titulos;
-  font-size: $font-size-2xl;
+  font-size: $font-size-3xl;
   font-weight: $font-weight-bold;
-  color: $primary-blue-darker;
   letter-spacing: -0.01em;
+  color: $franja-azul;
 }
 
-.sectionSub {
-  margin: $spacing-1 0 0;
+.verTodos {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  min-height: 2.6rem;
+  padding: 0 $spacing-5;
+  font-family: $fuente-titulos;
   font-size: $font-size-base;
-  color: $gray-500;
+  font-weight: $font-weight-semibold;
+  color: $franja-azul;
+  text-decoration: none;
+  white-space: nowrap;
+  background: $white;
+  border: 1px solid $franja-azul;
+  border-radius: 999px;
+  transition: color 0.15s ease, background-color 0.15s ease;
+
+  &:hover {
+    color: $franja-crema;
+    background: $franja-azul;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $franja-azul;
+    outline-offset: 2px;
+  }
 }
 
-.sectionLink {
+.enlace {
   display: inline-flex;
   align-items: center;
   gap: $spacing-1;
-  font-size: $font-size-sm;
+  font-size: $font-size-base;
   font-weight: $font-weight-semibold;
   color: $primary-blue-lighter;
   text-decoration: none;
@@ -194,136 +94,164 @@
   }
 }
 
-// ─── Accesos ──────────────────────────────────────────────────────────────────
-
-.accessGrid {
+// ── Accesos ───────────────────────────────────────────────────────────────────
+// Los dos que usa casi todo médico: grandes y de color, para que se vean de lejos.
+.accesos {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
-  gap: $spacing-4;
+  grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr));
+  gap: $spacing-5;
 }
 
-.accessCard {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-3;
-  height: 100%;
-  padding: $spacing-5;
-  border-radius: 0;
-  background: $white;
-  border: 1px solid $gray-200;
-  text-decoration: none;
-  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
-
-  &:hover {
-    transform: translateY(-3px);
-    box-shadow: $shadow-lg;
-    border-color: rgba($accent-blue, 0.4);
-  }
-}
-
-.accessIcon {
-  display: grid;
-  place-items: center;
-  width: 2.6rem;
-  height: 2.6rem;
-  border-radius: 0;
-  color: $white;
-}
-
-.accentDarkblue { background: linear-gradient(140deg, $primary-blue-darker, $primary-blue); }
-.accentBlue     { background: linear-gradient(140deg, $primary-blue, $accent-blue); }
-.accentAmber    { background: linear-gradient(140deg, $tono-amarillo-350, $warning-orange); }
-.accentGold     { background: linear-gradient(140deg, $tono-amarillo-450-b, $tono-amarillo-250); }
-
-.accessTitle {
-  margin: 0;
-  font-size: $font-size-lg;
-  font-weight: $font-weight-semibold;
-  color: $gray-900;
-}
-
-.accessDesc {
-  margin: 0;
-  flex: 1;
-  font-size: $font-size-sm;
-  line-height: 1.5;
-  color: $gray-500;
-}
-
-.accessArrow {
-  color: $primary-blue-lighter;
-  align-self: flex-end;
-}
-
-// ─── Beneficios ───────────────────────────────────────────────────────────────
-
-.benefitCard {
+.acceso {
   position: relative;
   display: flex;
-  flex-direction: column;
-  gap: $spacing-2;
-  padding: $spacing-5;
-  border-radius: 0;
-  background: $white;
-  border: 1px solid $gray-200;
-  // El acento lo pinta cada beneficio con su `color` guardado en la BD.
-  border-top: 3px solid var(--benefit-accent, #{$accent-blue});
+  align-items: center;
+  gap: $spacing-6;
+  height: 100%;
+  min-height: 9.5rem;
+  padding: $spacing-8;
+  overflow: hidden;
+  text-decoration: none;
+  border-radius: $radio-lg;
+  box-shadow: 0 22px 40px -28px rgba($primary-blue-darker, 0.8);
+  isolation: isolate;
   transition: transform 0.18s ease, box-shadow 0.18s ease;
 
   &:hover {
     transform: translateY(-3px);
-    box-shadow: $shadow-lg;
+    box-shadow: 0 28px 44px -26px rgba($primary-blue-darker, 0.9);
+  }
+
+  &:focus-visible {
+    outline: 3px solid $franja-azul;
+    outline-offset: 3px;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    min-height: 8rem;
+    padding: $spacing-6;
   }
 }
 
-.benefitTop {
+.accesoAzul {
+  color: $franja-crema;
+  background: $franja-azul;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    @include trama-cruces;
+  }
+
+  .accesoIcono {
+    color: $franja-azul;
+    background: $primary-yellow;
+  }
+}
+
+.accesoAmarillo {
+  color: $franja-azul;
+  background: $primary-yellow;
+  border: 1px solid $tono-amarillo-200;
+
+  .accesoIcono {
+    color: $franja-crema;
+    background: $franja-azul;
+  }
+}
+
+.accesoIcono {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 4.4rem;
+  height: 4.4rem;
+  border-radius: 50%;
+}
+
+.accesoTitulo {
+  flex: 1;
+  font-family: $fuente-titulos;
+  font-size: $font-size-4xl;
+  font-weight: $font-weight-bold;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.accesoFlecha {
+  flex-shrink: 0;
+  transition: transform 0.18s ease;
+
+  .acceso:hover & {
+    transform: translateX(4px);
+  }
+}
+
+// ── Beneficios ────────────────────────────────────────────────────────────────
+.beneficio {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+  padding: $spacing-5;
+  background: $white;
+  border: 1px solid $gray-200;
+  // El acento lo pinta cada beneficio con su `color` guardado en la BD.
+  border-top: 4px solid var(--benefit-accent, #{$franja-azul});
+  border-radius: $radio-lg;
+  box-shadow: 0 14px 30px -26px rgba($primary-blue-darker, 0.6);
+}
+
+.beneficioTop {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: $spacing-3;
 }
 
-.benefitCategoria {
+.beneficioCategoria {
   font-size: $font-size-xs;
   font-weight: $font-weight-semibold;
-  text-transform: uppercase;
   letter-spacing: 0.07em;
-  color: $gray-400;
+  text-transform: uppercase;
+  color: $gray-500;
 }
 
-.benefitDescuento {
+.beneficioDescuento {
   flex-shrink: 0;
   padding: $spacing-1 $spacing-3;
-  border-radius: 0;
   font-size: $font-size-sm;
   font-weight: $font-weight-bold;
   color: $white;
-  background: var(--benefit-accent, #{$accent-blue});
+  background: var(--benefit-accent, #{$franja-azul});
+  border-radius: 999px;
 }
 
-.benefitTitle {
+.beneficioTitulo {
   margin: 0;
+  font-family: $fuente-titulos;
   font-size: $font-size-lg;
   font-weight: $font-weight-semibold;
-  color: $gray-900;
   line-height: 1.35;
+  color: $franja-azul;
 }
 
-.benefitDesc {
-  margin: 0;
+.beneficioDesc {
+  display: -webkit-box;
   flex: 1;
+  margin: 0;
+  overflow: hidden;
   font-size: $font-size-sm;
   line-height: 1.5;
-  color: $gray-500;
+  color: $gray-600;
   // Descripción libre y larga en la BD: se recorta para que la grilla no se desalinee por una tarjeta con cuatro párrafos.
-  display: -webkit-box;
   -webkit-line-clamp: 3;
   line-clamp: 3;
   -webkit-box-orient: vertical;
-  overflow: hidden;
 }
 
-.benefitFoot {
+.beneficioPie {
   display: flex;
   align-items: center;
   gap: $spacing-2;
@@ -331,217 +259,133 @@
   color: $gray-500;
 }
 
-// ─── Convenios (tira de logos) ────────────────────────────────────────────────
-
-.logoStrip {
-  position: relative;
-  overflow: hidden;
-  padding: $spacing-5 0;
-  border-radius: 0;
-  background: $white;
-  border: 1px solid $gray-200;
-
-  // Difumina los bordes para que la tira no "corte" los logos de golpe.
-  &::before,
-  &::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    width: 4rem;
-    z-index: 1;
-    pointer-events: none;
-  }
-
-  &::before {
-    left: 0;
-    background: linear-gradient(90deg, $white, transparent);
-  }
-
-  &::after {
-    right: 0;
-    background: linear-gradient(270deg, $white, transparent);
-  }
-}
-
-.logoTrack {
-  display: flex;
-  align-items: center;
-  gap: $spacing-12;
-  width: max-content;
-  animation: logoScroll 42s linear infinite;
-
-  .logoStrip:hover & {
-    animation-play-state: paused;
-  }
-
-  // Respeta a quien pidió menos movimiento: se queda quieta y se puede scrollear.
-  @media (prefers-reduced-motion: reduce) {
-    animation: none;
-    width: 100%;
-    overflow-x: auto;
-    justify-content: flex-start;
-  }
-}
-
-.logoItem {
-  flex-shrink: 0;
-  height: 2.5rem;
-  width: auto;
-  object-fit: contain;
-  filter: grayscale(1);
-  opacity: 0.62;
-  transition: filter 0.2s ease, opacity 0.2s ease;
-
-  &:hover {
-    filter: grayscale(0);
-    opacity: 1;
-  }
-}
-
-@keyframes logoScroll {
-  from { transform: translateX(0); }
-  // -50%: la pista lleva la lista duplicada, así el salto es invisible.
-  to   { transform: translateX(-50%); }
-}
-
-// ─── Tutoriales (placeholder) ─────────────────────────────────────────────────
-
-.tutorialGrid {
+// ── Tutoriales ────────────────────────────────────────────────────────────────
+.tutoriales {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
   gap: $spacing-4;
 }
 
-.tutorialCard {
+.tutorial {
   display: flex;
   flex-direction: column;
   gap: $spacing-3;
-  padding: $spacing-5;
-  border-radius: 0;
-  background: rgba($white, 0.6);
-  border: 1px dashed $gray-300;
-}
-
-// La tarjeta con video real: borde sólido, no punteado como las pendientes.
-.tutorialCardVideo {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-3;
-  padding: $spacing-5;
-  border-radius: 0;
+  padding: $spacing-4;
   background: $white;
   border: 1px solid $gray-200;
+  border-radius: $radio-lg;
+  box-shadow: 0 14px 30px -26px rgba($primary-blue-darker, 0.6);
 }
 
-.tutorialVideo {
+// Lo que todavía no está grabado: borde punteado y sin sombra.
+.pendiente {
+  background: transparent;
+  border-style: dashed;
+  border-color: $gray-300;
+  box-shadow: none;
+}
+
+.video {
   width: 100%;
   aspect-ratio: 16 / 9;
-  border-radius: 0;
   background: $gray-900;
+  border-radius: $radio-md;
   // `contain` y no `cover`: recortar un tutorial puede tapar justo la parte de la pantalla que el video está explicando.
   object-fit: contain;
 }
 
-.tutorialThumb {
+.miniatura {
   display: grid;
   place-items: center;
   aspect-ratio: 16 / 9;
-  border-radius: 0;
-  background: linear-gradient(140deg, $secondary-blue, $gray-200);
-  color: $primary-blue-lighter;
+  color: $franja-azul;
+  background: $gray-100;
+  border-radius: $radio-md;
 }
 
-.tutorialTitle {
+.tutorialTitulo {
   margin: 0;
-  font-size: $font-size-base;
+  font-family: $fuente-titulos;
+  font-size: $font-size-lg;
   font-weight: $font-weight-semibold;
-  color: $gray-700;
+  color: $franja-azul;
 }
 
-.tutorialMeta {
+.pronto {
   margin: 0;
   font-size: $font-size-sm;
-  color: $gray-400;
+  color: $gray-500;
 }
 
-.soonBadge {
-  align-self: flex-start;
-  padding: $spacing-1 $spacing-3;
-  border-radius: 0;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-semibold;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  color: $primary-yellow-dark;
-  background: $primary-yellow-light;
-}
-
-// ─── Soporte ──────────────────────────────────────────────────────────────────
-
-.supportCard {
+// ── Soporte ───────────────────────────────────────────────────────────────────
+.soporte {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: $spacing-6;
+  gap: $spacing-5 $spacing-8;
   padding: $spacing-6 $spacing-8;
-  border-radius: 0;
-  background: linear-gradient(120deg, $secondary-blue, $gray-100);
-  border: 1px solid rgba($accent-blue, 0.24);
+  background: $primary-yellow-light;
+  border: 1px solid $primary-yellow;
+  border-radius: $radio-lg;
 
   @media (max-width: $breakpoint-md) {
-    flex-direction: column;
-    align-items: flex-start;
     padding: $spacing-5;
   }
 }
 
-.supportTitle {
+.soporteTitulo {
   margin: 0;
-  font-size: $font-size-xl;
-  font-weight: $font-weight-semibold;
-  color: $primary-blue-darker;
+  font-family: $fuente-titulos;
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-bold;
+  color: $franja-azul;
 }
 
-.supportDesc {
+.soporteTexto {
   margin: $spacing-1 0 0;
-  font-size: $font-size-sm;
-  color: $gray-600;
+  font-size: $font-size-base;
+  color: $gray-700;
 }
 
-.supportBtn {
-  flex-shrink: 0;
+.soporteBoton {
   display: inline-flex;
+  flex-shrink: 0;
   align-items: center;
   gap: $spacing-2;
-  padding: $spacing-3 $spacing-5;
-  border-radius: 0;
-  background: $primary-blue;
-  color: $white;
-  font-size: $font-size-base;
+  min-height: 3rem;
+  padding: 0 $spacing-6;
+  font-family: $fuente-titulos;
+  font-size: $font-size-lg;
   font-weight: $font-weight-semibold;
+  color: $franja-crema;
   text-decoration: none;
-  transition: background 0.16s ease, transform 0.16s ease;
+  background: $franja-azul;
+  border-radius: 999px;
+  transition: background-color 0.16s ease;
 
   &:hover {
-    background: $primary-blue-lighter;
-    transform: translateY(-1px);
+    background: $primary-blue-darker;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $franja-azul;
+    outline-offset: 2px;
   }
 }
 
-// ─── Estados ──────────────────────────────────────────────────────────────────
-
-.skeletonGrid {
+// ── Estados ───────────────────────────────────────────────────────────────────
+.esqueletos {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
   gap: $spacing-4;
 }
 
-.skeleton {
+.esqueleto {
   height: 9.5rem;
-  border-radius: 0;
   background: linear-gradient(90deg, $gray-100 25%, $gray-200 37%, $gray-100 63%);
   background-size: 400% 100%;
+  border-radius: $radio-lg;
   animation: $anim-shimmer-largo 1.4s ease infinite;
 
   @media (prefers-reduced-motion: reduce) {
@@ -549,12 +393,12 @@
   }
 }
 
-.empty {
+.vacio {
   padding: $spacing-8;
-  border-radius: 0;
-  border: 1px dashed $gray-300;
-  background: rgba($white, 0.6);
-  text-align: center;
-  font-size: $font-size-sm;
+  font-size: $font-size-base;
   color: $gray-500;
+  text-align: center;
+  background: $white;
+  border: 1px dashed $gray-300;
+  border-radius: $radio-lg;
 }

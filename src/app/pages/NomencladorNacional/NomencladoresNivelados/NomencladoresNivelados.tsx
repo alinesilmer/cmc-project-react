@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { conProceso } from "@/app/hooks/proceso";
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertCircle, CheckCircle2, ListOrdered, Plus, Trash2 } from "lucide-react";
 
@@ -415,18 +416,19 @@ function EscalaDelNomenclador({
 
   async function aplicarRecalculo() {
     setAplicando(true);
-    try {
-      const r = await recalcularNivelado(slug, { vigencia_desde: vigencia, dry_run: false });
-      setPrevia(null);
-      onToast(
-        r.errores.length ? "error" : "success",
-        `Recalculado: ${r.valores} valores en ${r.obras_sociales} obras sociales${r.errores.length ? ` (${r.errores.length} con error)` : ""}.`,
-      );
-    } catch (e) {
-      onToast("error", detalleError(e, "No se pudo recalcular."));
-    } finally {
-      setAplicando(false);
-    }
+    const r = await conProceso(
+      {
+        haciendo: "Recalculando los valores",
+        listo: "Valores recalculados",
+        detalleListo: (x) =>
+          `${x.valores} valores en ${x.obras_sociales} obras sociales${x.errores.length ? ` (${x.errores.length} con error)` : ""}`,
+        fallo: "No se pudo recalcular",
+        detalleFallo: (e) => detalleError(e, "No se pudo recalcular."),
+      },
+      () => recalcularNivelado(slug, { vigencia_desde: vigencia, dry_run: false }),
+    );
+    if (r) setPrevia(null);
+    setAplicando(false);
   }
 
   if (escala.isLoading) return <p className={base.hintText}>Cargando…</p>;

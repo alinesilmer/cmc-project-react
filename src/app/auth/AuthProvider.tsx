@@ -13,27 +13,21 @@ import { Ctx } from "./useAuth";
 import { anotarIngreso } from "@/app/features/avisoIngreso/reglasAviso";
 import { olvidarCatalogos } from "@/app/pages/facturacion/CargaFacturacion/catalogosCarga";
 
+// Versiones anteriores guardaban acá una copia del usuario con sus permisos: se borra para no dejar datos viejos.
+try {
+  sessionStorage.removeItem("me");
+} catch {
+  // storage bloqueado: no hay nada que limpiar.
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [ready, setReady] = useState(false);
   const navigate = useNavigate();
 
-  // precarga (pero OJO: no es fuente de verdad)
-  useEffect(() => {
-    const cached = sessionStorage.getItem("me");
-    if (cached) {
-      try {
-        setUser(JSON.parse(cached) as User);
-      } catch {
-        // La copia guardada no se pudo leer: se ignora y se pide a la API.
-      }
-    }
-  }, []);
-
   const login = async (nroSocio: number, password: string) => {
     const u = await apiLogin(nroSocio, password);
     setUser(u);
-    sessionStorage.setItem("me", JSON.stringify(u));
     anotarIngreso(u);
     return u;
   };
@@ -42,7 +36,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await apiLogout();
     setUser(null);
     setAccessToken(null);
-    sessionStorage.removeItem("me");
     delete http.defaults.headers.common["Authorization"];
     olvidarCatalogos();
   };
@@ -51,7 +44,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const goToLogin = (motivo: LogoutMotivo) => {
       setUser(null);
-      sessionStorage.removeItem("me");
       olvidarCatalogos();
       navigate("/panel/login", { replace: true, state: { motivo } });
     };
@@ -76,7 +68,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!token && !csrf) {
           // sin access en memoria y sin cookie de sesión: no hay nada que restaurar
           setUser(null);
-          sessionStorage.removeItem("me");
           setReady(true);
           return;
         }
@@ -91,12 +82,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const u = await apiMe();
         if (cancelled) return;
         setUser(u);
-        sessionStorage.setItem("me", JSON.stringify(u));
       } catch {
         if (cancelled) return;
         setUser(null);
         setAccessToken(null);
-        sessionStorage.removeItem("me");
         delete http.defaults.headers.common["Authorization"];
       } finally {
         if (!cancelled) setReady(true);

@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { Save, HousePlus, Info } from "lucide-react";
+import { Save, HousePlus, Info, X } from "lucide-react";
 import {
   createObraSocial,
   updateObraSocial,
   getObraSocial,
   uploadDocumento,
+  vincularConCabecera,
 } from "../obrasSociales.api";
 import { OBRAS_SOCIALES_KEY, useObrasSociales } from "../useObrasSociales";
 import {
@@ -39,6 +40,7 @@ import Button from "@/app/components/ui/Button/Button";
 import Franja from "@/app/components/layout/Franja/Franja";
 import FieldError from "@/app/components/ui/FieldError/FieldError";
 import Cargando from "@/app/components/ui/Cargando/Cargando";
+import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 import { ContactoList } from "./ContactoList";
 import { TIPO_DOCUMENTOS, formatCUIT } from "./documentos.helpers";
 import { DocRow } from "./DocRow";
@@ -66,6 +68,9 @@ export default function ObrasSocialesForm() {
   // Obra social cabecera: solo si la que se crea es una derivada. `principalRef` guarda la
   // que ya tenía al editar (puede estar de baja y no figurar en el listado).
   const [principalRef, setPrincipalRef] = useState<ObraSocialRef | null>(null);
+  // Al editar una cabecera: sus complementarias o secundarias, las que tenía y las que quedan al guardar.
+  const [secundarias, setSecundarias] = useState<ObraSocialRef[]>([]);
+  const [secundariasIniciales, setSecundariasIniciales] = useState<ObraSocialRef[]>([]);
   const osQuery = useObrasSociales();
   const queryClient = useQueryClient();
 
@@ -132,6 +137,8 @@ export default function ObrasSocialesForm() {
         if (data.obra_social_principal) {
           setPrincipalRef(data.obra_social_principal);
         }
+        setSecundarias(data.asociadas ?? []);
+        setSecundariasIniciales(data.asociadas ?? []);
         setDocumentos(data.documentos ?? []);
       } catch {
         setServerError("No se pudo cargar la obra social.");
@@ -170,6 +177,58 @@ export default function ObrasSocialesForm() {
         ? { replicar_galenos: false, replicar_nomencladores: false, replicar_valores: false }
         : {}),
     }));
+  };
+
+  // ── Secundarias de esta cabecera (solo al editar) ────────────────────────────
+  // Se pueden sumar las activas que no cuelgan de otra cabecera ni son cabecera de otras.
+  const secundariaOptions = (() => {
+    const lista = osQuery.data ?? [];
+    const conHijas = new Set(lista.map((o) => o.obra_social_principal_id).filter(Boolean));
+    const elegidas = new Set(secundarias.map((o) => o.id));
+    return lista
+      .filter(
+        (o) =>
+          o.activo &&
+          o.id !== obraId &&
+          !elegidas.has(o.id) &&
+          !conHijas.has(o.id) &&
+          (!o.obra_social_principal_id || o.obra_social_principal_id === obraId)
+      )
+      .map((o) => ({ id: o.id, label: o.denominacion }));
+  })();
+
+  const agregarSecundaria = (val: string | number | null) => {
+    const os = (osQuery.data ?? []).find((o) => o.id === Number(val));
+    if (!os) return;
+    setSecundarias((prev) => [
+      ...prev,
+      { id: os.id, nro_obra_social: os.nro_obra_social, nombre: os.nombre, denominacion: os.denominacion },
+    ]);
+  };
+
+  const quitarSecundaria = (idQuitar: number) =>
+    setSecundarias((prev) => prev.filter((o) => o.id !== idQuitar));
+
+  // Cada secundaria se cuelga (o se suelta) con su propio PATCH; lo que falle se avisa y el resto queda hecho.
+  const sincronizarSecundarias = async (cabeceraDeEstas: number) => {
+    if (principalRef) return;
+    const finales = new Set(secundarias.map((o) => o.id));
+    const iniciales = new Set(secundariasIniciales.map((o) => o.id));
+    const cambios = [
+      ...secundariasIniciales.filter((o) => !finales.has(o.id)).map((o) => ({ o, cabecera: null as number | null })),
+      ...secundarias.filter((o) => !iniciales.has(o.id)).map((o) => ({ o, cabecera: cabeceraDeEstas as number | null })),
+    ];
+    if (!cambios.length) return;
+
+    const resultados = await Promise.allSettled(cambios.map(({ o, cabecera }) => vincularConCabecera(o.id, cabecera)));
+    const fallaron = cambios.filter((_, i) => resultados[i].status === "rejected").map(({ o }) => o.denominacion);
+    if (fallaron.length) {
+      notify.error(
+        fallaron.length === 1 ? "No se pudo actualizar una relación" : `No se pudieron actualizar ${fallaron.length} relaciones`,
+        fallaron.join(", "),
+        { duration: 8000 }
+      );
+    }
   };
 
   // Los valores se apoyan en los galenos y en los códigos: al tildarlos se tildan los otros dos.
@@ -241,6 +300,7 @@ export default function ObrasSocialesForm() {
 
       if (isEdit && obraId) {
         await updateObraSocial(obraId, payload);
+        await sincronizarSecundarias(obraId);
         await subirPendientes(obraId);
         navigate(`/panel/convenios/obras-sociales/${obraId}`);
       } else {
@@ -743,6 +803,49 @@ export default function ObrasSocialesForm() {
             Relaciones
           </h2>
 
+          {isEdit ? (
+            principalRef ? (
+              <div className={s.callout} role="note">
+                <Info size={18} className={s.calloutIcon} aria-hidden="true" />
+                <p>
+                  Esta obra social es secundaria de <strong>{principalRef.denominacion}</strong>. Para cambiarlo o quitarla,
+                  entrá a su cabecera:{" "}
+                  <Link to={`/panel/convenios/obras-sociales/${principalRef.id}/editar`}>editar {principalRef.denominacion}</Link>.
+                </p>
+              </div>
+            ) : (
+              <div className={`${s.field} ${s.fieldWide}`} id="field-secundarias">
+                <label className={s.label}>Complementarias o secundarias</label>
+                {secundarias.length > 0 && (
+                  <ul className={s.tagList}>
+                    {secundarias.map((o) => (
+                      <li key={o.id} className={s.tag}>
+                        <span>{o.denominacion}</span>
+                        <BotonPlano
+                          type="button"
+                          className={s.tagRemove}
+                          onClick={() => quitarSecundaria(o.id)}
+                          aria-label={`Quitar ${o.denominacion}`}
+                        >
+                          <X size={12} aria-hidden="true" />
+                        </BotonPlano>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <AppSearchSelect
+                  key={secundarias.length}
+                  options={secundariaOptions}
+                  value={null}
+                  loading={osQuery.isLoading}
+                  disabled={osQuery.isLoading}
+                  onChange={agregarSecundaria}
+                />
+                <span className={s.hint}>Se agrupan con esta obra social en el padrón de médicos. Se guardan con el formulario.</span>
+              </div>
+            )
+          ) : (
+          <>
           <div className={s.callout} role="note">
             <Info size={18} className={s.calloutIcon} aria-hidden="true" />
             <p>
@@ -807,6 +910,8 @@ export default function ObrasSocialesForm() {
                 </span>
               </label>
             </fieldset>
+          )}
+          </>
           )}
         </section>
 

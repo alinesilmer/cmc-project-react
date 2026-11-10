@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Search, X as XIcon } from "lucide-react";
 
-import styles from "./consulta.module.scss";
+import clasesBase from "./consulta.module.scss";
+import clasesTicket from "./ComboboxTicket.module.scss";
 import Cargando from "@/app/components/ui/Cargando/Cargando";
 import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
@@ -25,6 +26,8 @@ type ComboboxProps<T> = {
   loading?: boolean;
   /** Message shown when the menu is open but there are no items (e.g. "Seguí escribiendo…"). */
   menuHint?: string;
+  /** `ticket`: sobre la cabecera azul del ticket de consulta; sin valor, el estilo de la hoja compartida. */
+  variante?: "ticket";
 };
 
 function Combobox<T>({
@@ -43,7 +46,9 @@ function Combobox<T>({
   onClear,
   loading = false,
   menuHint,
+  variante,
 }: ComboboxProps<T>) {
+  const styles = variante === "ticket" ? clasesTicket : clasesBase;
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
   const blurTimer = useRef<ReturnType<typeof setTimeout> | null>(null);

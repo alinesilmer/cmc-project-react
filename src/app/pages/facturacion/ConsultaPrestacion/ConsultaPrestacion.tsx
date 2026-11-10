@@ -6,6 +6,8 @@ import {
   Users,
   History,
   FileSearch,
+  Hash,
+  ClipboardList,
   ArrowLeftCircle,
   ArrowRightCircle,
 } from "lucide-react";
@@ -18,11 +20,15 @@ import type { MotivoEliminacion, PrestacionFicha, PrestacionRead } from "../type
 import { formatMoney } from "../money";
 import { FranjaEstado, LineaDeTiempo } from "./HistorialFicha";
 import styles from "./ConsultaPrestacion.module.scss";
+import base from "../ListaFacturas.module.scss";
+import Franja, { Solapa } from "@/app/components/layout/Franja/Franja";
+import SearchField from "@/app/components/ui/SearchField/SearchField";
+import Button from "@/app/components/ui/Button/Button";
+import Cargando from "@/app/components/ui/Cargando/Cargando";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
 import BotonVer from "@/app/components/ui/BotonVer/BotonVer";
 import BackButton from "@/app/components/ui/BackButton/BackButton";
 import { comoErrorApi, detalleObjeto } from "@/app/shared/lib/httpErrors";
-import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 import AccionesPrestacion, { type DireccionMover } from "../FacturaDetalle/AccionesPrestacion";
 import ConfirmActionModal from "../components/ConfirmActionModal";
 import EliminarPrestacionModal from "../components/EliminarPrestacionModal";
@@ -59,6 +65,7 @@ const ConsultaPrestacion: React.FC = () => {
   const { can } = usePermisos();
   const { id: idParam } = useParams<{ id: string }>();
 
+  const [modo, setModo] = useState<"id" | "aut">("id");
   const [idInput, setIdInput] = useState("");
   const [autInput, setAutInput] = useState("");
 
@@ -248,9 +255,6 @@ const ConsultaPrestacion: React.FC = () => {
     setAutInput("");
   };
 
-  const onIdKeyDown = (e: React.KeyboardEvent) => { if (e.key === "Enter") buscarPorId(); };
-  const onAutKeyDown = (e: React.KeyboardEvent) => { if (e.key === "Enter") buscarPorAutorizacion(); };
-
   // `idParam` sigue presente en la URL aunque el fetch haya dado 404 — no alcanza para decidir qué mostrar.
   const enModoFicha = !!idParam;
   const mostrandoFicha = enModoFicha && !loadingFicha && !!ficha;
@@ -261,86 +265,54 @@ const ConsultaPrestacion: React.FC = () => {
   const puedeAccionar = mostrandoFicha && facturaAbierta && can("facturacion:cargar");
 
   return (
-    <div className={styles.container}>
-      <div className={styles.header}>
-        <span className={styles.headerIcon}>
-          <FileSearch size={22} />
-        </span>
-        <div>
-          <h1 className={styles.title}>Consulta de prestación</h1>
-          <p className={styles.subtitle}>
-            Buscá por ID o por número de orden / autorización para ver el registro completo.
-          </p>
-        </div>
-      </div>
+    <div className={base.container}>
+      <Franja titulo="Consulta de prestación" icono={FileSearch}>
+        <Solapa activa={modo === "id"} onClick={() => setModo("id")}>
+          <Hash size={18} /> Por ID
+        </Solapa>
+        <Solapa activa={modo === "aut"} onClick={() => setModo("aut")}>
+          <ClipboardList size={18} /> Por orden o autorización
+        </Solapa>
+      </Franja>
 
-      <div className={styles.layout}>
-        <div className={styles.toolbar}>
-          <div className={styles.filterField}>
-            <label className={styles.filterLabel}>ID de prestación</label>
-            <div className={styles.inputRow}>
-              <input
-                className={styles.input}
-                type="text"
-                inputMode="numeric"
-                placeholder="Ej. 2665336"
-                value={idInput}
-                onChange={(e) => setIdInput(e.target.value)}
-                onKeyDown={onIdKeyDown}
-              />
-              <BotonPlano
-                type="button"
-                className={styles.iconBtn}
-                onClick={buscarPorId}
-                disabled={loadingFicha}
-                aria-label="Buscar por ID"
-              >
-                <Search size={16} />
-              </BotonPlano>
-            </div>
-          </div>
+      <form
+        className={base.barra}
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (modo === "id") buscarPorId();
+          else void buscarPorAutorizacion();
+        }}
+      >
+        <SearchField
+          className={base.buscador}
+          fullWidth
+          placeholder={modo === "id" ? "ID de prestación, ej. 2665336" : "Nº de orden o autorización, ej. 2047774"}
+          value={modo === "id" ? idInput : autInput}
+          onChange={(e) => (modo === "id" ? setIdInput(e.target.value) : setAutInput(e.target.value))}
+        />
+        <Button
+          type="submit"
+          variant="secondary"
+          leftIcon={<Search size={17} aria-hidden="true" />}
+          disabled={modo === "id" ? loadingFicha : loadingLista}
+        >
+          Buscar
+        </Button>
+      </form>
 
-          <div className={styles.divider} />
-
-          <div className={`${styles.filterField} ${styles.filterFieldWide}`}>
-            <label className={styles.filterLabel}>Nro de orden o autorización</label>
-            <div className={styles.inputRow}>
-              <input
-                className={styles.input}
-                type="text"
-                placeholder="Ej. 2047774"
-                value={autInput}
-                onChange={(e) => setAutInput(e.target.value)}
-                onKeyDown={onAutKeyDown}
-              />
-              <BotonPlano
-                type="button"
-                className={styles.iconBtn}
-                onClick={buscarPorAutorizacion}
-                disabled={loadingLista}
-                aria-label="Buscar por orden o autorización"
-              >
-                <Search size={16} />
-              </BotonPlano>
-            </div>
-          </div>
-        </div>
-
+      <div className={styles.cuerpo}>
         {/* ── Estado inicial ── */}
         {!enModoFicha && lista === null && !loadingLista && (
           <div className={styles.emptyState}>
             <span className={styles.emptyIcon}><Search size={24} /></span>
-            <p className={styles.emptyText}>
-              Ingresá un ID exacto o un número de orden / autorización para ver la ficha
-              completa de una prestación.
-            </p>
+            <p className={styles.emptyText}>Buscá una prestación por ID o por orden / autorización.</p>
           </div>
         )}
 
         {/* ── Cargando ── */}
         {((enModoFicha && loadingFicha) || (!enModoFicha && loadingLista)) && (
           <div className={styles.emptyState}>
-            <p className={styles.mutedText}>Buscando…</p>
+            <Cargando size={22} tono="marca" aria-label="Buscando" />
           </div>
         )}
 
@@ -351,13 +323,7 @@ const ConsultaPrestacion: React.FC = () => {
             <p className={styles.emptyTextStrong}>
               No se encontró ninguna prestación con el ID <strong>{notFoundId}</strong>.
             </p>
-            <p className={styles.emptyText}>
-              Revisá el número, o probá buscar por nro de orden / autorización si no tenés
-              el ID a mano.
-            </p>
-            <BotonPlano type="button" className={styles.ghostBtn} onClick={volver}>
-              Volver a buscar
-            </BotonPlano>
+            <Button variant="ghost" onClick={volver}>Volver a buscar</Button>
           </div>
         )}
 
@@ -372,7 +338,7 @@ const ConsultaPrestacion: React.FC = () => {
               </p>
             </div>
           ) : (
-            <div>
+            <div className={base.tablaCaja}>
               <div className={styles.listaInfo}>
                 <strong>{lista!.length} resultado{lista!.length !== 1 ? "s" : ""}</strong> para "{buscadoAut}"
                 {lista!.length > 1 && " — un mismo número de autorización puede cubrir varios ítems de un equipo."}

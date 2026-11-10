@@ -154,6 +154,10 @@ export const createObraSocial = (form: ObraSocialFormData) =>
 export const updateObraSocial = (id: number, form: ObraSocialFormData) =>
   patchJSON<ObraSocial>(`/api/obras_social/${id}`, buildPayload(form));
 
+// Cuelga una obra social de su cabecera (o la suelta, con `null`) sin tocar el resto de sus datos.
+export const vincularConCabecera = (id: number, cabeceraId: number | null) =>
+  patchJSON<ObraSocial>(`/api/obras_social/${id}`, { obra_social_principal_id: cabeceraId });
+
 export const deleteObraSocial = (id: number) =>
   delJSON<void>(`/api/obras_social/${id}`);
 

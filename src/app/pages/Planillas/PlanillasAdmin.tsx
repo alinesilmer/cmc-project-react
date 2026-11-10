@@ -16,6 +16,7 @@ import Caja from "@/app/components/ui/Caja/Caja";
 import Franja from "@/app/components/layout/Franja/Franja";
 import ListaPlanillas from "./components/ListaPlanillas";
 import { detalleDeError } from "@/app/shared/lib/httpErrors";
+import { conProceso } from "@/app/hooks/proceso";
 import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 /** Alta, edición y baja de las planillas que ven los médicos. */
@@ -51,20 +52,24 @@ export default function PlanillasAdmin() {
 
     setSubiendo(true);
     setError(null);
-    try {
+    const nueva = await conProceso(
+      {
+        haciendo: "Subiendo la planilla",
+        listo: "Planilla publicada",
+        fallo: "No se pudo subir",
+        detalleFallo: (err) => detalleDeError(err, "No se pudo subir la planilla."),
+      },
       // Sin descripción el backend usa el nombre del archivo, como el legacy.
-      const nueva = await createPlanilla(archivo, descripcion, fecha);
+      () => createPlanilla(archivo, descripcion, fecha),
+    );
+    if (nueva) {
       setPlanillas((prev) => [nueva, ...prev]);
       setDescripcion("");
       setFecha(hoyISO());
       setArchivo(null);
       if (fileRef.current) fileRef.current.value = "";
-      avisarOk("Planilla publicada.");
-    } catch (err) {
-      setError(detalleDeError(err, "No se pudo subir la planilla."));
-    } finally {
-      setSubiendo(false);
     }
+    setSubiendo(false);
   };
 
   const abrirEdicion = (p: Planilla) => {

@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
-import Modal from "@/app/components/ui/Modal/Modal";
+import { Layers } from "lucide-react";
+import Dialogo, { DialogoAviso, DialogoCampo, DialogoDatos } from "@/app/components/ui/Dialogo/Dialogo";
+import Cargando from "@/app/components/ui/Cargando/Cargando";
 import Button from "@/app/components/ui/Button/Button";
 import { crearComplemento, fetchPeriodoActivo, previewCierre } from "../api";
 import type { CierrePreviewResponse, FacturaRead, ObraSocialOption } from "../types";
 import { detailMessage } from "../types";
 import { formatMoney } from "../money";
 import ObraSocialAutocomplete from "../components/ObraSocialAutocomplete";
-import paleta from "@/app/styles/paleta.module.scss";
 import { comoErrorApi } from "@/app/shared/lib/httpErrors";
 
 interface Props {
@@ -100,88 +101,63 @@ const NuevaComplementariaModal: React.FC<Props> = ({ isOpen, onClose, onCreated 
   // Sin factura cerrada no hay nada que complementar: hay que seguir cargando en la que está abierta.
   const puedeCrear = !!preview && preview.cerrado && !creando;
 
+  if (!isOpen) return null;
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Nueva factura complementaria" size="small">
-      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-        <p style={{ fontSize: 13, color: paleta.gray700, margin: 0 }}>
-          Abre una factura adicional para un período <strong>ya cerrado</strong>, donde cargar las
-          prestaciones que quedaron afuera del envío original.
-        </p>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-          <label style={{ fontSize: 11, fontWeight: 700, color: paleta.tonoAzul400, letterSpacing: ".05em", textTransform: "uppercase" }}>
-            Obra social
-          </label>
-          <ObraSocialAutocomplete
-            value={obraSocial?.nro_obra_social ?? null}
-            onChange={(_, os) => setObraSocial(os)}
-            disabled={creando}
-          />
-        </div>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-          <label style={{ fontSize: 11, fontWeight: 700, color: paleta.tonoAzul400, letterSpacing: ".05em", textTransform: "uppercase" }}>
-            Período (YYYYMM)
-          </label>
-          <input
-            type="text"
-            inputMode="numeric"
-            maxLength={6}
-            value={periodo}
-            onChange={(e) => setPeriodo(e.target.value)}
-            placeholder="Ej. 202607"
-            disabled={!obraSocial || creando}
-            style={{
-              height: 36, padding: "0 12px", border: `1px solid ${paleta.gray200}`,
-              borderRadius: 6, fontSize: 13, color: paleta.tonoAzul750C, outline: "none",
-              boxSizing: "border-box",
-            }}
-          />
-        </div>
-
-        {previewLoading && (
-          <span style={{ fontSize: 12, color: paleta.tonoAzul400 }}>Cargando período…</span>
-        )}
-
-        {preview && (
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <span style={{ fontSize: 12, fontWeight: 600, borderRadius: 20, padding: "3px 10px", background: paleta.gray100, color: paleta.gray600 }}>
-              {preview.cantidad} prestación{preview.cantidad !== 1 ? "es" : ""}
-            </span>
-            <span style={{ fontSize: 12, fontWeight: 600, borderRadius: 20, padding: "3px 10px", background: paleta.tonoVerde50C, color: paleta.tonoVerde550 }}>
-              Total: {formatMoney(preview.importe_total)}
-            </span>
-            <span style={{
-              fontSize: 12, fontWeight: 600, borderRadius: 20, padding: "3px 10px",
-              background: preview.cerrado ? paleta.tonoVerde50C : paleta.tonoAmarillo50D,
-              color: preview.cerrado ? paleta.tonoVerde550 : paleta.tonoNaranja550,
-            }}>
-              {preview.cerrado ? "Cerrado" : "Abierto"}
-            </span>
-          </div>
-        )}
-
-        {preview && !preview.cerrado && (
-          <div style={{ background: paleta.tonoAmarillo50C, border: `1px solid ${paleta.warningOrange}`, borderRadius: 6, padding: "8px 12px", fontSize: 12, color: paleta.tonoNaranja550 }}>
-            Este período todavía está abierto — cargá las prestaciones ahí. Un complemento solo tiene
-            sentido cuando la factura anterior ya se cerró y se envió.
-          </div>
-        )}
-
-        {error && (
-          <div style={{ background: paleta.tonoRojo50, border: `1px solid ${paleta.tonoRojo400}`, borderRadius: 6, padding: "8px 12px", fontSize: 12, color: paleta.tonoRojo550C }}>
-            {error}
-          </div>
-        )}
-
-        <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+    <Dialogo
+      titulo="Nueva complementaria"
+      icono={Layers}
+      onClose={creando ? undefined : onClose}
+      acciones={
+        <>
           <Button variant="ghost" onClick={onClose} disabled={creando}>Cancelar</Button>
           <Button variant="primary" onClick={handleCrear} disabled={!puedeCrear} isLoading={creando}>
             Abrir complemento
           </Button>
-        </div>
-      </div>
-    </Modal>
+        </>
+      }
+    >
+      <DialogoAviso>Abre una factura adicional para un período ya cerrado, donde cargar lo que quedó afuera del envío.</DialogoAviso>
+
+      <DialogoCampo rotulo="Obra social">
+        <ObraSocialAutocomplete
+          value={obraSocial?.nro_obra_social ?? null}
+          onChange={(_, os) => setObraSocial(os)}
+          disabled={creando}
+        />
+      </DialogoCampo>
+
+      <DialogoCampo rotulo="Período" htmlFor="complemento-periodo">
+        <input
+          id="complemento-periodo"
+          type="text"
+          inputMode="numeric"
+          maxLength={6}
+          value={periodo}
+          onChange={(e) => setPeriodo(e.target.value)}
+          placeholder="Ej. 202607"
+          disabled={!obraSocial || creando}
+        />
+      </DialogoCampo>
+
+      {previewLoading && <Cargando size={18} tono="marca" aria-label="Cargando el período" />}
+
+      {preview && (
+        <DialogoDatos
+          filas={[
+            { rotulo: "Prestaciones", valor: preview.cantidad },
+            { rotulo: "Total", valor: formatMoney(preview.importe_total) },
+            { rotulo: "Estado", valor: preview.cerrado ? "Cerrado" : "Abierto" },
+          ]}
+        />
+      )}
+
+      {preview && !preview.cerrado && (
+        <DialogoAviso>Este período sigue abierto: cargá las prestaciones ahí. Un complemento sólo sirve con la factura anterior ya cerrada y enviada.</DialogoAviso>
+      )}
+
+      {error && <DialogoAviso tono="peligro">{error}</DialogoAviso>}
+    </Dialogo>
   );
 };
 

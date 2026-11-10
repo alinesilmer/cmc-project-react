@@ -1,10 +1,10 @@
 import React from "react";
-import Modal from "@/app/components/ui/Modal/Modal";
+import { FileCheck2 } from "lucide-react";
+
+import Dialogo, { DialogoAviso, DialogoDatos } from "@/app/components/ui/Dialogo/Dialogo";
 import Button from "@/app/components/ui/Button/Button";
 import type { CierrePreviewResponse } from "../types";
 import { formatMoney } from "../money";
-import { AlertTriangle } from "lucide-react";
-import paleta from "@/app/styles/paleta.module.scss";
 
 interface Props {
   isOpen: boolean;
@@ -20,35 +20,41 @@ interface Props {
 
 const ConfirmarCierreModal: React.FC<Props> = ({
   isOpen, preview, osNombre, tipoFactura, nroFactura, archivoNombre, onClose, onConfirm, loading,
-}) => (
-  <Modal isOpen={isOpen} onClose={onClose} title="Confirmar cierre de período" size="small">
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      <p style={{ fontSize: 13, color: paleta.gray700, margin: 0 }}>
-        Vas a cerrar <strong>{osNombre}</strong> · período {preview.periodo}.
-      </p>
-      <ul style={{ fontSize: 13, color: paleta.gray700, margin: 0, paddingLeft: 20 }}>
-        <li>{preview.cantidad} prestaciones</li>
-        {(preview.sin_valorizar ?? 0) > 0 && (
-          <li style={{ color: paleta.tonoNaranja550, fontWeight: 600 }}>
-            {preview.sin_valorizar} sin valorizar (en $0 por falta de precio)
-          </li>
-        )}
-        <li>{formatMoney(preview.importe_total)}</li>
-        {tipoFactura && <li>Tipo de factura: {tipoFactura}</li>}
-        {nroFactura && <li>Nº de factura: {nroFactura}</li>}
-        <li>Documento: {archivoNombre ?? "sin adjuntar"}</li>
-      </ul>
-      <div style={{ background: paleta.tonoAmarillo50C, border: `1px solid ${paleta.warningOrange}`, borderRadius: 6, padding: "8px 12px", fontSize: 12, color: paleta.tonoNaranja550 }}>
-        <AlertTriangle size={14} style={{ verticalAlign: "-2px" }} aria-hidden="true" /> Esta acción <strong>NO se puede deshacer</strong> y habilita la liquidación.
-      </div>
-      <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-        <Button variant="ghost" onClick={onClose} disabled={loading}>Cancelar</Button>
-        <Button variant="danger" onClick={onConfirm} disabled={loading} isLoading={loading}>
-          Sí, cerrar período
-        </Button>
-      </div>
-    </div>
-  </Modal>
-);
+}) => {
+  if (!isOpen) return null;
+
+  const sinValorizar = preview.sin_valorizar ?? 0;
+
+  return (
+    <Dialogo
+      titulo="Cerrar el período"
+      icono={FileCheck2}
+      peligro
+      onClose={loading ? undefined : onClose}
+      acciones={
+        <>
+          <Button variant="ghost" onClick={onClose} disabled={loading}>Cancelar</Button>
+          <Button variant="danger" onClick={onConfirm} disabled={loading} isLoading={loading}>
+            Sí, cerrar
+          </Button>
+        </>
+      }
+    >
+      <DialogoDatos
+        filas={[
+          { rotulo: "Obra social", valor: osNombre },
+          { rotulo: "Período", valor: preview.periodo },
+          { rotulo: "Prestaciones", valor: preview.cantidad },
+          { rotulo: "Total", valor: formatMoney(preview.importe_total) },
+          ...(tipoFactura ? [{ rotulo: "Tipo de factura", valor: tipoFactura }] : []),
+          ...(nroFactura ? [{ rotulo: "Nº de factura", valor: nroFactura }] : []),
+          { rotulo: "Documento", valor: archivoNombre ?? "Sin adjuntar" },
+        ]}
+      />
+      {sinValorizar > 0 && <DialogoAviso>{sinValorizar} sin valorizar: quedan en $0 por falta de precio.</DialogoAviso>}
+      <DialogoAviso tono="peligro">No se puede deshacer y habilita la liquidación.</DialogoAviso>
+    </Dialogo>
+  );
+};
 
 export default ConfirmarCierreModal;

@@ -1,6 +1,6 @@
 import React, { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { ArrowRightCircle, ArrowLeftCircle } from "lucide-react";
+import { ArrowRightCircle, ArrowLeftCircle, FileCheck2 } from "lucide-react";
 
 import { useAppSnackbar } from "@/app/hooks/useAppSnackbar";
 import { usePermisos } from "@/app/auth/usePermisos";
@@ -37,7 +37,8 @@ import comun from "./Comun.module.scss";
 import styles from "./FacturaDetalle.module.scss";;
 import Tabla from "@/app/components/ui/Tabla/Tabla";
 import { comoErrorApi, detalleObjeto } from "@/app/shared/lib/httpErrors";
-import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
+import Franja, { Solapa } from "@/app/components/layout/Franja/Franja";
+import Cargando from "@/app/components/ui/Cargando/Cargando";
 
 // Set vacío compartido: los grupos sin filas ocupadas reciben siempre esta misma referencia y su memo no se invalida.
 const SIN_OCUPADAS: ReadonlySet<number> = new Set();
@@ -687,6 +688,15 @@ const FacturaDetalle: React.FC = () => {
 
   return (
     <div className={styles.container} style={restaurando ? { visibility: "hidden" } : undefined}>
+      <Franja titulo={detalle ? `Expediente N.º ${detalle.id_factura}` : "Listado de prestaciones"} icono={FileCheck2}>
+        {detalle?.documentacion_digital && (
+          <>
+            <Solapa activa={pestana === "detalle"} onClick={() => setPestana("detalle")}>Detalle</Solapa>
+            <Solapa activa={pestana === "documentacion"} onClick={() => setPestana("documentacion")}>Documentación</Solapa>
+          </>
+        )}
+      </Franja>
+
       <CabeceraExpediente
         detalle={detalle}
         filas={todasFlat}
@@ -696,27 +706,6 @@ const FacturaDetalle: React.FC = () => {
         onIrAFactura={(idFactura) => navigate(`/panel/facturacion/periodos/${idFactura}`)}
         onCompactaChange={setBarraCompacta}
       />
-
-      {detalle?.documentacion_digital && (
-        <nav className={styles.tabs} aria-label="Secciones de la factura">
-          <BotonPlano
-            type="button"
-            className={`${styles.tab} ${pestana === "detalle" ? styles.tabActiva : ""}`}
-            aria-current={pestana === "detalle" ? "page" : undefined}
-            onClick={() => setPestana("detalle")}
-          >
-            Detalle
-          </BotonPlano>
-          <BotonPlano
-            type="button"
-            className={`${styles.tab} ${pestana === "documentacion" ? styles.tabActiva : ""}`}
-            aria-current={pestana === "documentacion" ? "page" : undefined}
-            onClick={() => setPestana("documentacion")}
-          >
-            Documentación
-          </BotonPlano>
-        </nav>
-      )}
 
       {pestana === "documentacion" && detalle?.documentacion_digital ? (
         <PestanaDocumentacion detalle={detalle} filas={todasFlat} vista={vistaOpciones} />
@@ -750,7 +739,7 @@ const FacturaDetalle: React.FC = () => {
             </thead>
             <tbody>
               {loading && (
-                <tr><td colSpan={columnasConPeso.length} className={styles.loadingCell}>Cargando…</td></tr>
+                <tr><td colSpan={columnasConPeso.length} className={styles.loadingCell}><Cargando size={22} tono="marca" aria-label="Cargando" /></td></tr>
               )}
               {!loading && error && (
                 <tr><td colSpan={columnasConPeso.length} className={styles.emptyCell}>{error}</td></tr>
@@ -759,7 +748,7 @@ const FacturaDetalle: React.FC = () => {
                 <tr><td colSpan={columnasConPeso.length} className={styles.emptyCell}>Esta factura no tiene prestaciones.</td></tr>
               )}
               {!loading && !error && detalle && detalle.total_prestaciones > 0 && visibles.length === 0 && (
-                <tr><td colSpan={columnasConPeso.length} className={styles.emptyCell}>Ningún resultado con los filtros de vista actuales.</td></tr>
+                <tr><td colSpan={columnasConPeso.length} className={styles.emptyCell}>Ninguna prestación con los filtros de vista actuales.</td></tr>
               )}
             </tbody>
           </Tabla>

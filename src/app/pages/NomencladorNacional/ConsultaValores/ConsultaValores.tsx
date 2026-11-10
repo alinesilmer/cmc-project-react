@@ -1,10 +1,9 @@
 import { useState, useMemo, useRef } from "react";
-import { Search, AlertCircle, AlertTriangle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
-import styles from "../ConsultaShared/consulta.module.scss";
 import Combobox from "../ConsultaShared/Combobox";
-import ResultRegister from "../ConsultaShared/ResultRegister";
+import PaginaConsulta from "../ConsultaShared/PaginaConsulta";
+import TicketConsulta from "../ConsultaShared/TicketConsulta";
 import { useCopago } from "../ConsultaShared/useCopago";
 import { listNomenclador, getTablaValores } from "../nomenclador.api";
 import { getEspecialidades } from "../../Especialidades/especialidades.api";
@@ -12,8 +11,6 @@ import type { NomencladorOut, TablaValorItem, ViaPractica } from "../nomenclador
 import type { ObraSocialListItem } from "../../ObrasSociales/obrasSociales.types";
 import { useObrasSociales } from "../../ObrasSociales/useObrasSociales";
 import type { Especialidad } from "../../Especialidades/especialidades.types";
-import Cargando from "@/app/components/ui/Cargando/Cargando";
-import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
 export default function ConsultaValores() {
   // OS autocomplete
@@ -150,22 +147,12 @@ export default function ConsultaValores() {
   const canSearch = Boolean(osNro && selectedNom);
 
   return (
-    <div className={styles.page}>
-      <div className={styles.inner}>
-        <div className={styles.pagehead}>
-          <h1 className={styles.pageTitle}>Consulta de valores</h1>
-          <p className={styles.pageSub}>
-            Valor vigente de una práctica según el convenio pactado con una obra
-            social.
-          </p>
-        </div>
-
-        <div className={styles.instrument}>
-          {/* ── Query column ── */}
-          <div className={styles.colQuery}>
-            <div className={styles.colTitle} />
-
+    <PaginaConsulta titulo="Consulta de valores">
+      <TicketConsulta
+        campos={
+          <>
             <Combobox<ObraSocialListItem>
+              variante="ticket"
               idx={1}
               label="Obra social"
               placeholder="Buscar por nombre o número…"
@@ -180,23 +167,9 @@ export default function ConsultaValores() {
               onClear={() => { setSelectedOSItem(null); setOsSearch(""); resetResult(); }}
             />
 
-            <Combobox<Especialidad>
-              idx={2}
-              label="Especialidad"
-              hint="opcional"
-              placeholder="Buscar especialidad…"
-              query={espSearch}
-              onQueryChange={(q) => { setEspSearch(q); resetResult(); }}
-              items={filteredEsp}
-              getKey={(e) => e.id}
-              getText={(e) => e.nombre}
-              selected={selectedEspItem}
-              onSelect={(e) => { setSelectedEspItem(e); setEspSearch(""); resetResult(); }}
-              onClear={() => { setSelectedEspItem(null); setEspSearch(""); resetResult(); }}
-            />
-
             <Combobox<NomencladorOut>
-              idx={3}
+              variante="ticket"
+              idx={2}
               label="Práctica"
               hint="por código o por nombre"
               placeholder="Buscar por código o nombre…"
@@ -213,82 +186,38 @@ export default function ConsultaValores() {
               menuHint={nomSearch.trim().length < 2 ? "Escribí al menos 2 caracteres…" : "Sin resultados"}
             />
 
-            <div className={styles.viaToggle}>
-              {(
-                [
-                  ["T", "Tradicional"],
-                  ["L", "Laparoscópica"],
-                ] as const
-              ).map(([v, label]) => (
-                <label key={v} className={styles.viaOption}>
-                  <input
-                    type="radio"
-                    name="via"
-                    value={v}
-                    checked={via === v}
-                    onChange={() => { setVia(v); resetResult(); }}
-                  />
-                  {label}
-                </label>
-              ))}
-            </div>
-
-            <BotonPlano
-              type="button"
-              className={styles.cta}
-              onClick={handleSearch}
-              disabled={!canSearch || loading}
-            >
-              {loading ? <Cargando size={17} /> : <Search size={17} />}
-              Consultar precio
-            </BotonPlano>
-          </div>
-
-          {/* ── Result column ── */}
-          <div className={styles.colResult}>
-            {loading ? (
-              <div className={styles.loading}>
-                <span className={styles.pulse} />
-                Consultando valores…
-              </div>
-            ) : result ? (
-              <>
-                <ResultRegister
-                  result={result}
-                  copago={copago}
-                  showVigencia
-                  showDesglose
-                  eligibility={
-                    espId && selectedEspItem
-                      ? { nombre: selectedEspItem.nombre, valida: especialidadValida }
-                      : null
-                  }
-                />
-                {via === "L" && result.via_aplicada === "T" && (
-                  <div className={styles.viaDegradeNotice}>
-                    <AlertTriangle size={16} />
-                    Este código no admite vía laparoscópica; se muestra el precio tradicional.
-                  </div>
-                )}
-              </>
-            ) : searched && error ? (
-              <div className={styles.errorbox}>
-                <AlertCircle size={18} />
-                {error}
-              </div>
-            ) : (
-              <div className={styles.prompt}>
-                <div className={styles.promptLines} aria-hidden="true">
-                  <i /><i /><i /><i /><i /><i />
-                </div>
-                <div className={styles.promptInner}>
-                 
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
+            <Combobox<Especialidad>
+              variante="ticket"
+              idx={3}
+              label="Especialidad"
+              hint="opcional"
+              placeholder="Buscar especialidad…"
+              query={espSearch}
+              onQueryChange={(q) => { setEspSearch(q); resetResult(); }}
+              items={filteredEsp}
+              getKey={(e) => e.id}
+              getText={(e) => e.nombre}
+              selected={selectedEspItem}
+              onSelect={(e) => { setSelectedEspItem(e); setEspSearch(""); resetResult(); }}
+              onClear={() => { setSelectedEspItem(null); setEspSearch(""); resetResult(); }}
+            />
+          </>
+        }
+        via={via}
+        onVia={(v) => { setVia(v); resetResult(); }}
+        puedeConsultar={canSearch}
+        consultando={loading}
+        onConsultar={handleSearch}
+        resultado={result}
+        error={searched ? error : null}
+        copago={copago}
+        conDetalle
+        habilitada={
+          espId && selectedEspItem
+            ? { nombre: selectedEspItem.nombre, valida: especialidadValida }
+            : null
+        }
+      />
+    </PaginaConsulta>
   );
 }

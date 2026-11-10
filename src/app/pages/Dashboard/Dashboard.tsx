@@ -2,6 +2,7 @@ import { useMemo } from "react";
 
 import { useAuth } from "@/app/auth/useAuth";
 import { usePermisos } from "@/app/auth/usePermisos";
+import FranjaSaludo from "@/app/components/layout/FranjaSaludo/FranjaSaludo";
 import { vistasVisibles, type Vista } from "./vistasInicio";
 import TareasDelDia from "./components/TareasDelDia";
 import VistaRapida from "./components/VistaRapida";
@@ -25,10 +26,7 @@ type Props = {
 function InicioPersonal({ saludo, fecha, vistas, claveTareas }: Props) {
   return (
     <div className={s.pagina}>
-      <header className={s.hero}>
-        <p className={s.fecha}>{fecha}</p>
-        <h1 className={s.saludo}>{saludo}</h1>
-      </header>
+      <FranjaSaludo fecha={fecha} saludo={saludo} />
 
       <div className={`${s.cuerpo} ${vistas.length === 0 ? s.cuerpoSolo : ""}`}>
         <div className={s.principal}>

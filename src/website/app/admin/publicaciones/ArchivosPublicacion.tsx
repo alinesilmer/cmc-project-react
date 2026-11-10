@@ -8,6 +8,7 @@ import IconoArchivo from "@/website/components/UI/IconoArchivo/IconoArchivo";
 import { useVistaPrevia } from "@/website/hooks/useVistaPrevia";
 import { DOCUMENTOS, IMAGENES } from "@/website/lib/subidas";
 import { nombreVisible, tipoDeArchivo } from "@/website/lib/documentos";
+import { urlSegura } from "@/app/shared/lib/urlSegura";
 import type { DocumentoNoticia } from "@/website/types";
 
 type Props = {
@@ -81,7 +82,7 @@ export default function ArchivosPublicacion(p: Props) {
               <li key={d.id} className={s.item}>
                 <span className={s.nombre}>
                   <IconoArchivo tipo={tipoDeArchivo(d.content_type, d.path)} />
-                  <a href={d.path} target="_blank" rel="noopener noreferrer" title={nombreVisible(d)}>
+                  <a href={urlSegura(d.path) ?? undefined} target="_blank" rel="noopener noreferrer" title={nombreVisible(d)}>
                     {nombreVisible(d)}
                   </a>
                 </span>

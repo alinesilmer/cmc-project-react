@@ -7,127 +7,47 @@ import { useQuery } from "@tanstack/react-query";
 import {
   ArrowRight,
   ArrowUpRight,
-  CircleUserRound,
   DollarSign,
   ExternalLink,
-  FileText,
-  Globe,
   LifeBuoy,
   MapPin,
   PlayCircle,
-  Receipt,
   ShieldCheck,
 } from "lucide-react";
 
 import { useAuth } from "../../auth/useAuth";
 import { saludoSegunHora } from "@/app/shared/lib/fechas";
 import { esOrganizacion } from "../../auth/roles";
+import FranjaSaludo from "@/app/components/layout/FranjaSaludo/FranjaSaludo";
 import Carrusel from "./components/Carrusel/Carrusel";
 import { getBeneficiosVigentes } from "../Beneficios/beneficios.api";
 import type { Beneficio } from "../Beneficios/beneficios.types";
 import styles from "./InicioMedico.module.scss";
 
-// WebP de 107 KB: va debajo de un degradé casi opaco.
-import heroImage from "../../assets/bg2.webp";
-
-// Logos de las obras sociales con convenio.
-import logoBoreal from "../../assets/obras-sociales/boreal.png";
-import logoIoscor from "../../assets/obras-sociales/ioscor.jpg";
-import logoIosfa from "../../assets/obras-sociales/iosfa.jpg";
-import logoIssunne from "../../assets/obras-sociales/issunne.png";
-import logoMedife from "../../assets/obras-sociales/medife.jpg";
-import logoNobis from "../../assets/obras-sociales/nobis.png";
-import logoOmint from "../../assets/obras-sociales/omint.png";
-import logoOspjn from "../../assets/obras-sociales/ospjn.jpg";
-import logoOspm from "../../assets/obras-sociales/ospm.jpg";
-import logoPrevencion from "../../assets/obras-sociales/prevencion.jpg";
-import logoSancor from "../../assets/obras-sociales/sancor.jpg";
-import logoSwiss from "../../assets/obras-sociales/swiss-medical.png";
-import logoUpcn from "../../assets/obras-sociales/upcn.png";
+/** Cuántos beneficios muestra el inicio: el resto está en el sitio del Colegio. */
+const MAX_BENEFICIOS = 5;
 
 const WHATSAPP_URL =
   "https://wa.me/5493794252323?text=¡Hola!,%20necesito%20soporte%20con%20el%20sistema%20del%20Colegio%20Médico";
 
-// La vidriera los trae todos: antes se cortaba en 6 y el socio no tenía cómo enterarse de que había más.
+/** `azul` y `amarillo`: los dos accesos que más se usan van en colores distintos para que se vean de lejos. */
+type Acceso = { icon: LucideIcon; title: string; link: string; tono: "azul" | "amarillo" };
 
-const OBRAS_SOCIALES: { src: string; nombre: string }[] = [
-  { src: logoIoscor, nombre: "IOSCOR" },
-  { src: logoSwiss, nombre: "Swiss Medical" },
-  { src: logoSancor, nombre: "Sancor Salud" },
-  { src: logoOmint, nombre: "Omint" },
-  { src: logoMedife, nombre: "Medifé" },
-  { src: logoPrevencion, nombre: "Prevención Salud" },
-  { src: logoIssunne, nombre: "ISSUNNE" },
-  { src: logoIosfa, nombre: "OSFA" },
-  { src: logoOspjn, nombre: "OSPJN" },
-  { src: logoOspm, nombre: "OSPM" },
-  { src: logoNobis, nombre: "Nobis" },
-  { src: logoBoreal, nombre: "Boreal" },
-  { src: logoUpcn, nombre: "UPCN" },
-];
-
-type QuickAction = {
-  icon: LucideIcon;
-  title: string;
-  description: string;
-  link: string;
-  accent: "blue" | "gold" | "amber" | "darkblue";
-};
-
-const ACCESOS: QuickAction[] = [
-  {
-    icon: DollarSign,
-    title: "Consulta de precios",
-    description:
-      "El valor vigente de una práctica según el convenio de cada obra social.",
-    link: "/panel/nomenclador/consulta-precios",
-    accent: "darkblue",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Validaciones",
-    description: "Validá la cobertura de un afiliado antes de atenderlo.",
-    link: "/panel/validaciones",
-    accent: "blue",
-  },
-  {
-    icon: FileText,
-    title: "Planillas de consulta",
-    description:
-      "Las planillas que publica el Colegio para presentar con tu facturación.",
-    link: "/panel/planillas",
-    accent: "blue",
-  },
-  {
-    icon: Receipt,
-    title: "Mi recepción",
-    description:
-      "Las prestaciones que el Colegio ya te publicó, por obra social.",
-    link: "/panel/facturacion/mi-recepcion",
-    accent: "blue",
-  },
-  {
-    icon: CircleUserRound,
-    title: "Mi perfil",
-    description:
-      "Tus datos, tu documentación y las especialidades que tenés adheridas.",
-    link: "/panel/mi-perfil",
-    accent: "gold",
-  },
+const ACCESOS: Acceso[] = [
+  { icon: DollarSign, title: "Consulta de precios", link: "/panel/nomenclador/consulta-precios", tono: "azul" },
+  { icon: ShieldCheck, title: "Validaciones", link: "/panel/validaciones", tono: "amarillo" },
 ];
 
 /** Los tutoriales publicados. Todavía sin backend: cuando exista, esta constante se reemplaza por la query y el resto de la sección no cambia. */
-type Tutorial = { titulo: string; descripcion: string; url: string };
+type Tutorial = { titulo: string; url: string };
 
 const TUTORIALES: Tutorial[] = [
   {
     titulo: "Validaciones en Medife",
-    descripcion: "Cómo validar un afiliado paso a paso.",
     url: "https://res.cloudinary.com/dcfkgepmp/video/upload/v1787517269/medife_tuto_f8w32o.mp4",
   },
   {
     titulo: "Validación Unión Personal",
-    descripcion: "Cómo validar un afiliado paso a paso.",
     url: "https://res.cloudinary.com/dcfkgepmp/video/upload/v1790890254/union_personal_zkmpje.mp4",
   },
 ];
@@ -138,11 +58,15 @@ const TUTORIALES_PENDIENTES = [
   "Cargar tu documentación al legajo",
 ];
 
-/** Portal de los usuarios médicos (rol `medico`): hero corto, accesos, la vidriera de beneficios y convenios, y el módulo de tutoriales por venir. */
+/** Portal de los usuarios médicos (rol `medico`): el banner con el saludo, los accesos, la vidriera de beneficios y convenios, y los tutoriales. */
 const InicioMedico: React.FC = () => {
   const { user } = useAuth();
 
-  const greeting = useMemo(() => saludoSegunHora(), []);
+  const saludo = useMemo(() => saludoSegunHora(), []);
+  const fecha = useMemo(
+    () => new Date().toLocaleDateString("es-AR", { weekday: "long", day: "numeric", month: "long" }),
+    [],
+  );
 
   const nombre = user?.nombre?.trim() ?? "";
 
@@ -166,28 +90,28 @@ const InicioMedico: React.FC = () => {
     enabled: !esOrg,
   });
 
+  const destacados = useMemo(() => beneficios.slice(0, MAX_BENEFICIOS), [beneficios]);
+
   const renderBeneficio = (b: Beneficio, index: number) => (
     <motion.article
       key={b.id}
-      className={styles.benefitCard}
+      className={styles.beneficio}
       style={{ "--benefit-accent": b.color ?? undefined } as React.CSSProperties}
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       // Techo al escalonado: sin él, con 30 beneficios el último entraba a 1,2 s.
       transition={{ duration: 0.26, delay: Math.min(index, 8) * 0.04 }}
     >
-      <div className={styles.benefitTop}>
-        <span className={styles.benefitCategoria}>{b.categoria}</span>
-        {b.descuento && (
-          <span className={styles.benefitDescuento}>{b.descuento}</span>
-        )}
+      <div className={styles.beneficioTop}>
+        <span className={styles.beneficioCategoria}>{b.categoria}</span>
+        {b.descuento && <span className={styles.beneficioDescuento}>{b.descuento}</span>}
       </div>
 
-      <h3 className={styles.benefitTitle}>{b.titulo}</h3>
-      <p className={styles.benefitDesc}>{b.descripcion}</p>
+      <h3 className={styles.beneficioTitulo}>{b.titulo}</h3>
+      <p className={styles.beneficioDesc}>{b.descripcion}</p>
 
       {b.ubicacion && (
-        <div className={styles.benefitFoot}>
+        <div className={styles.beneficioPie}>
           <MapPin size={14} />
           {b.ubicacion}
         </div>
@@ -196,84 +120,30 @@ const InicioMedico: React.FC = () => {
   );
 
   return (
-    <div className={styles.page}>
-      <div className={styles.content}>
-        {/* ── Hero ── */}
-        <motion.section
-          className={styles.hero}
-          style={{ "--hero-image": `url(${heroImage})` } as React.CSSProperties}
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.24 }}
-        >
-          <div className={styles.heroGlow} aria-hidden="true" />
+    <div className={styles.pagina}>
+      <FranjaSaludo fecha={fecha} saludo={`${saludo}${nombre ? `, ${nombre}` : ""}`} />
 
-          <div className={styles.heroInner}>
-            <div className={styles.heroText}>
-              <h1 className={styles.greeting}>
-                {greeting}
-                {nombre ? `, ${nombre}` : ""}.
-              </h1>
-
-              <p className={styles.heroSub}>
-                {esOrg
-                  ? "Consultá valores y planillas del Colegio."
-                  : "Consultá valores, validá afiliados y aprovechá los beneficios del Colegio."}
-              </p>
-
-              <div className={styles.heroActions}>
-                <Link
-                  to="/panel/nomenclador/consulta-precios"
-                  className={`${styles.heroBtn} ${styles.heroBtnPrimary}`}
-                >
-                  <DollarSign size={17} />
-                  Consultar un precio
-                </Link>
-
-                {/* El sitio institucional es el mismo SPA en "/" — no es un enlace externo, por eso va con Link y sin target _blank. */}
-                <Link to="/" className={`${styles.heroBtn} ${styles.heroBtnGhost}`}>
-                  <Globe size={17} />
-                  Ir al sitio del Colegio
-                </Link>
-              </div>
-            </div>
-
-          </div>
-        </motion.section>
-
+      <div className={styles.cuerpo}>
         {/* ── Accesos ── */}
-        <section className={styles.section}>
-          <div className={styles.sectionHead}>
-            <div>
-              <h2 className={styles.sectionTitle}>Accesos rápidos</h2>
-              <p className={styles.sectionSub}>
-                Lo que más usás, a un clic.
-              </p>
-            </div>
-          </div>
+        <section className={styles.seccion}>
+          <h2 className={styles.titulo}>Accesos rápidos</h2>
 
-          <div className={styles.accessGrid}>
-            {accesos.map((action, index) => {
-              const Icon = action.icon;
-              const accentClass =
-                styles[
-                  `accent${action.accent[0].toUpperCase()}${action.accent.slice(1)}`
-                ];
-
+          <div className={styles.accesos}>
+            {accesos.map((acceso, index) => {
+              const Icono = acceso.icon;
               return (
                 <motion.div
-                  key={action.title}
-                  initial={{ opacity: 0, y: 16 }}
+                  key={acceso.title}
+                  initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.26, delay: index * 0.04 }}
+                  transition={{ duration: 0.24, delay: index * 0.04 }}
                 >
-                  <Link to={action.link} className={styles.accessCard}>
-                    <div className={`${styles.accessIcon} ${accentClass}`}>
-                      <Icon size={20} />
-                    </div>
-                    <h3 className={styles.accessTitle}>{action.title}</h3>
-                    <p className={styles.accessDesc}>{action.description}</p>
-                    <ArrowRight size={18} className={styles.accessArrow} />
+                  <Link to={acceso.link} className={`${styles.acceso} ${acceso.tono === "azul" ? styles.accesoAzul : styles.accesoAmarillo}`}>
+                    <span className={styles.accesoIcono}>
+                      <Icono size={30} />
+                    </span>
+                    <span className={styles.accesoTitulo}>{acceso.title}</span>
+                    <ArrowRight size={26} className={styles.accesoFlecha} />
                   </Link>
                 </motion.div>
               );
@@ -283,140 +153,84 @@ const InicioMedico: React.FC = () => {
 
         {/* ── Beneficios ── Datos en vivo de GET /api/beneficios/vigentes (activos y no vencidos). */}
         {!esOrg && (
-          <section className={styles.section}>
-            <div className={styles.sectionHead}>
-              <div>
-                <h2 className={styles.sectionTitle}>Beneficios para socios</h2>
-                <p className={styles.sectionSub}>
-                  Descuentos y convenios vigentes en comercios y servicios.
-                </p>
-              </div>
+          <section className={styles.seccion}>
+            <div className={styles.cabeza}>
+              <h2 className={styles.titulo}>Beneficios para socios</h2>
+              {/* El sitio institucional es el mismo SPA en "/": no es un enlace externo, por eso va con Link. */}
+              {beneficios.length > 0 && (
+                <Link to="/beneficios" className={styles.verTodos}>
+                  Ver todos
+                  <ArrowUpRight size={16} />
+                </Link>
+              )}
             </div>
 
             {beneficiosLoading ? (
-              <div className={styles.skeletonGrid}>
+              <div className={styles.esqueletos}>
                 {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className={styles.skeleton} />
+                  <div key={i} className={styles.esqueleto} />
                 ))}
               </div>
             ) : beneficiosError ? (
-              <div className={styles.empty}>
-                No se pudieron cargar los beneficios en este momento.
-              </div>
+              <div className={styles.vacio}>No se pudieron cargar los beneficios en este momento.</div>
             ) : beneficios.length === 0 ? (
-              <div className={styles.empty}>
-                Todavía no hay beneficios cargados. Muy pronto vas a encontrar acá
-                los descuentos y convenios del Colegio.
-              </div>
+              <div className={styles.vacio}>Todavía no hay beneficios cargados.</div>
             ) : (
-              <Carrusel etiqueta="Beneficios para socios">
-                {beneficios.map(renderBeneficio)}
-              </Carrusel>
+              <Carrusel etiqueta="Beneficios para socios">{destacados.map(renderBeneficio)}</Carrusel>
             )}
           </section>
         )}
 
-        {/* ── Convenios ── */}
-        {!esOrg && (
-          <section className={styles.section}>
-            <div className={styles.sectionHead}>
-              <div>
-                <h2 className={styles.sectionTitle}>Obras sociales con validación web</h2>
-                <p className={styles.sectionSub}>
-                  Consultá valores y validá afiliados de todas ellas desde el panel.
-                </p>
-              </div>
-              <Link to="/panel/validaciones" className={styles.sectionLink}>
-                Validar un afiliado
-                <ArrowUpRight size={15} />
-              </Link>
-            </div>
-
-            <div className={styles.logoStrip}>
-              {/* La lista va duplicada: el keyframe corre hasta -50% y engancha con el principio, que es la misma secuencia. */}
-              <div className={styles.logoTrack}>
-                {[...OBRAS_SOCIALES, ...OBRAS_SOCIALES].map((os, i) => (
-                  <img
-                    key={`${os.nombre}-${i}`}
-                    src={os.src}
-                    alt={os.nombre}
-                    className={styles.logoItem}
-                    loading="lazy"
-                    // La segunda vuelta es decorativa: no debe leerse dos veces.
-                    aria-hidden={i >= OBRAS_SOCIALES.length}
-                  />
-                ))}
-              </div>
-            </div>
-          </section>
-        )}
-
         {/* ── Tutoriales ── */}
-        <section className={styles.section}>
-          <div className={styles.sectionHead}>
-            <div>
-              <h2 className={styles.sectionTitle}>Tutoriales</h2>
-              <p className={styles.sectionSub}>
-                Videos cortos para sacarle el jugo al sistema.
-              </p>
-            </div>
-          </div>
+        <section className={styles.seccion}>
+          <h2 className={styles.titulo}>Tutoriales</h2>
 
-          <div className={styles.tutorialGrid}>
+          <div className={styles.tutoriales}>
             {tutoriales.map((t) => (
-              <article key={t.url} className={styles.tutorialCardVideo}>
+              <article key={t.url} className={styles.tutorial}>
                 {/* `preload="none"` y no "metadata": el video no se descarga hasta que alguien lo pide. */}
                 <video
-                  className={styles.tutorialVideo}
+                  className={styles.video}
                   src={t.url}
                   controls
                   preload="none"
                   playsInline
                   controlsList="nodownload"
                 />
-                <h3 className={styles.tutorialTitle}>{t.titulo}</h3>
-                <p className={styles.tutorialMeta}>{t.descripcion}</p>
+                <h3 className={styles.tutorialTitulo}>{t.titulo}</h3>
               </article>
             ))}
 
             {TUTORIALES_PENDIENTES.map((titulo) => (
-              <div key={titulo} className={styles.tutorialCard}>
-                <div className={styles.tutorialThumb}>
+              <div key={titulo} className={`${styles.tutorial} ${styles.pendiente}`}>
+                <div className={styles.miniatura}>
                   <PlayCircle size={30} />
                 </div>
-                <h3 className={styles.tutorialTitle}>{titulo}</h3>
-                <p className={styles.tutorialMeta}>Disponible pronto</p>
+                <h3 className={styles.tutorialTitulo}>{titulo}</h3>
+                <p className={styles.pronto}>Disponible pronto</p>
               </div>
             ))}
           </div>
         </section>
 
         {/* ── Soporte ── */}
-        <section className={styles.section}>
-          <div className={styles.supportCard}>
-            <div>
-              <h2 className={styles.supportTitle}>¿Necesitás una mano?</h2>
-              <p className={styles.supportDesc}>
-                Escribinos por WhatsApp si algo no funciona. Si un dato de tu
-                legajo está mal, reportalo desde{" "}
-                <Link to="/panel/mi-perfil" className={styles.sectionLink}>
-                  Mi perfil
-                </Link>
-                .
-              </p>
-            </div>
-
-            <a
-              href={WHATSAPP_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={styles.supportBtn}
-            >
-              <LifeBuoy size={17} />
-              Contactar soporte
-              <ExternalLink size={15} />
-            </a>
+        <section className={styles.soporte}>
+          <div>
+            <h2 className={styles.soporteTitulo}>¿Necesitás una mano?</h2>
+            <p className={styles.soporteTexto}>
+              Escribinos por WhatsApp si algo no funciona. Si un dato de tu legajo está mal, reportalo desde{" "}
+              <Link to="/panel/mi-perfil" className={styles.enlace}>
+                Mi perfil
+              </Link>
+              .
+            </p>
           </div>
+
+          <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className={styles.soporteBoton}>
+            <LifeBuoy size={17} />
+            Contactar soporte
+            <ExternalLink size={15} />
+          </a>
         </section>
       </div>
     </div>
