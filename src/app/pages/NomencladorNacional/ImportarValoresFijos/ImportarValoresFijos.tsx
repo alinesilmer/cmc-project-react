@@ -64,6 +64,9 @@ const ACCION_EN_REPLICA: Partial<Record<AccionFija, string>> = {
   reemplazar: "reemplaza posteriores",
 };
 const CATEGORIAS = ["Practica", "Consulta", "Honorarios individuales"];
+// Los códigos que piden decidir algo (alta, quién factura, catálogo). Los suspendidos no entran: reactivarlos es otra decisión.
+const ESTADOS_CONFLICTO: EstadoFilaFija[] = ["sin_catalogo", "sin_alta", "sin_quien_factura"];
+const esConflicto = (f: FilaPreviaOut) => ESTADOS_CONFLICTO.includes(f.estado);
 
 const fmt = (v: string | null) => (v == null ? "—" : formatoPesos.format(Number(v)));
 const fechaCorta = (iso: string) => iso.split("-").reverse().join("/");
@@ -115,6 +118,16 @@ function decisionInicial(f: FilaPreviaOut): Decision {
     accion: f.accion_sugerida ?? "",
     especialidades: f.requiere_quien_factura ? f.especialidades : [],
     sinRestriccion: false,
+    categoria: "Practica",
+  };
+}
+
+/** «Cargar igual»: la acción que lo da de alta y lo carga, sin restricción de especialidad y, si no existe, como Práctica. */
+function decisionCargarIgual(f: FilaPreviaOut): Decision {
+  return {
+    accion: f.acciones.find((a) => a !== "omitir") ?? "",
+    especialidades: [],
+    sinRestriccion: f.requiere_quien_factura,
     categoria: "Practica",
   };
 }
@@ -182,6 +195,7 @@ export default function ImportarValoresFijos() {
 
   const [filtro, setFiltro] = useState<EstadoFilaFija | null>(null);
   const [masiva, setMasiva] = useState<AccionFija | "">("");
+  const [cargarIgual, setCargarIgual] = useState(false);
   const [page, setPage] = useState(1);
 
   const [replica, setReplica] = useState<ReplicaState>({ activo: true, destinos: [] });
@@ -230,6 +244,7 @@ export default function ImportarValoresFijos() {
     setErrorPrevia(null);
     setErrorAplicar(null);
     setFiltro(null);
+    setCargarIgual(false);
     setPage(1);
   }, [os, vigencia, archivo]);
   useEffect(() => setPage(1), [filtro]);
@@ -263,6 +278,7 @@ export default function ImportarValoresFijos() {
         filas: archivo.filas,
       });
       setPrevia(r);
+      setCargarIgual(false);
       setDecisiones(new Map(r.filas.map((f) => [f.fila, decisionInicial(f)])));
     } catch (e) {
       setPrevia(null);
@@ -294,6 +310,18 @@ export default function ImportarValoresFijos() {
           .filter((o) => o.codigo === f.codigo && o.fila !== fila)
           .forEach((o) => next.set(o.fila, { ...next.get(o.fila)!, accion: "omitir" }));
       }
+      return next;
+    });
+  }
+
+  const conflictivas = useMemo(() => filas.filter(esConflicto), [filas]);
+
+  // Marca (o desmarca) todos los conflictivos de una: cada uno vuelve a su decisión original al desmarcar.
+  function alternarCargarIgual(on: boolean) {
+    setCargarIgual(on);
+    setDecisiones((prev) => {
+      const next = new Map(prev);
+      conflictivas.forEach((f) => next.set(f.fila, on ? decisionCargarIgual(f) : decisionInicial(f)));
       return next;
     });
   }
@@ -494,6 +522,19 @@ export default function ImportarValoresFijos() {
               </BotonPlano>
             ))}
           </div>
+
+          {conflictivas.length > 0 && (
+            <label className={styles.cargarIgual}>
+              <input type="checkbox" checked={cargarIgual} onChange={(e) => alternarCargarIgual(e.target.checked)} />
+              <span>
+                <b>Cargar igual los {conflictivas.length} códigos con conflicto</b>
+                <small>
+                  Se dan de alta, quedan sin restricción de especialidad y los que no existen en el catálogo se crean como
+                  Práctica. Después podés ajustarlos.
+                </small>
+              </span>
+            </label>
+          )}
 
           <section className={styles.tablaPanel}>
             <div className={styles.barra}>

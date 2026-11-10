@@ -384,3 +384,33 @@
   flex-wrap: wrap;
 }
 
+// «Cargar igual»: un solo tilde para los códigos con conflicto.
+.cargarIgual {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-3;
+  padding: $spacing-3 $spacing-4;
+  background: $primary-yellow-light;
+  border: 1px solid $tono-amarillo-250-c;
+  border-radius: $radio-md;
+  cursor: pointer;
+
+  input {
+    flex-shrink: 0;
+    width: 1.1rem;
+    height: 1.1rem;
+    margin-top: 0.2rem;
+    accent-color: $franja-azul;
+  }
+
+  span {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  small {
+    font-size: $font-size-sm;
+    color: $gray-600;
+  }
+}
