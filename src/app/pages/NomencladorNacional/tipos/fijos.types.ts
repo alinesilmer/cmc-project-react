@@ -95,7 +95,7 @@ export type ImportarFijosPreviewOut = {
   filas: FilaPreviaOut[];
 };
 
-type ReplicaOSOut = {
+export type ReplicaOSOut = {
   obra_social_nro: number;
   nombre: string;
   estado: "ok" | "error";

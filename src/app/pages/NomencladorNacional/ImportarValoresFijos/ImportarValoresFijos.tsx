@@ -12,15 +12,17 @@ import { useObrasSociales } from "../../ObrasSociales/useObrasSociales";
 import { getEspecialidades } from "../../Especialidades/especialidades.api";
 import { readExcel } from "@/app/shared/lib/precios/readExcel";
 import { mensajeDeError } from "@/app/shared/lib/httpErrors";
-import { conProceso } from "@/app/hooks/proceso";
-import { aplicarValoresFijos, getFamiliaObraSocial, previsualizarValoresFijos } from "../nomenclador.api";
+import { useNotify } from "@/app/hooks/useNotify";
+import { aplicarValoresFijos, getFamiliaObraSocial, previsualizarValoresFijos, replicarValoresFijos } from "../nomenclador.api";
 import type {
   AccionFija,
   EstadoFilaFija,
   FilaPreviaOut,
   ImportarFijosAplicarOut,
+  ImportarFijosAplicarPayload,
   ImportarFijosFilaIn,
   ImportarFijosPreviewOut,
+  ReplicaOSOut,
 } from "../nomenclador.types";
 import { formatoPesos } from "@/app/shared/lib/formatos";
 import Cargando from "@/app/components/ui/Cargando/Cargando";
@@ -137,6 +139,18 @@ function pendiente(f: FilaPreviaOut, d: Decision): boolean {
   return d.accion !== "omitir" && f.requiere_quien_factura && !d.sinRestriccion && d.especialidades.length === 0;
 }
 
+/** Barra de avance de la carga: la principal y después cada plan. */
+function AvanceCarga({ avance }: { avance: { hechos: number; total: number; actual: string } }) {
+  return (
+    <div className={styles.avance} role="status" aria-live="polite">
+      <progress value={avance.hechos} max={avance.total} />
+      <span>
+        Cargando {avance.actual} · {avance.hechos} de {avance.total} listas. No cierres esta pantalla.
+      </span>
+    </div>
+  );
+}
+
 function PrecioActual({ f }: { f: FilaPreviaOut }) {
   if (f.estado === "error" || f.estado === "sin_catalogo") return <span className={styles.muted}>—</span>;
   const vs = f.variantes;
@@ -196,6 +210,11 @@ export default function ImportarValoresFijos() {
   const [filtro, setFiltro] = useState<EstadoFilaFija | null>(null);
   const [masiva, setMasiva] = useState<AccionFija | "">("");
   const [cargarIgual, setCargarIgual] = useState(false);
+  const notify = useNotify();
+  // Avance de la carga: la principal y después cada plan, de a uno (cada pedido es corto).
+  const [avance, setAvance] = useState<{ hechos: number; total: number; actual: string } | null>(null);
+  // Lo último que se cargó en la principal, para reintentar sólo los planes que fallaron.
+  const ultimaCarga = useRef<Omit<ImportarFijosAplicarPayload, "replicar_en"> | null>(null);
   const [page, setPage] = useState(1);
 
   const [replica, setReplica] = useState<ReplicaState>({ activo: true, destinos: [] });
@@ -359,52 +378,106 @@ export default function ImportarValoresFijos() {
     return { ...c, porDestino };
   }, [filas, decisiones, destinos]);
 
+  /** Un plan por pedido: si falla (red, tiempo), queda marcado con error y se puede reintentar solo. */
+  async function replicarUno(base: Omit<ImportarFijosAplicarPayload, "replicar_en">, nro: number): Promise<ReplicaOSOut> {
+    try {
+      const [r] = await replicarValoresFijos({ ...base, replicar_en: [nro] });
+      return r;
+    } catch (e) {
+      return {
+        obra_social_nro: nro,
+        nombre: nombreOS.get(nro) ?? "",
+        estado: "error",
+        motivo: mensajeDeError(e, "No se pudo cargar. Probá de nuevo."),
+        precios_creados: 0,
+        filas_cargadas: 0,
+        altas: 0,
+        omitidas: [],
+      };
+    }
+  }
+
   async function confirmar() {
     if (!previa || !archivo || os == null) return;
     setAplicando(true);
     setErrorAplicar(null);
-    const r = await conProceso(
-      { haciendo: "Cargando los valores", listo: "Valores cargados", fallo: "No se pudo cargar" },
-      async () => {
-        try {
-          return await aplicarValoresFijos({
-            obra_social_nro: os,
-            vigencia_desde: vigencia,
-            encabezado: archivo.encabezado,
-            filas: archivo.filas,
-            replicar_en: destinos,
-            decisiones: filas.map((f) => {
-              const d = decisiones.get(f.fila)!;
-              return {
-                fila: f.fila,
-                estado_visto: f.estado,
-                accion: d.accion as AccionFija,
-                especialidades: d.sinRestriccion ? null : d.especialidades,
-                sin_restriccion: d.sinRestriccion || null,
-                categoria: f.estado === "sin_catalogo" ? d.categoria : null,
-              };
-            }),
-          });
-        } catch (e) {
-          const status = (e as { response?: { status?: number } })?.response?.status;
-          const detail = (e as { response?: { data?: { detail?: { mensaje?: string; errores?: string[] } } } })?.response?.data?.detail;
-          const mensaje =
-            detail && typeof detail === "object" && detail.errores
-              ? `${detail.mensaje ?? "No se pudo cargar"}: ${detail.errores.slice(0, 5).join(" · ")}`
-              : status === 409
-                ? `${mensajeDeError(e)} Tocá «Previsualizar» otra vez.`
-                : mensajeDeError(e, "No se pudo cargar. No se guardó nada.");
-          setErrorAplicar(mensaje);
-          throw new Error(mensaje);
-        }
-      },
-    );
-    setConfirmando(false);
-    if (r) {
-      setResultado(r);
+    const base: Omit<ImportarFijosAplicarPayload, "replicar_en"> = {
+      obra_social_nro: os,
+      vigencia_desde: vigencia,
+      encabezado: archivo.encabezado,
+      filas: archivo.filas,
+      decisiones: filas.map((f) => {
+        const d = decisiones.get(f.fila)!;
+        return {
+          fila: f.fila,
+          estado_visto: f.estado,
+          accion: d.accion as AccionFija,
+          especialidades: d.sinRestriccion ? null : d.especialidades,
+          sin_restriccion: d.sinRestriccion || null,
+          categoria: f.estado === "sin_catalogo" ? d.categoria : null,
+        };
+      }),
+    };
+    ultimaCarga.current = base;
+    const total = destinos.length + 1;
+    try {
+      // 1. La obra social principal sola (todo o nada).
+      setAvance({ hechos: 0, total, actual: osNombre });
+      let principal: ImportarFijosAplicarOut;
+      try {
+        principal = await aplicarValoresFijos({ ...base, replicar_en: [] });
+      } catch (e) {
+        const status = (e as { response?: { status?: number } })?.response?.status;
+        const detail = (e as { response?: { data?: { detail?: { mensaje?: string; errores?: string[] } } } })?.response?.data?.detail;
+        const mensaje =
+          detail && typeof detail === "object" && detail.errores
+            ? `${detail.mensaje ?? "No se pudo cargar"}: ${detail.errores.slice(0, 5).join(" · ")}`
+            : status === 409
+              ? `${mensajeDeError(e)} Tocá «Previsualizar» otra vez.`
+              : mensajeDeError(e, "No se pudo cargar. No se guardó nada.");
+        setErrorAplicar(mensaje);
+        notify.error("No se pudo cargar", mensaje, { duration: 8000 });
+        setConfirmando(false);
+        return;
+      }
+
+      // 2. Cada plan, de a uno.
+      const replicas: ReplicaOSOut[] = [];
+      for (const [i, nro] of destinos.entries()) {
+        setAvance({ hechos: i + 1, total, actual: `${nro} · ${nombreOS.get(nro) ?? ""}` });
+        replicas.push(await replicarUno(base, nro));
+      }
+
+      setResultado({ ...principal, replicas });
       setPrevia(null);
+      setConfirmando(false);
+      const fallaron = replicas.filter((r) => r.estado === "error").length;
+      if (fallaron) notify.warning("Valores cargados, con planes que fallaron", `${fallaron} de ${replicas.length}: podés reintentarlos.`, { duration: 8000 });
+      else notify.success("Valores cargados");
+    } finally {
+      setAvance(null);
+      setAplicando(false);
     }
-    setAplicando(false);
+  }
+
+  /** Reintenta sólo los planes que fallaron, con las mismas decisiones. */
+  async function reintentarFallidas() {
+    const base = ultimaCarga.current;
+    if (!base || !resultado) return;
+    const fallidas = resultado.replicas.filter((r) => r.estado === "error");
+    if (!fallidas.length) return;
+    setAplicando(true);
+    try {
+      const nuevas = new Map<number, ReplicaOSOut>();
+      for (const [i, r] of fallidas.entries()) {
+        setAvance({ hechos: i, total: fallidas.length, actual: `${r.obra_social_nro} · ${r.nombre}` });
+        nuevas.set(r.obra_social_nro, await replicarUno(base, r.obra_social_nro));
+      }
+      setResultado((prev) => prev && { ...prev, replicas: prev.replicas.map((r) => nuevas.get(r.obra_social_nro) ?? r) });
+    } finally {
+      setAvance(null);
+      setAplicando(false);
+    }
   }
 
   const puedePrevisualizar = os != null && !!vigencia && !!archivo && !previsualizando && !leyendo;
@@ -485,6 +558,12 @@ export default function ImportarValoresFijos() {
             <li><b>{resultado.altas}</b> altas en la obra social{resultado.codigos_creados ? `, ${resultado.codigos_creados} códigos nuevos en el catálogo` : ""}</li>
             <li><b>{resultado.omitidas}</b> filas no se cargaron</li>
           </ul>
+          {avance && !confirmando && <AvanceCarga avance={avance} />}
+          {resultado.replicas.some((r) => r.estado === "error") && (
+            <BotonPlano type="button" className={styles.btnSecondary} onClick={reintentarFallidas} disabled={aplicando}>
+              Reintentar los {resultado.replicas.filter((r) => r.estado === "error").length} que fallaron
+            </BotonPlano>
+          )}
           {resultado.replicas.map((r) => (
             <div key={r.obra_social_nro} className={r.estado === "ok" ? styles.replicaOk : styles.replicaError}>
               <b>{r.obra_social_nro} · {r.nombre}:</b>{" "}
@@ -713,6 +792,7 @@ export default function ImportarValoresFijos() {
             {fechaCorta(vigencia)} que se van a borrar.
           </p>
         )}
+        {avance && <AvanceCarga avance={avance} />}
         <div className={styles.modalAcciones}>
           <BotonPlano type="button" className={styles.btnSecondary} onClick={() => setConfirmando(false)} disabled={aplicando}>Volver</BotonPlano>
           <BotonPlano type="button" className={styles.btnPrimary} onClick={confirmar} disabled={aplicando}>

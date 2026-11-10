@@ -71,6 +71,7 @@ import type {
   ImportarFijosPayload,
   ImportarFijosPreviewOut,
   ImportarFijosAplicarPayload,
+  ReplicaOSOut,
   ImportarFijosAplicarOut,
   ReplicarFamiliaResult,
   ReplicarValoresFamiliaPayload,
@@ -114,6 +115,8 @@ export const updateNomenclador = (
 /** Aplica la plantilla YA guardada del código a las obras sociales dadas. */
 /** Timeout para las operaciones masivas, que pueden tardar minutos contra la base de prod. */
 const TIMEOUT_MASIVO_MS = 10 * 60_000;
+// Cargar valores fijos en una obra social y todos sus planes (miles de filas × decenas de planes).
+export const TIMEOUT_CARGA_LARGA_MS = 30 * 60_000;
 
 export const aplicarEspecialidades = (
   id: number,
@@ -675,8 +678,14 @@ export const previsualizarValoresFijos = (payload: ImportarFijosPayload): Promis
     timeout: TIMEOUT_MASIVO_MS,
   });
 
+/** Carga en las obras sociales de `replicar_en` lo ya cargado en la principal: de a una, con pedidos cortos. */
+export const replicarValoresFijos = (payload: ImportarFijosAplicarPayload): Promise<ReplicaOSOut[]> =>
+  postJSON<ReplicaOSOut[]>("/api/valores_nm/importar_fijos/replicar", payload, {
+    timeout: TIMEOUT_MASIVO_MS,
+  });
+
 /** Aplica las decisiones. 409 si los datos cambiaron desde la vista previa. */
 export const aplicarValoresFijos = (payload: ImportarFijosAplicarPayload): Promise<ImportarFijosAplicarOut> =>
   postJSON<ImportarFijosAplicarOut>("/api/valores_nm/importar_fijos/aplicar", payload, {
-    timeout: TIMEOUT_MASIVO_MS,
+    timeout: TIMEOUT_CARGA_LARGA_MS,
   });

@@ -27,18 +27,7 @@
     <!-- El primer pedido al API paga el cifrado completo (0,2 a 0,8 s): se abre la conexión mientras carga el JS. Vite reemplaza la variable al compilar. -->
     <link rel="preconnect" href="%VITE_API_URL%" crossorigin />
     <!-- Fuentes propias (public/fonts, @font-face en src/fuentes.css): se precarga la del texto y la de los títulos de cada app. -->
-    <script>
-      (function () {
-        var panel = location.pathname.indexOf("/panel") === 0;
-        var fuentes = panel ? ["google-sans", "montserrat"] : ["inter", "manrope"];
-        fuentes.forEach(function (f) {
-          var l = document.createElement("link");
-          l.rel = "preload"; l.as = "font"; l.type = "font/woff2"; l.crossOrigin = "anonymous";
-          l.href = "/fonts/" + f + "-latin.woff2";
-          document.head.appendChild(l);
-        });
-      })();
-    </script>
+    <script src="/precarga-fuentes.js"></script>
     <title>Colegio Médico de Corrientes</title>
     <meta
       name="description"

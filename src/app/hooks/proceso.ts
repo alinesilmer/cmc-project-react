@@ -54,13 +54,18 @@ const resolver = <T>(texto: Texto<T> | undefined, resultado: T): string =>
  * Corre una acción lenta con el modal de espera encima: «haciendo…», y al terminar «listo» o el error.
  * Devuelve lo que devolvió la tarea, o `undefined` si falló (o si ya había otra acción en curso).
  */
-export async function conProceso<T>(textos: TextosProceso<T>, tarea: () => Promise<T>): Promise<T | undefined> {
+export async function conProceso<T>(
+  textos: TextosProceso<T>,
+  tarea: () => Promise<T>,
+  /** Para las cargas masivas que tardan más que el límite común. */
+  limiteMs: number = LIMITE_MS,
+): Promise<T | undefined> {
   if (estado.fase !== "libre" || leerDescarga() !== "libre") return undefined;
   emitir({ fase: "corriendo", titulo: textos.haciendo, detalle: "No toques nada hasta que termine." });
   let reloj = 0;
   try {
     const limite = new Promise<never>((_, rechazar) => {
-      reloj = window.setTimeout(() => rechazar(new Error("La acción tardó demasiado.")), LIMITE_MS);
+      reloj = window.setTimeout(() => rechazar(new Error("La acción tardó demasiado.")), limiteMs);
     });
     const resultado = await Promise.race([tarea(), limite]);
     emitir({ fase: "listo", titulo: resolver(textos.listo, resultado), detalle: resolver(textos.detalleListo, resultado) });
