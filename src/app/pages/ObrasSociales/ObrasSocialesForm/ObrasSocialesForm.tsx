@@ -200,10 +200,12 @@ export default function ObrasSocialesForm() {
   const agregarSecundaria = (val: string | number | null) => {
     const os = (osQuery.data ?? []).find((o) => o.id === Number(val));
     if (!os) return;
-    setSecundarias((prev) => [
-      ...prev,
-      { id: os.id, nro_obra_social: os.nro_obra_social, nombre: os.nombre, denominacion: os.denominacion },
-    ]);
+    // El buscador avisa dos veces por elección (al elegir y al perder el foco): sin esto la misma quedaba repetida.
+    setSecundarias((prev) =>
+      prev.some((o) => o.id === os.id)
+        ? prev
+        : [...prev, { id: os.id, nro_obra_social: os.nro_obra_social, nombre: os.nombre, denominacion: os.denominacion }]
+    );
   };
 
   const quitarSecundaria = (idQuitar: number) =>
