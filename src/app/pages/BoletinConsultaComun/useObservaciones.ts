@@ -27,6 +27,12 @@ type ApiPlantillasResponse = {
 
 // ─── Query keys ───────────────────────────────────────────────────
 
+/** Tope de la columna `boletin_observacion.texto` (varchar 1000): todos los renglones de una obra social suman esto. */
+export const MAX_OBSERVACION = 1000;
+
+/** Tope de `boletin_observacion_plantilla.texto` (varchar 400, único). */
+export const MAX_PLANTILLA = 400;
+
 const OBS_KEY = ["boletin-observaciones"] as const;
 const PLANTILLAS_KEY = ["boletin-observaciones", "plantillas"] as const;
 
@@ -83,7 +89,7 @@ export function useObservaciones() {
 
   const saveObservacion = useCallback(
     async (nro: number, texto: string): Promise<void> => {
-      await saveMutation.mutateAsync({ nro, texto: texto.trim().slice(0, 1000) });
+      await saveMutation.mutateAsync({ nro, texto: texto.trim().slice(0, MAX_OBSERVACION) });
     },
     [saveMutation]
   );
@@ -102,7 +108,7 @@ export function useObservaciones() {
 
   const addTemplate = useCallback(
     async (texto: string): Promise<void> => {
-      const trimmed = texto.trim().slice(0, 1000);
+      const trimmed = texto.trim().slice(0, MAX_PLANTILLA);
       if (!trimmed) return;
       await addTemplateMutation.mutateAsync(trimmed);
     },

@@ -420,6 +420,11 @@ export const OBRAS_SOCIALES: ObraSocialConfig[] = [
       "Centro de atención de Unión Personal. Consultá en el Colegio el usuario y la clave compartida.",
     url: "https://centro.unionpersonal.com.ar/appHMS/ca_web_prod/login.php",
     nota: "Cargá sólo el número de afiliado, la versión de credencial y el plan; después el código de consulta 420101.",
+    requisitos: {
+      titulo: "Requisitos obligatorios",
+      items: ["Token web", "N° de afiliado sin el último número", "Versión de la credencial", "Plan"],
+      motivo: "Sin estos datos el portal no autoriza la prestación.",
+    },
     guia: {
       chip: "Usuario y clave",
       titulo: "Unión Personal — Usuario y clave",

@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useConfirmacion } from "@/app/hooks/useConfirmacion";
+import { detalleDeError } from "@/app/shared/lib/httpErrors";
 import { createNews, getNewsById, removeNewsDoc, updateNews } from "@/website/lib/news.client";
 import { normalizar } from "@/website/lib/texto";
 import type { DocumentoNoticia, Noticia, TipoPublicacion } from "@/website/types";
@@ -104,8 +105,8 @@ export function useFormPublicacion(publicacion: Noticia | null, onGuardada: () =
         await createNews(datos, { portada, adjuntos: adjuntosNuevos });
       }
       onGuardada();
-    } catch {
-      setError("Error al guardar la publicación. Por favor, intentá de nuevo.");
+    } catch (e) {
+      setError(detalleDeError(e, "Error al guardar la publicación. Por favor, intentá de nuevo."));
     } finally {
       setGuardando(false);
     }

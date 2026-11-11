@@ -1,11 +1,9 @@
 import { useState, type KeyboardEvent } from "react";
 
 import Button from "@/app/components/ui/Button/Button";
-import type { Plantilla } from "../useObservaciones";
+import { MAX_OBSERVACION as MAX, type Plantilla } from "../useObservaciones";
 import s from "./EditorObservacion.module.scss";
 import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
-
-const MAX = 1000;
 
 /** Suma la plantilla como un renglón nuevo al final. */
 const sumar = (texto: string, plantilla: string) =>
