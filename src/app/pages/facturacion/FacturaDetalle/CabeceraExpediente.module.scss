@@ -1,6 +1,10 @@
 @use "@/app/styles/all.scss" as *;
 // Mismo lenguaje visual que el resto del listado (ver FacturaDetalle.module.scss).
 
+// Alto del topbar sticky de la app: lo publica el propio Topbar (`--alto-topbar`, ver altoTopbar.ts) porque cambia
+// con el ancho (dos filas en escritorio, una en pantallas chicas). El valor de respaldo es el de escritorio.
+$alto-topbar: var(--alto-topbar, 8.3125rem);
+
 // ── Botones ───────────────────────────────────────────────────────────────────
 .btn {
   display: inline-flex;
@@ -78,7 +82,7 @@
   border-radius: $radio-lg;
   margin-bottom: $spacing-5;
   // Al volver desde la barra compacta, que no quede tapada por el topbar.
-  scroll-margin-top: 5rem;
+  scroll-margin-top: calc(#{$alto-topbar} + 1rem);
 }
 
 .principal {
@@ -234,17 +238,20 @@
 .statNota { font-size: 0.75rem; color: $tono-azul-400; }
 .statTotal .statEtiqueta, .statTotal .statNota { color: $tono-verde-550; }
 
-.barra { height: 0.375rem; border-radius: 6px; background: $gray-200; overflow: hidden; }
-.barraRelleno { height: 100%; background: $tono-azul-450; }
+// Barra de progreso de «Revisadas». No se llama `.barra`: esa es la fila de acciones de arriba y, con el mismo
+// nombre, esta regla (6px de alto, overflow hidden) la achicaba y recortaba los botones.
+.progreso { height: 0.375rem; border-radius: 6px; background: $gray-200; overflow: hidden; }
+.progresoRelleno { height: 100%; background: $tono-azul-450; }
 
 .tipos { display: flex; flex-direction: column; gap: 0.1875rem; font-size: 0.75rem; color: $carpeta-noche; }
 .tipoFila { display: flex; justify-content: space-between; gap: 0.5rem; }
 
 // ── Barra compacta fija ───────────────────────────────────────────────────────
-// Fija debajo del topbar (el `top` lo pone el componente). Va a todo el ancho de la
+// Fija pegada debajo del topbar (z-index 50): con `top` menor quedaría tapada por él. Va a todo el ancho de la
 // ventana: el padding lateral de `.container` es 1.8rem.
 .compacta {
   position: fixed;
+  top: $alto-topbar;
   left: 0;
   right: 0;
   z-index: 40;
@@ -256,7 +263,13 @@
   background: $white;
   border-bottom: 1px solid $gray-200;
   box-shadow: 0 4px 16px rgba($black, .10);
-  overflow: hidden;
+  // Los botones nunca se achican ni se recortan: lo que no entra en pantallas angostas se oculta (ver abajo)
+  // y, como último recurso, la barra se desplaza en horizontal en vez de cortarlos.
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+
+  > :not(.compactaOs) { flex-shrink: 0; }
 }
 
 .compactaIcono {
@@ -286,6 +299,14 @@
 .compactaCant { font-size: 0.82rem; color: $tono-azul-400; white-space: nowrap; }
 .compactaTotal { margin-left: auto; font-size: 0.82rem; padding: 0.25rem 0.875rem; }
 
+@media (max-width: 1280px) {
+  .compactaCant { display: none; }
+}
+
 @media (max-width: 900px) {
-  .compactaCant, .compactaOs { display: none; }
+  .compactaOs { display: none; }
+}
+
+@media (max-width: 700px) {
+  .compacta > .chip:not(.compactaTotal) { display: none; }
 }

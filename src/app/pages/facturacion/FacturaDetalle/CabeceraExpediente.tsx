@@ -14,12 +14,12 @@ import BackButton from "@/app/components/ui/BackButton/BackButton";
 import Button from "@/app/components/ui/Button/Button";
 import styles from "./CabeceraExpediente.module.scss";
 import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
+import { useAltoTopbar } from "@/app/components/layout/Topbar/altoTopbar";
 
 // Alto de la barra compacta fija. La tabla (`.tablaEncabezado`) lo suma a su `top` para
 // quedar pegada debajo de ella: el padre lo recibe en `onCompactaChange`.
+// El alto del topbar de la app no se hardcodea: lo publica el propio Topbar (`--alto-topbar`) y la barra fija va debajo.
 export const ALTO_BARRA_COMPACTA = 56;
-// El alto del topbar de la app (64px + su borde): la barra fija va debajo.
-const ALTO_TOPBAR = 65;
 
 const estadoChip = (estado: string | null | undefined) => (estado === "A" ? styles.chipAbierta : styles.chipCerrada);
 const estadoLabel = (estado: string | null | undefined) =>
@@ -47,6 +47,7 @@ export default function CabeceraExpediente({
   const [compacta, setCompacta] = useState(false);
   const [copiado, setCopiado] = useState(false);
   const { anterior, siguiente } = usePeriodosVecinos(detalle?.cod_obra, detalle?.periodo);
+  const altoTopbar = useAltoTopbar();
 
   // La barra compacta aparece cuando la cabecera completa se fue por arriba (debajo del
   // topbar), no cuando todavía no se llegó a ella.
@@ -54,12 +55,12 @@ export default function CabeceraExpediente({
     const el = cabeceraRef.current;
     if (!el || typeof IntersectionObserver === "undefined") return;
     const obs = new IntersectionObserver(
-      ([e]) => setCompacta(!e.isIntersecting && e.boundingClientRect.top < ALTO_TOPBAR),
-      { rootMargin: `-${ALTO_TOPBAR}px 0px 0px 0px` },
+      ([e]) => setCompacta(!e.isIntersecting && e.boundingClientRect.top < altoTopbar),
+      { rootMargin: `-${altoTopbar}px 0px 0px 0px` },
     );
     obs.observe(el);
     return () => obs.disconnect();
-  }, [detalle]);
+  }, [detalle, altoTopbar]);
 
   useEffect(() => { onCompactaChange(compacta); }, [compacta, onCompactaChange]);
 
@@ -214,8 +215,8 @@ export default function CabeceraExpediente({
             <span className={styles.statValor}>
               {entero(stats.revisadas)} <span className={styles.statDe}>/ {entero(stats.total)}</span>
             </span>
-            <div className={styles.barra} role="progressbar" aria-valuenow={stats.porcentaje} aria-valuemin={0} aria-valuemax={100}>
-              <div className={styles.barraRelleno} style={{ width: `${stats.porcentaje}%` }} />
+            <div className={styles.progreso} role="progressbar" aria-valuenow={stats.porcentaje} aria-valuemin={0} aria-valuemax={100}>
+              <div className={styles.progresoRelleno} style={{ width: `${stats.porcentaje}%` }} />
             </div>
           </div>
           {conDocumentacion && (
@@ -273,7 +274,7 @@ export default function CabeceraExpediente({
       </div>
 
       {compacta && (
-        <div className={styles.compacta} style={{ top: ALTO_TOPBAR, height: ALTO_BARRA_COMPACTA }} role="region" aria-label="Resumen del expediente">
+        <div className={styles.compacta} style={{ height: ALTO_BARRA_COMPACTA }} role="region" aria-label="Resumen del expediente">
           <span className={styles.compactaIcono}><FileCheck2 size={18} /></span>
           <strong className={styles.compactaNumero}>Exp. N.º {detalle.id_factura}</strong>
           <span className={styles.compactaOs} title={nombreOs}>{nombreOs}</span>
