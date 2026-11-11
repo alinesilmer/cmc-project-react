@@ -725,7 +725,7 @@ const FacturaDetalle: React.FC = () => {
         )}
 
         <div className={styles.tableWrap}>
-          <Tabla className={`${comun.table} ${styles.tablaEncabezado}`} style={barraCompacta ? { top: 65 + ALTO_BARRA_COMPACTA } : undefined}>
+          <Tabla className={`${comun.table} ${styles.tablaEncabezado}`} style={barraCompacta ? { top: `calc(var(--alto-topbar, 8.3125rem) + ${ALTO_BARRA_COMPACTA}px)` } : undefined}>
             <colgroup>
               {columnasConPeso.map((c) => <col key={c.id} style={{ width: `${c.pct}%` }} />)}
             </colgroup>

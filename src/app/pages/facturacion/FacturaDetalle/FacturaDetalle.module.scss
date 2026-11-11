@@ -70,12 +70,12 @@
 
 .thActions { text-align: right; }
 
-// Encabezado fijo: queda pegado debajo de la barra superior (64px + su borde) mientras se recorren los bloques de filas.
+// Encabezado fijo: queda pegado debajo de la barra superior mientras se recorren los bloques de filas.
 .tablaEncabezado {
   position: sticky;
-  // Debajo del topbar; con la barra compacta del expediente a la vista, el `top` lo
-  // corre `FacturaDetalle` (estilo en línea sobre esta tabla).
-  top: 65px;
+  // Debajo del topbar, cuyo alto real publica el propio Topbar (`--alto-topbar`; 8.3125rem = escritorio, de respaldo).
+  // Con la barra compacta del expediente a la vista, el `top` lo corre `FacturaDetalle` (estilo en línea sobre esta tabla).
+  top: var(--alto-topbar, 8.3125rem);
   z-index: 5;
 }
 

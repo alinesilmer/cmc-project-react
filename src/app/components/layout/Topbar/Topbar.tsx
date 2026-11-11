@@ -16,6 +16,7 @@ import { ColumnasMenu } from "./ItemMenu";
 import MenuCelular from "./MenuCelular";
 import MenuCuenta from "./MenuCuenta";
 import { anotarReciente } from "./recientes";
+import { publicarAltoTopbar } from "./altoTopbar";
 import {
   DOCTOR_TOP_NAV,
   MENU_USUARIO,
@@ -83,6 +84,9 @@ export default function Topbar() {
 
   const authLabel = isAuthenticated ? "Salir" : "Iniciar sesión";
   const AuthIcon = isAuthenticated ? LogOut : CircleUserRound;
+
+  // Publica el alto real de la barra (`--alto-topbar`) para las pantallas con piezas pegadas debajo de ella.
+  useLayoutEffect(() => (headerRef.current ? publicarAltoTopbar(headerRef.current) : undefined), []);
 
   // Al navegar se cierran los menús.
   useEffect(() => {
