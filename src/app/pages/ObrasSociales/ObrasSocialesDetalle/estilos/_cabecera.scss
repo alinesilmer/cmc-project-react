@@ -121,7 +121,7 @@
   word-break: break-word;
 }
 
-// Botón de copiar: discreto hasta que el mouse entra en la fila, pero siempre visible al navegar con teclado y una vez copiado.
+// Botón de copiar: siempre visible.
 .copyBtn {
   margin-left: auto;
   flex-shrink: 0;
@@ -136,13 +136,7 @@
   background: none;
   color: $gray-500;
   cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.15s ease, color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
-
-  .infoRow:hover &,
-  &:focus-visible {
-    opacity: 1;
-  }
+  transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
 
   &:hover {
     color: $franja-azul;
@@ -157,6 +151,5 @@
 }
 
 .copyBtnDone {
-  opacity: 1;
   color: $success-green;
 }

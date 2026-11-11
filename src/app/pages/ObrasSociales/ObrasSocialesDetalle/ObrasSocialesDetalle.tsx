@@ -36,6 +36,7 @@ const formatFecha = formatFechaLarga;
 
 function CopyButton({ label, value }: { label: string; value: string }) {
   const [copiado, setCopiado] = useState(false);
+  const notify = useNotify();
 
   const copiar = async () => {
     try {
@@ -43,7 +44,7 @@ function CopyButton({ label, value }: { label: string; value: string }) {
       setCopiado(true);
       setTimeout(() => setCopiado(false), 1600);
     } catch {
-      /* Sin permiso de portapapeles: el valor igual está a la vista. */
+      notify.error("No se pudo copiar. Seleccioná el texto y copialo a mano.");
     }
   };
 
