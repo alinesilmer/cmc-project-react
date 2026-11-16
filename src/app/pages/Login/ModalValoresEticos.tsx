@@ -51,13 +51,7 @@ export default function ModalValoresEticos({ abierto, onCerrar }: Props) {
               </BotonPlano>
             </header>
 
-            <div className={styles.visor}>
-              <iframe src={pdf} title="Valores Éticos Mínimos" className={styles.pdf} />
-              <div className={styles.alternativa}>
-                <FileText aria-hidden="true" />
-                <p>Tocá «Abrir» para verlo en pantalla completa.</p>
-              </div>
-            </div>
+            <p className={styles.indicacion}>Tocá «Abrir» para leerlo o «PDF» para descargarlo.</p>
 
             <footer className={styles.acciones}>
               <a href={pdf} target="_blank" rel="noopener noreferrer" className={styles.secundaria}>

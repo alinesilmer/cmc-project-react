@@ -14,7 +14,7 @@
 .ventana {
   display: flex;
   flex-direction: column;
-  width: min(100%, 57.5rem);
+  width: min(100%, 28rem);
   max-height: calc(100dvh - 2.5rem);
   overflow: hidden;
   background: $white;
@@ -109,57 +109,23 @@
   }
 }
 
-.visor {
-  position: relative;
-  flex: 1;
-  min-height: 0;
-  padding: 1rem 1rem 0;
-  background: $gray-100;
-}
-
-.pdf {
-  display: block;
-  width: 100%;
-  height: min(65vh, 45rem);
-  border: 1px solid $tono-gris-100;
-  border-radius: 8px;
-  background: $white;
-}
-
-// En el celular el visor no se muestra: muchos navegadores no dibujan un PDF dentro de la página.
-.alternativa {
-  display: none;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.625rem;
-  padding: 2.25rem 1.25rem;
-  border-radius: 8px;
-  background: $white;
-  border: 1px dashed $tono-gris-100-c;
+.indicacion {
+  margin: 0;
+  padding: 1.25rem 1.25rem 0;
+  font-size: 0.95rem;
   color: $carpeta-plata-costura;
-  text-align: center;
-
-  svg {
-    width: 2.5rem;
-    height: 2.5rem;
-    color: $primary-blue;
-  }
-
-  p {
-    margin: 0;
-  }
 }
 
 .acciones {
   display: flex;
-  justify-content: flex-end;
   gap: 0.625rem;
   padding: 1rem;
-  background: $gray-100;
+  background: $white;
 }
 
 .principal,
 .secundaria {
+  flex: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -209,14 +175,6 @@
   .ventana {
     border-radius: 10px 10px 0 0;
     max-height: 92dvh;
-  }
-
-  .pdf {
-    display: none;
-  }
-
-  .alternativa {
-    display: flex;
   }
 
   .acciones {

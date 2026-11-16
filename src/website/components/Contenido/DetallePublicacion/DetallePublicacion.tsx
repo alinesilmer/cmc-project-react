@@ -95,8 +95,9 @@ export default function DetallePublicacion({ tipo }: { tipo: TipoPublicacion }) 
       <article className={styles.cuerpo}>
         {mostrarResumen && <p className={styles.resumen}>{resumen}</p>}
         <ContenidoMarkdown contenido={publicacion.contenido} className={styles.texto} />
-        <DocumentosPublicacion documentos={publicacion.documentos ?? []} />
       </article>
+
+      <DocumentosPublicacion documentos={publicacion.documentos ?? []} className={styles.adjuntos} />
 
       <footer className={styles.pie}>
         <Button to={config.ruta} variant="outline" iconoIzquierda={<ArrowLeft />}>
