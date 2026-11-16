@@ -25,10 +25,12 @@ interface ValorPediatria {
   valor: number;
 }
 
-/** El código de consulta del boletín. Swiss Medical usa el suyo. */
+/** El código de consulta del boletín. Swiss Medical y UNNE usan el suyo. */
 const CODIGO_CONSULTA = "420351";
 const CODIGO_CONSULTA_SWISS = "42010100";
 const SWISS_MEDICAL_NRO = 256;
+const CODIGO_CONSULTA_UNNE = "420101";
+const UNNE_NRO = 81;
 
 /** Una obra social del boletín. */
 export interface ItemBoletin {
@@ -162,12 +164,13 @@ export async function fetchBoletinMedico(
 ): Promise<ItemBoletin[]> {
   const fecha = hoyISO();
 
-  const [obras, consultas, consultasSwiss, galenos, observaciones, precios] =
+  const [obras, consultas, consultasSwiss, consultasUnne, galenos, observaciones, precios] =
     await Promise.all([
       // Sin filtro: el catálogo entero, ya ordenado alfabéticamente por el backend.
       listObrasSociales(),
       consultaPorOS(CODIGO_CONSULTA, fecha),
       consultaPorOS(CODIGO_CONSULTA_SWISS, fecha),
+      consultaPorOS(CODIGO_CONSULTA_UNNE, fecha),
       // Sin los galenos ocultados para el médico desde "Actualizar Unidades".
       fetchGalenosPorOS(fecha, { soloVisibles: true }),
       observacionesPorOS(),
@@ -181,8 +184,9 @@ export async function fetchBoletinMedico(
     const nro = os.nro_obra_social;
     if (!nro) continue;
 
-    // Swiss Medical factura la consulta con su propio código.
-    const fuente = nro === SWISS_MEDICAL_NRO ? consultasSwiss : consultas;
+    // Swiss Medical y UNNE facturan la consulta con su propio código.
+    const fuente =
+      nro === SWISS_MEDICAL_NRO ? consultasSwiss : nro === UNNE_NRO ? consultasUnne : consultas;
     const item = fuente.get(nro);
     const galenosDeOS = galenos.get(nro) ?? [];
     const obsDeOS = observaciones.get(nro) ?? [];
