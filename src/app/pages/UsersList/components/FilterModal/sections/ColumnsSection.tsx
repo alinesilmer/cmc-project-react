@@ -42,6 +42,7 @@ const AVAILABLE_COLUMNS: {
 
   { key: "documento", label: "Documento", group: "personal", sensible: true },
   { key: "sexo", label: "Sexo", group: "personal", sensible: true },
+  { key: "domicilio_particular", label: "Domicilio Particular", group: "personal", sensible: true },
   { key: "mail_particular", label: "Mail", group: "personal", sensible: true },
   { key: "tele_particular", label: "Teléfono", group: "personal", sensible: true },
   { key: "celular_particular", label: "Celular", group: "personal", sensible: true },

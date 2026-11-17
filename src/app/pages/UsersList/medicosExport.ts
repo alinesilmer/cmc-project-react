@@ -16,6 +16,7 @@ export type ExportColumnKey =
   | "celular_particular"
   | "telefono_consulta"
   | "domicilio_consulta"
+  | "domicilio_particular"
   | "activo"
   | "sexo"
   | "provincia"
@@ -59,6 +60,7 @@ const KEYMAP: Record<ExportColumnKey, string[]> = {
     "TELEFONOCONSULTA",
   ],
   domicilio_consulta: ["domicilio_consulta", "DOMICILIO_CONSULTA"],
+  domicilio_particular: ["domicilio_particular", "DOMICILIO_PARTICULAR"],
 
   activo: ["estado_cuenta", "activo", "ACTIVO", "estado", "ESTADO"],
 
@@ -147,6 +149,7 @@ export const DEFAULT_HEADERS: Record<ExportColumnKey, string> = {
   celular_particular: "Celular",
   telefono_consulta: "Teléfono Consultorio",
   domicilio_consulta: "Domicilio Consultorio",
+  domicilio_particular: "Domicilio Particular",
   activo: "Activo",
   sexo: "Sexo",
   provincia: "Provincia",
