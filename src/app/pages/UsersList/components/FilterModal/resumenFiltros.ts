@@ -53,6 +53,7 @@ export function filtrosActivos(
     otro("tieneMalapraxis", "Mala praxis", o.tieneMalapraxis === "true" ? "Con" : "Sin");
   if (o.fechaIngresoDesde) otro("fechaIngresoDesde", "Ingreso desde", o.fechaIngresoDesde);
   if (o.fechaIngresoHasta) otro("fechaIngresoHasta", "Ingreso hasta", o.fechaIngresoHasta);
+  if (o.fechaRecibido) otro("fechaRecibido", "Recibido", o.fechaRecibido);
 
   if (f.enabled) {
     out.push({

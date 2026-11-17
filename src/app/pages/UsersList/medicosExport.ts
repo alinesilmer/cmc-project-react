@@ -23,6 +23,7 @@ export type ExportColumnKey =
   | "adherente"
   | "condicion_impositiva"
   | "fecha_ingreso"
+  | "fecha_recibido"
   | "especialidad"
   | "anssal"
   | "malapraxis"
@@ -68,6 +69,7 @@ const KEYMAP: Record<ExportColumnKey, string[]> = {
   condicion_impositiva: ["condicion_impositiva", "CONDICION_IMPOSITIVA", "condicionImpositiva"],
 
   fecha_ingreso: ["fecha_ingreso", "FECHA_INGRESO", "fechaIngreso", "FECHAINGRESO"],
+  fecha_recibido: ["fecha_recibido", "FECHA_RECIBIDO", "fechaRecibido", "FECHARECIBIDO"],
 
   especialidad: [
     "especialidad",
@@ -152,6 +154,7 @@ export const DEFAULT_HEADERS: Record<ExportColumnKey, string> = {
   adherente: "Adherente",
   condicion_impositiva: "Condición Impositiva",
   fecha_ingreso: "Fecha Ingreso",
+  fecha_recibido: "Fecha Recibido",
   especialidad: "Especialidades",
   anssal: "ANSSAL",
   malapraxis: "Mala Praxis",
@@ -265,6 +268,7 @@ export function mapUIToQuery(filters: FilterSelection) {
 
     fecha_ingreso_desde: otros.fechaIngresoDesde || undefined,
     fecha_ingreso_hasta: otros.fechaIngresoHasta || undefined,
+    fecha_recibido: otros.fechaRecibido || undefined,
 
     malapraxis_vencida: v.malapraxisVencida ? "1" : undefined,
     malapraxis_por_vencer: v.malapraxisPorVencer ? "1" : undefined,

@@ -27,6 +27,7 @@ const AVAILABLE_COLUMNS: {
   { key: "especialidad", label: "Especialidad", group: "profesional" },
   { key: "categoria", label: "Categoría", group: "profesional" },
   { key: "fecha_ingreso", label: "Fecha de Ingreso", group: "profesional" },
+  { key: "fecha_recibido", label: "Fecha de Recibido", group: "profesional" },
   { key: "malapraxis", label: "Mala Praxis", group: "profesional" },
   { key: "vencimiento_malapraxis", label: "Venc. Mala Praxis", group: "profesional" },
   { key: "vencimiento_anssal", label: "Venc. ANSSAL", group: "profesional" },

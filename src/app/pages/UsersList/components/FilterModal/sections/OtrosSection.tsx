@@ -145,6 +145,14 @@ export function OtrosSection({
           onChange={(valor) => onPatch({ fechaIngresoHasta: valor })}
         />
       </div>
+
+      <div className={styles.exportField}>
+        <label className={styles.exportLabel}>Fecha Recibido</label>
+        <CampoFecha
+          value={otros.fechaRecibido}
+          onChange={(valor) => onPatch({ fechaRecibido: valor })}
+        />
+      </div>
     </div>
   );
 }

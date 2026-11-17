@@ -390,6 +390,9 @@ function applyMedicosFilters(rows: MedicoRow[], filters: FilterSelection): Medic
   const fromIngreso = o.fechaIngresoDesde ? parseDateAny(o.fechaIngresoDesde) : null;
   const toIngreso = o.fechaIngresoHasta ? parseDateAny(o.fechaIngresoHasta) : null;
 
+  const recibidoRaw = o.fechaRecibido ? parseDateAny(o.fechaRecibido) : null;
+  const recibido = recibidoRaw ? startOfDay(recibidoRaw) : null;
+
   const fromVto = v.fechaDesde ? parseDateAny(v.fechaDesde) : null;
   const toVtoByDate = v.fechaHasta ? parseDateAny(v.fechaHasta) : null;
   const toVto = v.dias > 0 ? addDays(today, v.dias) : toVtoByDate;
@@ -472,6 +475,11 @@ function applyMedicosFilters(rows: MedicoRow[], filters: FilterSelection): Medic
       const dIng = parseDateAny(rawIng);
       if (!dIng) return false;
       if (!inRange(startOfDay(dIng), fromIngreso, toIngreso)) return false;
+    }
+
+    if (o.fechaRecibido) {
+      const dRec = parseDateAny(pickFirst(row, ["fecha_recibido", "FECHA_RECIBIDO", "fechaRecibido", "FECHARECIBIDO"]));
+      if (!dRec || startOfDay(dRec).getTime() !== recibido?.getTime()) return false;
     }
 
     if (wantAnyVencCheckbox || wantsAnyVtoWindow) {
@@ -692,6 +700,7 @@ const UsersList: React.FC = () => {
       const label = [o.fechaIngresoDesde && `desde ${o.fechaIngresoDesde}`, o.fechaIngresoHasta && `hasta ${o.fechaIngresoHasta}`].filter(Boolean).join(" ");
       chips.push({ key: "fechaIngreso", label: `Ingreso: ${label}` });
     }
+    if (o.fechaRecibido) chips.push({ key: "fechaRecibido", label: `Recibido: ${o.fechaRecibido}` });
 
     if (v.malapraxisVencida) chips.push({ key: "malapraxisVencida", label: "Mala praxis vencida" });
     if (v.malapraxisPorVencer) chips.push({ key: "malapraxisPorVencer", label: "Mala praxis por vencer" });
@@ -742,6 +751,7 @@ const UsersList: React.FC = () => {
       tieneMalapraxis: patchOtros({ tieneMalapraxis: "" }),
       adherente: patchOtros({ adherente: "" }),
       fechaIngreso: patchOtros({ fechaIngresoDesde: "", fechaIngresoHasta: "" }),
+      fechaRecibido: patchOtros({ fechaRecibido: "" }),
       malapraxisVencida: patchVenc({ malapraxisVencida: false }),
       malapraxisPorVencer: patchVenc({ malapraxisPorVencer: false }),
       anssalVencido: patchVenc({ anssalVencido: false }),

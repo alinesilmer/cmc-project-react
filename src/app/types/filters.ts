@@ -47,6 +47,7 @@ export type OtrosFilter = {
   condicionImpositiva: string;
   fechaIngresoDesde: string;
   fechaIngresoHasta: string;
+  fechaRecibido: string;
   tieneMalapraxis: "" | "true" | "false";
 };
 
@@ -97,6 +98,7 @@ export const initialFilters: FilterSelection = {
     condicionImpositiva: "",
     fechaIngresoDesde: "",
     fechaIngresoHasta: "",
+    fechaRecibido: "",
     tieneMalapraxis: "",
   },
   faltantes: {
