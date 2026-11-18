@@ -183,6 +183,7 @@ export default function ConsultaPrecios() {
         resultado={result}
         error={searched ? error : null}
         copago={copago}
+        descontarCopago
       />
     </PaginaConsulta>
   );

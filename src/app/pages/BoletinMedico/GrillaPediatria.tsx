@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import type { ItemBoletin } from "./boletinMedico.api";
 import { moneda } from "./boletinMedico.formato";
+import { NOTA_COPAGO } from "./boletinPediatria";
 import s from "./BoletinMedico.module.scss";
 
 /** Los códigos de pediatría de cada obra social, con el número y su valor. */
@@ -26,6 +27,7 @@ export default function GrillaPediatria({ items }: { items: ItemBoletin[] }) {
                 <span className={s.valorNombre}>
                   <span className={s.valorCodigo}>{v.codigo}</span>
                   {v.nombre}
+                  {v.conCopago && <span className={s.valorNota}>{NOTA_COPAGO}</span>}
                 </span>
                 <span className={s.valorMonto}>{moneda.format(v.valor)}</span>
               </li>

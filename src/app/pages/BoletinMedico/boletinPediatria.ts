@@ -105,6 +105,12 @@ export const CODIGOS_CON_PRECIO_PEDIATRICO = [
   ),
 ];
 
+/** Todos los códigos que se muestran, para las obras sociales que no están en la lista del Colegio pero tienen precio de pediatría. */
+export const CODIGOS_DE_PEDIATRIA = Object.keys(NOMBRE_CODIGO);
+
 /** `true` si el médico tiene Pediatría en cualquiera de sus especialidades. */
 export const esPediatra = (especialidades: readonly number[] | undefined): boolean =>
   Boolean(especialidades?.includes(ESPECIALIDAD_PEDIATRIA));
+
+/** Leyenda de los valores a los que ya se les descontó el copago. */
+export const NOTA_COPAGO = "(PRECIO FINAL CON COPAGO APLICADO)";

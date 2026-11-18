@@ -182,6 +182,15 @@
   color: $franja-azul;
 }
 
+// Aclaración bajo el total cuando ya trae el copago descontado.
+.totalNota {
+  flex-basis: 100%;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  text-align: right;
+  color: $tono-amarillo-350;
+}
+
 .pie {
   display: flex;
   flex-direction: column;

@@ -2,6 +2,7 @@ import type { jsPDF } from "jspdf";
 import { formatoPesos } from "@/app/shared/lib/formatos";
 import { fitText } from "@/app/shared/lib/documentos/pdfColegio";
 import type { ItemBoletin } from "../boletinMedico.api";
+import { NOTA_COPAGO } from "../boletinPediatria";
 import { AZUL, GRIS, MARGEN, type Lienzo, type Rgb, type SeccionPdf } from "./base";
 
 // Las tarjetas de la pantalla: una por obra social, con su cabecera azul y los códigos debajo.
@@ -10,6 +11,8 @@ const AMARILLO: Rgb = [250, 240, 200];
 const BORDE: Rgb = [226, 232, 240];
 const ZEBRA: Rgb = [248, 250, 252];
 const TEXTO: Rgb = [71, 85, 105];
+// El mismo amarillo oscuro de la leyenda del copago en pantalla.
+const AMARILLO_OSCURO: Rgb = [180, 128, 31];
 
 const COLUMNAS = 2;
 const SEPARACION = 6;
@@ -19,10 +22,13 @@ const ANCHO_CODIGO = 12;
 const INTERLINEA = 3.7;
 const PADDING_FILA = 1.8;
 const PIE_PAGINA = 16;
+const INTERLINEA_NOTA = 3.2;
 
 interface FilaMedida {
   codigo: string;
   lineas: string[];
+  /** La leyenda del copago, en letra chica bajo el nombre; vacía si no aplica. */
+  nota: string[];
   monto: string;
   alto: number;
 }
@@ -46,11 +52,15 @@ function medir(doc: jsPDF, item: ItemBoletin, ancho: number): TarjetaMedida {
 
   const filas = item.pediatria.map<FilaMedida>((v, n) => {
     const lineas = doc.splitTextToSize(v.nombre, anchoNombre) as string[];
+    doc.setFontSize(7);
+    const nota = v.conCopago ? (doc.splitTextToSize(NOTA_COPAGO, anchoNombre) as string[]) : [];
+    doc.setFontSize(8.5);
     return {
       codigo: v.codigo,
       lineas,
+      nota,
       monto: montos[n],
-      alto: lineas.length * INTERLINEA + PADDING_FILA * 2,
+      alto: lineas.length * INTERLINEA + nota.length * INTERLINEA_NOTA + PADDING_FILA * 2,
     };
   });
 
@@ -99,6 +109,14 @@ function dibujarTarjeta(doc: jsPDF, t: TarjetaMedida, x: number, y: number, anch
     doc.setFontSize(8.5);
     doc.setTextColor(...TEXTO);
     f.lineas.forEach((linea, l) => doc.text(linea, x + RELLENO + ANCHO_CODIGO, base + l * INTERLINEA));
+
+    if (f.nota.length > 0) {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(7);
+      doc.setTextColor(...AMARILLO_OSCURO);
+      const yNota = base + (f.lineas.length - 1) * INTERLINEA + INTERLINEA_NOTA;
+      f.nota.forEach((linea, l) => doc.text(linea, x + RELLENO + ANCHO_CODIGO, yNota + l * INTERLINEA_NOTA));
+    }
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
