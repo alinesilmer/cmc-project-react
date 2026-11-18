@@ -316,3 +316,15 @@ textarea.entrada { resize: vertical; min-height: 4.5rem; }
   display: flex;
   gap: $spacing-2;
 }
+
+// Marca de pantalla de demostración, junto al título de la franja.
+.demo {
+  display: inline-block;
+  padding: $spacing-1 $spacing-4;
+  border: 2px solid $franja-crema;
+  border-radius: 999px;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.18em;
+  color: $franja-crema;
+}

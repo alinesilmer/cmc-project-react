@@ -75,7 +75,7 @@ export default function TableroPage() {
 
   return (
     <>
-      <Franja suelta titulo="Tablero" icono={Kanban}>
+      <Franja suelta titulo="Tablero" icono={Kanban} lateral={<span className={s.demo}>DEMO</span>}>
         <Solapa activa={!soloMias} onClick={() => setSoloMias(false)} cuenta={tarjetas.length}>
           Todas
         </Solapa>

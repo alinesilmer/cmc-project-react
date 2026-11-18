@@ -8,9 +8,9 @@ import {
 } from "@/app/features/nomenclador/galenos";
 import { listObrasSociales } from "../ObrasSociales/obrasSociales.api";
 import {
-  CODIGO_CONSULTA_COMUN,
+  codigoViejo,
   CODIGOS_CON_PRECIO_PEDIATRICO,
-  CODIGOS_PEDIATRIA,
+  codigosPediatria,
   ESPECIALIDAD_PEDIATRIA,
   NOMBRE_CODIGO,
 } from "./boletinPediatria";
@@ -143,15 +143,19 @@ async function preciosPediatria(fecha: string): Promise<Map<string, Map<number, 
 /** Los valores de pediatría de una obra social, en el orden de la lista del Colegio. */
 function valoresPediatria(
   nro: number,
-  precios: Map<string, Map<number, ApiBoletinItem>>,
-  consulta: number | null
+  precios: Map<string, Map<number, ApiBoletinItem>>
 ): ValorPediatria[] {
   const valores: ValorPediatria[] = [];
-  for (const codigo of CODIGOS_PEDIATRIA[nro] ?? []) {
+  for (const codigo of codigosPediatria(nro)) {
+    const propio = aNumero(precios.get(codigo)?.get(nro)?.precio_total);
+    const viejo = codigoViejo(codigo);
+    // Si el código nuevo no tiene precio cargado, se muestra con el precio del número viejo.
     const valor =
-      codigo === CODIGO_CONSULTA_COMUN
-        ? consulta
-        : aNumero(precios.get(codigo)?.get(nro)?.precio_total);
+      propio && propio > 0
+        ? propio
+        : viejo
+          ? aNumero(precios.get(viejo)?.get(nro)?.precio_total)
+          : 0;
     if (valor && valor > 0) {
       valores.push({ codigo, nombre: NOMBRE_CODIGO[codigo] ?? codigo, valor });
     }
@@ -194,7 +198,7 @@ export async function fetchBoletinMedico(
     // Sin precio, sin galenos y sin condiciones no hay nada que mostrar.
     const crudo = item ? aNumero(item.precio_total) : null;
     const consulta = crudo && crudo > 0 ? crudo : null;
-    const pediatriaDeOS = precios ? valoresPediatria(nro, precios, consulta) : [];
+    const pediatriaDeOS = precios ? valoresPediatria(nro, precios) : [];
     if (
       consulta === null &&
       galenosDeOS.length === 0 &&
