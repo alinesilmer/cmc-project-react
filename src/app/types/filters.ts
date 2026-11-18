@@ -48,6 +48,7 @@ export type OtrosFilter = {
   fechaIngresoDesde: string;
   fechaIngresoHasta: string;
   fechaRecibido: string;
+  fallecido: "" | "si" | "no";
   tieneMalapraxis: "" | "true" | "false";
 };
 
@@ -99,6 +100,7 @@ export const initialFilters: FilterSelection = {
     fechaIngresoDesde: "",
     fechaIngresoHasta: "",
     fechaRecibido: "",
+    fallecido: "",
     tieneMalapraxis: "",
   },
   faltantes: {

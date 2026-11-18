@@ -62,6 +62,10 @@ export type DoctorProfile = {
   codigo_postal?: string | null;
   categoria?: string | null;
   estado_cuenta?: EstadoCuenta | null;
+  /** Cuándo cambió el estado de la cuenta (UTC); con `baja` es la fecha de baja. */
+  estado_cuenta_at?: string | null;
+  fallecido?: boolean | null;
+  motivo_baja?: string | null;
   /** Rol principal del legajo; "medico" es un socio. */
   rol?: string | null;
   fecha_nac?: string | null;
@@ -158,6 +162,8 @@ export const UPDATE_WHITELIST = [
   "celular_particular",
   "mail_particular",
   "fecha_ingreso",
+  "fallecido",
+  "motivo_baja",
 
   // profesionales
   "nro_socio",
@@ -262,8 +268,11 @@ export const getListEspecialidades = () =>
   getJSON<Especialidad[]>(ESPECIALIDADES());
 
 // PATCH /medicos/:id/estado — fuera de "activo" la API le corta las sesiones a la persona.
-export const setMedicoEstado = (id: string | number, estado_cuenta: EstadoCuenta) =>
-  patchJSON(`/api/medicos/${id}/estado`, { estado_cuenta });
+export const setMedicoEstado = (
+  id: string | number,
+  estado_cuenta: EstadoCuenta,
+  motivo_baja?: string
+) => patchJSON(`/api/medicos/${id}/estado`, { estado_cuenta, motivo_baja });
 
 export type RenovarPasswordOut = {
   medico_id: number;

@@ -3,6 +3,7 @@ import styles from "../DoctorProfilePage.module.scss";
 import type { DoctorProfileX } from "./legajo.types";
 import { parseLocalDate, toYmd } from "./legajo.helpers";
 import { errorCbu, MEDIOS_COBRO, type MedioCobro } from "@/app/shared/lib/cbu";
+import MotivoBaja from "./MotivoBaja";
 
 type Valor = DoctorProfileX[keyof DoctorProfileX];
 
@@ -80,6 +81,27 @@ export function camposEdicion(draft: Partial<DoctorProfileX>, setField: SetField
   // setField está tipado por clave; para los campos de cobro alcanza con un setter sin tipo.
   const setAny = setField as unknown as (key: keyof DoctorProfileX, val: unknown) => void;
 
+  const RMotivoBaja = () => (
+    <MotivoBaja
+      value={draft.motivo_baja ?? ""}
+      onChange={(v) => setField("motivo_baja", v)}
+      claseSelect={styles.select}
+      claseInput={styles.input}
+    />
+  );
+
+  /** Casilla de un campo sí/no del borrador. */
+  const RCheck = (key: "fallecido", etiqueta: string) => (
+    <label className={styles.radioOpcion}>
+      <input
+        type="checkbox"
+        checked={Boolean(draft[key])}
+        onChange={(e) => setAny(key, e.target.checked)}
+      />
+      {etiqueta}
+    </label>
+  );
+
   /** CBU de Santander o de otro banco: solo dígitos, con el aviso de por qué no sirve si no es válido. */
   const RCbu = (key: "cbu_santander" | "cbu_otro_banco", banco: "santander" | "otro") => {
     const valor = (draft[key] as string | null | undefined) ?? "";
@@ -122,7 +144,7 @@ export function camposEdicion(draft: Partial<DoctorProfileX>, setField: SetField
     </>
   );
 
-  return { RText, RNumber, RSexo, RCondicion_impositiva, RDate, RCbu, RMedioCobro };
+  return { RText, RNumber, RSexo, RCondicion_impositiva, RDate, RCbu, RMedioCobro, RCheck, RMotivoBaja };
 }
 
 export type CamposEdicion = ReturnType<typeof camposEdicion>;

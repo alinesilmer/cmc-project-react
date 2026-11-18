@@ -49,6 +49,7 @@ export function filtrosActivos(
   if (o.especialidad)
     otro("especialidad", "Especialidad", nombreDeEspecialidad(o.especialidad, especialidades));
   if (o.adherente) otro("adherente", "Adherente", o.adherente === "si" ? "Sí" : "No");
+  if (o.fallecido) otro("fallecido", "Fallecido", o.fallecido === "si" ? "Sí" : "No");
   if (o.tieneMalapraxis)
     otro("tieneMalapraxis", "Mala praxis", o.tieneMalapraxis === "true" ? "Con" : "Sin");
   if (o.fechaIngresoDesde) otro("fechaIngresoDesde", "Ingreso desde", o.fechaIngresoDesde);

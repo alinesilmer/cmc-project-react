@@ -35,6 +35,7 @@ import TabDocumentos from "./legajo/TabDocumentos";
 import TabEspecialidades from "./legajo/TabEspecialidades";
 import TabPermisos from "./legajo/TabPermisos";
 import RenovarPasswordModal from "./legajo/RenovarPasswordModal";
+import BajaModal from "./legajo/BajaModal";
 import { crearReportar } from "./legajo/reportar";
 import { TAB_ICONS, TAB_LABELS } from "./legajo/pestanas";
 import type { TabKey } from "./legajo/legajo.types";
@@ -135,6 +136,7 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
 
   const [delOpen, setDelOpen] = useState(false);
   const [renovarOpen, setRenovarOpen] = useState(false);
+  const [bajaOpen, setBajaOpen] = useState(false);
   // La propia se cambia con la actual, no se renueva (la API también lo rechaza).
   const puedeRenovar = can("medico:renovar_password") && !esLegajoPropio;
 
@@ -211,7 +213,7 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
                         <Switch
                           checked={estadoCuenta === "activo"}
                           disabled={toggleBusy}
-                          onChange={(_e, checked) => cambiarEstado(checked)}
+                          onChange={(_e, checked) => (checked ? cambiarEstado(true) : setBajaOpen(true))}
                           inputProps={{ "aria-label": "Activar o dar de baja la cuenta" }}
                         />
                       </div>
@@ -485,6 +487,17 @@ const DoctorProfilePage: React.FC<DoctorProfilePageProps> = ({
           <p>¿Querés continuar?</p>
         </div>
       </ActionModal>
+
+      {bajaOpen && data && (
+        <BajaModal
+          nombre={data.name}
+          ocupado={toggleBusy}
+          onClose={() => setBajaOpen(false)}
+          onConfirmar={async (motivo) => {
+            if (await cambiarEstado(false, motivo)) setBajaOpen(false);
+          }}
+        />
+      )}
 
       {renovarOpen && data && (
         <RenovarPasswordModal

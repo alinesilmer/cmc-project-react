@@ -701,6 +701,7 @@ const UsersList: React.FC = () => {
       chips.push({ key: "fechaIngreso", label: `Ingreso: ${label}` });
     }
     if (o.fechaRecibido) chips.push({ key: "fechaRecibido", label: `Recibido: ${o.fechaRecibido}` });
+    if (o.fallecido) chips.push({ key: "fallecido", label: `Fallecido: ${o.fallecido === "si" ? "Sí" : "No"}` });
 
     if (v.malapraxisVencida) chips.push({ key: "malapraxisVencida", label: "Mala praxis vencida" });
     if (v.malapraxisPorVencer) chips.push({ key: "malapraxisPorVencer", label: "Mala praxis por vencer" });
@@ -752,6 +753,7 @@ const UsersList: React.FC = () => {
       adherente: patchOtros({ adherente: "" }),
       fechaIngreso: patchOtros({ fechaIngresoDesde: "", fechaIngresoHasta: "" }),
       fechaRecibido: patchOtros({ fechaRecibido: "" }),
+      fallecido: patchOtros({ fallecido: "" }),
       malapraxisVencida: patchVenc({ malapraxisVencida: false }),
       malapraxisPorVencer: patchVenc({ malapraxisPorVencer: false }),
       anssalVencido: patchVenc({ anssalVencido: false }),

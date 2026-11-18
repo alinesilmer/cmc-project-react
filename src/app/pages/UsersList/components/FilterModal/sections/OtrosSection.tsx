@@ -66,6 +66,19 @@ export function OtrosSection({
       </div>
 
       <div className={styles.exportField}>
+        <label className={styles.exportLabel}>Fallecido</label>
+        <select
+          className={styles.exportSelect}
+          value={otros.fallecido}
+          onChange={(e) => onPatch({ fallecido: e.target.value as OtrosFilter["fallecido"] })}
+        >
+          <option value="">Todos</option>
+          <option value="si">Sí</option>
+          <option value="no">No</option>
+        </select>
+      </div>
+
+      <div className={styles.exportField}>
         <label className={styles.exportLabel}>Especialidad</label>
         <select
           className={styles.exportSelect}

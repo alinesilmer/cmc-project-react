@@ -61,15 +61,20 @@ export function useLegajoDatos(medicoId: string, readOnly: boolean) {
     };
   }, [medicoId]);
 
-  async function cambiarEstado(checked: boolean) {
+  /** `motivo` es el de la baja: la API lo guarda sólo al pasar a baja y lo borra al reactivar. */
+  async function cambiarEstado(checked: boolean, motivo?: string) {
     try {
       setToggleBusy(true);
       const next: EstadoCuenta = checked ? "activo" : "baja";
-      await setMedicoEstado(medicoId, next);
+      await setMedicoEstado(medicoId, next, motivo);
       setEstadoCuenta(next);
-      setData((d) => (d ? { ...d, estado_cuenta: next } : d));
+      // Se vuelve a leer: la fecha de baja la pone el servidor.
+      const fresh = await getMedicoDetail(medicoId);
+      setData({ ...fresh, fecha_ingreso: getFechaIngreso(fresh) });
+      return true;
     } catch (e: unknown) {
       notify.error(mensajeDe(e) || "No se pudo actualizar el estado.");
+      return false;
     } finally {
       setToggleBusy(false);
     }

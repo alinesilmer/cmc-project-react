@@ -97,6 +97,7 @@ const PrevencionSalud = lazy(() => import("./app/pages/Validaciones/PrevencionSa
 const SwissMedical = lazy(() => import("./app/pages/Validaciones/SwissMedical"));
 const InstitucionPage = lazy(() => import("./app/pages/Institucion/InstitucionPage"));
 const AgendaPage = lazy(() => import("./app/pages/Agenda/AgendaPage"));
+const TableroPage = lazy(() => import("./app/pages/Tablero/TableroPage"));
 const ActividadPage = lazy(() => import("./app/pages/Actividad/ActividadPage"));
 const PlanillasMedico = lazy(() => import("./app/pages/Planillas/PlanillasMedico"));
 const PlanillasAdmin = lazy(() => import("./app/pages/Planillas/PlanillasAdmin"));
@@ -316,6 +317,7 @@ export default function RootRoutes() {
               </Route>
 
               <Route path="help" element={<Help />} />
+              <Route path="tablero" element={<TableroPage />} />
 
               <Route element={<RequireScope scope="nomenclador:leer" />}>
                 <Route path="boletin" element={<Boletin />} />

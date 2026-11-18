@@ -25,6 +25,8 @@ export type ExportColumnKey =
   | "condicion_impositiva"
   | "fecha_ingreso"
   | "fecha_recibido"
+  | "fallecido"
+  | "motivo_baja"
   | "especialidad"
   | "anssal"
   | "malapraxis"
@@ -72,6 +74,8 @@ const KEYMAP: Record<ExportColumnKey, string[]> = {
 
   fecha_ingreso: ["fecha_ingreso", "FECHA_INGRESO", "fechaIngreso", "FECHAINGRESO"],
   fecha_recibido: ["fecha_recibido", "FECHA_RECIBIDO", "fechaRecibido", "FECHARECIBIDO"],
+  fallecido: ["fallecido", "FALLECIDO"],
+  motivo_baja: ["motivo_baja", "MOTIVO_BAJA", "motivoBaja"],
 
   especialidad: [
     "especialidad",
@@ -158,6 +162,8 @@ export const DEFAULT_HEADERS: Record<ExportColumnKey, string> = {
   condicion_impositiva: "Condición Impositiva",
   fecha_ingreso: "Fecha Ingreso",
   fecha_recibido: "Fecha Recibido",
+  fallecido: "Fallecido",
+  motivo_baja: "Motivo de Baja",
   especialidad: "Especialidades",
   anssal: "ANSSAL",
   malapraxis: "Mala Praxis",
@@ -238,6 +244,7 @@ export function pickValue(row: MedicoRow, canonicalKey: ExportColumnKey): string
   const candidates = KEYMAP[canonicalKey] ?? [canonicalKey];
   for (const k of candidates) {
     const v = row?.[k];
+    if (canonicalKey === "fallecido" && typeof v === "boolean") return v ? "Sí" : "No";
     if (!isNil(v)) return toCleanString(v);
   }
   return "";
@@ -272,6 +279,7 @@ export function mapUIToQuery(filters: FilterSelection) {
     fecha_ingreso_desde: otros.fechaIngresoDesde || undefined,
     fecha_ingreso_hasta: otros.fechaIngresoHasta || undefined,
     fecha_recibido: otros.fechaRecibido || undefined,
+    fallecido: otros.fallecido === "si" ? "1" : otros.fallecido === "no" ? "0" : undefined,
 
     malapraxis_vencida: v.malapraxisVencida ? "1" : undefined,
     malapraxis_por_vencer: v.malapraxisPorVencer ? "1" : undefined,

@@ -12,8 +12,10 @@ const PASO = 200;
 export interface CierreObraSocial {
   nro: string;
   nombre: string;
-  /** Original más complementos cerrados. */
+  /** Facturas cabecera cerradas: los complementos no entran. */
   facturas: number;
+  /** Nº de la factura cabecera, sin repetir. */
+  nrosFactura: string[];
   importe: number;
   /** Último cierre, `YYYY-MM-DD…`. */
   ultimoCierre: string | null;
@@ -23,6 +25,7 @@ export const colsCierres: ColumnaExport<CierreObraSocial>[] = [
   { header: "Nº", value: (c) => c.nro },
   { header: "Obra social", value: (c) => c.nombre },
   { header: "Facturas", value: (c) => c.facturas, tipo: "numero" },
+  { header: "Nº factura", value: (c) => c.nrosFactura.join(", ") },
   { header: "Último cierre", value: (c) => fmtFecha(c.ultimoCierre) },
   { header: "Facturado", value: (c) => c.importe, tipo: "moneda" },
 ];
@@ -35,11 +38,11 @@ export function useCierres(
   habilitado: boolean,
 ) {
   const consulta = useQuery({
-    queryKey: ["rep-cierres", periodo],
+    queryKey: ["rep-cierres", "cabecera", periodo],
     queryFn: () =>
       paginar(
         (page) =>
-          listarFacturas({ periodo, limit: PASO, offset: (page - 1) * PASO }).then((r) => r.data),
+          listarFacturas({ periodo, solo_complementos: false, limit: PASO, offset: (page - 1) * PASO }).then((r) => r.data),
         { size: PASO },
       ),
     enabled: habilitado,
@@ -58,16 +61,19 @@ export function useCierres(
       nro: f.cod_obr,
       nombre: nombreDe(f.cod_obr),
       facturas: 0,
+      nrosFactura: [],
       importe: 0,
       ultimoCierre: null,
     };
     fila.facturas += 1;
+    const nro = f.nro_factura?.trim();
+    if (nro && !fila.nrosFactura.includes(nro)) fila.nrosFactura.push(nro);
     // Decimal del backend: llega como texto.
     fila.importe += Number(f.importe ?? 0);
     if (f.fecha && (!fila.ultimoCierre || f.fecha > fila.ultimoCierre)) fila.ultimoCierre = f.fecha;
     porObra.set(f.cod_obr, fila);
   }
-  // Una obra social con el original cerrado y un complemento abierto cuenta como cerrada.
+  // Una obra social con alguna cabecera cerrada cuenta como cerrada.
   for (const nro of porObra.keys()) abiertas.delete(nro);
 
   const filas = [...porObra.values()].sort((a, b) => b.importe - a.importe);

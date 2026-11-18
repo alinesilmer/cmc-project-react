@@ -38,7 +38,7 @@ export const esOrganizacion = (user: User | null | undefined): boolean =>
   Boolean(user?.es_organizacion);
 
 /** Rutas que una organización no usa: las validaciones se hacen por el médico que atiende al afiliado, no por la clínica. */
-const ORGANIZACION_BLOCKED_PATHS = ["/panel/validaciones"];
+const ORGANIZACION_BLOCKED_PATHS = ["/panel/validaciones", "/panel/tablero"];
 
 export const organizacionCanAccess = (pathname: string): boolean =>
   !ORGANIZACION_BLOCKED_PATHS.some(

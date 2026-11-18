@@ -1,0 +1,318 @@
+@use "@/app/styles/all.scss" as *;
+
+// Tablero del personal: tres columnas con tarjetas que se arrastran y el detalle de la elegida al costado.
+
+.pagina {
+  width: 100%;
+  padding: $spacing-6 $spacing-12 $spacing-12;
+
+  @media (max-width: 1200px) { padding: $spacing-6 $spacing-8 $spacing-10; }
+  @media (max-width: $breakpoint-md) { padding: $spacing-5; }
+  @media (max-width: $breakpoint-sm) { padding: $spacing-4; }
+}
+
+.barra {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: $spacing-3;
+  margin-bottom: $spacing-5;
+}
+
+.zona {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 21.5rem;
+  gap: $spacing-5;
+  align-items: start;
+
+  @media (max-width: 1100px) { grid-template-columns: minmax(0, 1fr); }
+}
+
+.tablero {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(13.75rem, 1fr));
+  gap: $spacing-4;
+  min-width: 0;
+  overflow-x: auto;
+  padding-bottom: $spacing-2;
+}
+
+// ── Columnas ────────────────────────────────────────────────────────────────
+
+.columna {
+  --acento-columna: #{$gray-500};
+  display: flex;
+  flex-direction: column;
+  min-height: 26rem;
+  padding: $spacing-3;
+  background: $white;
+  border-top: 5px solid var(--acento-columna);
+  border-radius: $radio-lg;
+  box-shadow: 0 1px 3px rgba($primary-blue-darker, 0.12);
+  transition: background-color 0.12s ease;
+
+  &.en_curso { --acento-columna: #{$tono-amarillo-250-c}; }
+  &.hecho { --acento-columna: #{$success-green}; }
+
+  &.sobre { background: $gray-50; outline: 2px dashed rgba($primary-blue, 0.35); outline-offset: -4px; }
+}
+
+.cabeceraColumna {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: $spacing-1 $spacing-1 $spacing-3;
+
+  h3 {
+    margin: 0;
+    font-size: $font-size-lg;
+    color: $primary-blue-darker;
+  }
+}
+
+.cuentaColumna {
+  color: $gray-500;
+  font-weight: $font-weight-bold;
+}
+
+.masColumna {
+  margin-left: auto;
+  display: grid;
+  place-items: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  color: $gray-500;
+  border-radius: $radio-md;
+  cursor: pointer;
+
+  &:hover:not(:disabled) { color: $primary-blue; background: $gray-100; }
+  &:disabled { opacity: 0.4; cursor: not-allowed; }
+}
+
+.lista {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: $spacing-2;
+  min-height: 8rem;
+  padding: 2px;
+
+  // La raya de «va acá» al final de la columna.
+  &.lineaAbajo::after {
+    content: "";
+    position: absolute;
+    left: 2px;
+    right: 2px;
+    bottom: -3px;
+    height: 3px;
+    background: $primary-blue;
+    border-radius: 2px;
+  }
+}
+
+.columnaVacia {
+  margin: $spacing-4 0 0;
+  text-align: center;
+  color: $gray-400;
+  font-size: $font-size-sm;
+}
+
+// ── Tarjetas ────────────────────────────────────────────────────────────────
+
+.tarjeta {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-2;
+  padding: $spacing-3;
+  background: $gray-100;
+  border: 1px solid transparent;
+  border-radius: $radio-lg;
+  cursor: grab;
+  // Con el dedo sólo se arrastra desde el asa: el resto deja desplazar la pantalla.
+  touch-action: pan-y;
+
+  &:hover { border-color: $gray-300; }
+  &:focus-visible { outline: 2px solid $acento; outline-offset: 2px; }
+
+  &.seleccionada { background: $primary-yellow; border-color: $tono-amarillo-200; }
+  &.arrastrada { opacity: 0.35; }
+
+  // La raya de «va acá» arriba de esta tarjeta.
+  &.lineaArriba::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(#{-$spacing-1} - 1.5px);
+    height: 3px;
+    background: $primary-blue;
+    border-radius: 2px;
+  }
+}
+
+.asa {
+  flex: none;
+  display: grid;
+  place-items: center;
+  margin: 1px -4px 0 -6px;
+  color: $gray-400;
+  touch-action: none;
+}
+
+.punto {
+  flex: none;
+  width: 0.65rem;
+  height: 0.65rem;
+  margin-top: 0.32rem;
+  border-radius: 50%;
+
+  &.alta { background: $tono-rojo-400; }
+  &.media { background: $tono-amarillo-250-c; }
+  &.baja { background: $success-green; }
+}
+
+.textoTarjeta {
+  min-width: 0;
+
+  h4 {
+    margin: 0;
+    font-size: $font-size-base;
+    font-weight: $font-weight-semibold;
+    line-height: 1.35;
+    color: $primary-blue-darker;
+    overflow-wrap: anywhere;
+  }
+
+  small {
+    display: block;
+    margin-top: $spacing-1;
+    font-size: $font-size-sm;
+    color: $gray-500;
+  }
+}
+
+.vencida { color: $danger-red; font-weight: $font-weight-semibold; }
+
+// La copia que acompaña al puntero mientras se arrastra.
+.fantasma {
+  position: fixed;
+  z-index: 2000;
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-2;
+  padding: $spacing-3;
+  background: $white;
+  border: 1px solid $gray-300;
+  border-radius: $radio-lg;
+  box-shadow: 0 14px 30px rgba($primary-blue-darker, 0.28);
+  transform: rotate(2.5deg);
+  pointer-events: none;
+  cursor: grabbing;
+}
+
+// ── Detalle ─────────────────────────────────────────────────────────────────
+
+.panel {
+  position: sticky;
+  top: $spacing-3;
+  min-width: 0;
+  overflow: hidden;
+  background: $white;
+  border-radius: $radio-lg;
+  box-shadow: 0 1px 3px rgba($primary-blue-darker, 0.12);
+
+  @media (max-width: 1100px) { position: static; }
+}
+
+.cabeceraPanel {
+  padding: $spacing-3 $spacing-5;
+  background: $primary-blue-darker;
+  color: $primary-yellow;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.cuerpoPanel {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+  padding: $spacing-5;
+}
+
+.tituloPanel {
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-semibold;
+  color: $primary-blue-darker;
+}
+
+.fila {
+  display: grid;
+  grid-template-columns: 5.6rem minmax(0, 1fr);
+  align-items: center;
+  gap: $spacing-2;
+  font-size: $font-size-base;
+
+  > span { color: $gray-500; }
+}
+
+.bloque {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+  font-size: $font-size-base;
+
+  > span { color: $gray-500; }
+}
+
+.entrada {
+  width: 100%;
+  padding: $spacing-2 $spacing-3;
+  font: inherit;
+  font-weight: $font-weight-normal;
+  color: $gray-800;
+  background: $white;
+  border: 1px solid $gray-300;
+  border-radius: $radio-md;
+
+  &:focus-visible { outline: 2px solid $acento; outline-offset: 1px; }
+}
+
+textarea.entrada { resize: vertical; min-height: 4.5rem; }
+
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+}
+
+.comentarios {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.comentario {
+  padding: $spacing-2 $spacing-3;
+  background: $gray-100;
+  border-radius: $radio-md;
+  font-size: $font-size-sm;
+
+  b { color: $primary-blue-darker; margin-right: $spacing-2; }
+  time { color: $gray-500; }
+  p { margin: $spacing-1 0 0; color: $gray-700; overflow-wrap: anywhere; }
+}
+
+.sinComentarios { margin: 0; color: $gray-400; font-size: $font-size-sm; }
+
+.nuevoComentario {
+  display: flex;
+  gap: $spacing-2;
+}
