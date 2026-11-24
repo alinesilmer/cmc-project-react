@@ -241,7 +241,7 @@ export async function generarReciboPdf(
         },
         periodoLargo(d.periodo_a_aplicar),
         d.adeudado != null ? importe(d.adeudado) : "—",
-        conSigno(-d.total),
+        d.total > 0 ? conSigno(-d.total) : importe(0),   // una deducción que no se alcanzó a cobrar muestra 0,00
         d.saldo != null ? importe(d.saldo) : "—",
       ]);
       filas.push({

@@ -73,6 +73,12 @@ type AccionLote = "agregar" | "quitar" | "caja" | "eliminar";
 
 const esPendiente = (r: DeduccionHistorialItem) => r.estado === "pendiente" || r.estado === "vencida";
 
+// Lo que se muestra y se suma de cada fila: el SALDO mientras todavía se debe (una cuota de 10.000 con 8.000
+// cobrados debe 2.000, como en el sistema anterior) y el importe de la cuota cuando ya no se debe nada.
+const montoVisible = (r: DeduccionHistorialItem) =>
+  esPendiente(r) || r.estado === "en_pago" ? Number(r.saldo_pendiente ?? r.monto ?? 0) : Number(r.monto ?? 0);
+const cobradaEnParte = (r: DeduccionHistorialItem) => montoVisible(r) !== Number(r.monto ?? 0);
+
 const plural = (n: number, uno: string, varios: string) => `${n} ${n === 1 ? uno : varios}`;
 
 // Fechas que llegan sin zona horaria («2026-08-27T06:09:00»): se muestran tal cual, sin correrlas de huso.
@@ -262,7 +268,7 @@ const DeduccionesList: React.FC = () => {
     });
 
   const marcadas = [...seleccion.values()];
-  const sumaMarcadas = marcadas.reduce((acc, r) => acc + Number(r.monto ?? 0), 0);
+  const sumaMarcadas = marcadas.reduce((acc, r) => acc + montoVisible(r), 0);
   const puedeAgregar = marcadas.length > 0 && hasOpenPago && marcadas.every(esPendiente);
   const puedeQuitar = marcadas.length > 0 && marcadas.every((r) => r.estado === "en_pago");
   const puedeCaja = marcadas.length > 0 && marcadas.every(esPendiente);
@@ -386,7 +392,7 @@ const DeduccionesList: React.FC = () => {
       fecha: partesFecha(row.created_at)?.fecha ?? "",
       periodo: periodoLargo(row.mes_periodo, row.anio_periodo),
       descontadaEl: partesFecha(row.fecha_aplicacion)?.fecha,
-      monto: Number(row.monto ?? 0),
+      monto: montoVisible(row),
     }));
 
   const exportExcel = async () => {
@@ -586,7 +592,7 @@ const DeduccionesList: React.FC = () => {
                     <th>Concepto</th>
                     <th>Período</th>
                     <th>{pestana === "aplicadas" ? "Aplicada" : "Creada"}</th>
-                    <th>Monto</th>
+                    <th>{pestana === "aplicadas" ? "Monto" : "Saldo"}</th>
                     <th aria-label="Acciones" />
                   </tr>
                 </thead>
@@ -635,7 +641,16 @@ const DeduccionesList: React.FC = () => {
                             );
                           })()}
                         </td>
-                        <td className={s.celdaMonto}>{formatMoney(r.monto)}</td>
+                        <td className={s.celdaMonto}>
+                          {cobradaEnParte(r) ? (
+                            <span className={s.celdaDoble}>
+                              {formatMoney(montoVisible(r))}
+                              <small>de {formatMoney(r.monto)}</small>
+                            </span>
+                          ) : (
+                            formatMoney(montoVisible(r))
+                          )}
+                        </td>
                         <td>
                           {trabajando ? (
                             <Loader2 size={16} className={lq.gira} aria-label="Procesando" />
@@ -850,7 +865,7 @@ const DeduccionesList: React.FC = () => {
             filas={[
               { rotulo: "Médico", valor: cancelTarget.medico_nombre },
               { rotulo: "Concepto", valor: conceptoDe(cancelTarget) },
-              { rotulo: "Monto", valor: formatMoney(cancelTarget.monto) },
+              { rotulo: "Monto", valor: formatMoney(montoVisible(cancelTarget)) },
               { rotulo: "Período", valor: monthLabel(cancelTarget.mes_periodo, cancelTarget.anio_periodo) },
             ]}
           />
