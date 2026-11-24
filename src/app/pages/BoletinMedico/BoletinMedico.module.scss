@@ -168,6 +168,15 @@
   color: $gray-600;
 }
 
+// Aclaración bajo el nombre cuando el valor ya tiene el copago descontado.
+.valorNota {
+  display: block;
+  margin-top: $spacing-1;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  color: $tono-amarillo-350;
+}
+
 // El código, chico antes del nombre en el boletín de pediatría: el médico factura con el número.
 .valorCodigo {
   margin-right: $spacing-2;

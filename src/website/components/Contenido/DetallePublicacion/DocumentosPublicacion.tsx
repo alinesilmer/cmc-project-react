@@ -6,10 +6,10 @@ import { urlSegura } from "@/app/shared/lib/urlSegura";
 import type { DocumentoNoticia } from "@/website/types";
 import styles from "./DocumentosPublicacion.module.scss";
 
-type Props = { documentos: DocumentoNoticia[] };
+type Props = { documentos: DocumentoNoticia[]; className?: string };
 
 /** Los adjuntos de una publicación: el primer PDF se muestra embebido (suele ser la norma o el programa del curso). */
-export default function DocumentosPublicacion({ documentos: todos }: Props) {
+export default function DocumentosPublicacion({ documentos: todos, className }: Props) {
   const documentos = todos.filter((d) => urlSegura(d.path));
   const { pdf, imagen, otro } = agruparPorTipo(documentos);
   const [destacado, ...otrosPdf] = pdf;
@@ -18,7 +18,7 @@ export default function DocumentosPublicacion({ documentos: todos }: Props) {
   if (documentos.length === 0) return null;
 
   return (
-    <section className={styles.documentos} aria-label="Archivos">
+    <section className={`${styles.documentos} ${className ?? ""}`} aria-label="Archivos">
       {destacado && (
         <div className={styles.pdf}>
           <div className={styles.pdfBarra}>

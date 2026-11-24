@@ -36,7 +36,7 @@ export default function RequisitosModal({ os, onClose }: Props) {
   const dia = ficha ? (ficha.dia_corte ?? 20) : null;
 
   return (
-    <MarcoModal onClose={onClose} className={g.card} aria-label={requisitos?.titulo ?? os.nombre}>
+    <MarcoModal onClose={onClose} className={`${g.card} ${s.ancho}`} aria-label={requisitos?.titulo ?? os.nombre}>
       <div className={g.header}>
         <span className={g.logoRing} style={{ ["--os-color" as string]: os.color }}>
           {os.logo ? <img src={os.logo} alt="" /> : iniciales(os.nombre)}
@@ -59,7 +59,7 @@ export default function RequisitosModal({ os, onClose }: Props) {
                 return (
                   <li key={item} className={s.item}>
                     <span className={s.icono}>
-                      <Icono size={30} strokeWidth={1.8} aria-hidden="true" />
+                      <Icono size={26} strokeWidth={1.8} aria-hidden="true" />
                     </span>
                     <span className={s.nombre}>{item}</span>
                     <span className={s.sello}>Obligatorio</span>

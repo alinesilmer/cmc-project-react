@@ -26,6 +26,7 @@ import {
   Home,
   HousePlus,
   Inbox,
+  Kanban,
   Landmark,
   Layers,
   ListOrdered,
@@ -255,6 +256,8 @@ export const TOP_NAV: TopEntry[] = [
       {
         heading: "Colegio",
         items: [
+          // Sin `perms`: lo ve todo el personal; los socios quedan afuera por MedicoRouteGuard.
+          { path: `${base}/tablero`, icon: Kanban, label: "Tablero" },
           // Los componentes siguen en `src/website/`, pero la pantalla se monta en el panel.
           { path: `${base}/sitio`, icon: Globe, label: "Contenido del sitio", perms: ["contenido:editar"] },
           { path: `${base}/agenda`, icon: CalendarDays, label: "Calendario", perms: ["catalogo:leer"] },

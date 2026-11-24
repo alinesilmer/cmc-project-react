@@ -27,6 +27,9 @@ const AVAILABLE_COLUMNS: {
   { key: "especialidad", label: "Especialidad", group: "profesional" },
   { key: "categoria", label: "Categoría", group: "profesional" },
   { key: "fecha_ingreso", label: "Fecha de Ingreso", group: "profesional" },
+  { key: "fecha_recibido", label: "Fecha de Recibido", group: "profesional" },
+  { key: "fallecido", label: "Fallecido", group: "profesional" },
+  { key: "motivo_baja", label: "Motivo de Baja", group: "profesional" },
   { key: "malapraxis", label: "Mala Praxis", group: "profesional" },
   { key: "vencimiento_malapraxis", label: "Venc. Mala Praxis", group: "profesional" },
   { key: "vencimiento_anssal", label: "Venc. ANSSAL", group: "profesional" },
@@ -41,6 +44,7 @@ const AVAILABLE_COLUMNS: {
 
   { key: "documento", label: "Documento", group: "personal", sensible: true },
   { key: "sexo", label: "Sexo", group: "personal", sensible: true },
+  { key: "domicilio_particular", label: "Domicilio Particular", group: "personal", sensible: true },
   { key: "mail_particular", label: "Mail", group: "personal", sensible: true },
   { key: "tele_particular", label: "Teléfono", group: "personal", sensible: true },
   { key: "celular_particular", label: "Celular", group: "personal", sensible: true },

@@ -1,0 +1,15 @@
+@use "@/app/styles/all.scss" as *;
+
+.estado {
+  display: inline-block;
+  padding: $spacing-1 $spacing-3;
+  border-radius: 999px;
+  font-size: $font-size-sm;
+  color: $gray-600;
+  background: $gray-200;
+}
+
+.visible {
+  color: $success-green;
+  background: rgba($success-green, 0.12);
+}

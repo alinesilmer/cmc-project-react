@@ -47,6 +47,7 @@ export default function ReporteCierres({ cierres: { consulta, filas, abiertas } 
                   <tr>
                     <th>Obra social</th>
                     <th>Facturas</th>
+                    <th>Nº factura</th>
                     <th>Último cierre</th>
                     <th>Facturado</th>
                   </tr>
@@ -56,12 +57,13 @@ export default function ReporteCierres({ cierres: { consulta, filas, abiertas } 
                     <tr key={c.nro}>
                       <td className={styles.nombre}>{c.nombre}</td>
                       <td>{numero.format(c.facturas)}</td>
+                      <td>{c.nrosFactura.join(", ") || "—"}</td>
                       <td>{fmtFecha(c.ultimoCierre)}</td>
                       <td>{moneyExacto.format(c.importe)}</td>
                     </tr>
                   ))}
                   <tr>
-                    <td colSpan={3}>Total general</td>
+                    <td colSpan={4}>Total general</td>
                     <td>{moneyExacto.format(total)}</td>
                   </tr>
                 </tbody>

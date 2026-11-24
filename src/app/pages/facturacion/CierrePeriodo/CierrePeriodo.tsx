@@ -3,12 +3,15 @@ import { useNavigate } from "react-router-dom";
 import { FileCheck2, Paperclip, X } from "lucide-react";
 
 import { conProceso } from "@/app/hooks/proceso";
-import { previewCierre, cerrarPeriodo, fetchPeriodoActivo } from "../api";
+import { previewCierre, cerrarPeriodo, fetchPeriodoActivo, publicarPeriodo } from "../api";
 import type { CierrePreviewResponse, ObraSocialOption } from "../types";
 import { detailMessage } from "../types";
 import { formatMoney } from "../money";
 import ObraSocialAutocomplete from "../components/ObraSocialAutocomplete";
 import ConfirmarCierreModal from "./ConfirmarCierreModal";
+import PublicarRecepciones from "./PublicarRecepciones";
+import { usePermisos } from "@/app/auth/usePermisos";
+import Segmentos from "@/app/components/ui/Segmentos/Segmentos";
 import PaginaPasos from "@/app/components/layout/PaginaPasos/PaginaPasos";
 import Paso from "@/app/components/ui/Paso/Paso";
 import Cifras from "@/app/components/ui/Cifras/Cifras";
@@ -23,6 +26,9 @@ const TIPOS_FACTURA = ["A", "B", "C"];
 
 const CierrePeriodo: React.FC = () => {
   const navigate = useNavigate();
+  const { can } = usePermisos();
+  // Publicar es otro permiso que cerrar: sin él no se pregunta ni se muestra la sección.
+  const puedePublicar = can("facturacion:periodo");
 
   const [obraSocial, setObraSocial] = useState<ObraSocialOption | null>(null);
   const [periodo, setPeriodo] = useState("");
@@ -37,6 +43,7 @@ const CierrePeriodo: React.FC = () => {
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [cerrando, setCerrando] = useState(false);
+  const [publicar, setPublicar] = useState<"si" | "no">("no");
 
   // Cargar período activo cuando se elige OS
   useEffect(() => {
@@ -78,22 +85,37 @@ const CierrePeriodo: React.FC = () => {
   const handleCerrar = async () => {
     if (!obraSocial || !periodo || !preview) return;
     setCerrando(true);
+    const publicarAlCerrar = puedePublicar && publicar === "si";
+    let publicacion: "ok" | "fallo" | null = null;
     const result = await conProceso(
       {
         haciendo: "Cerrando el período",
         listo: "Período cerrado",
-        detalleListo: (r) => `Factura #${r.id_factura} · ${formatMoney(r.importe_total)}`,
+        detalleListo: (r) =>
+          `Factura #${r.id_factura} · ${formatMoney(r.importe_total)}` +
+          (publicacion === "ok" ? " · Recepciones publicadas" : publicacion === "fallo" ? " · No se pudieron publicar: hacelo desde Períodos." : ""),
         fallo: "No se pudo cerrar",
         detalleFallo: (e) => detailMessage(comoErrorApi(e).response?.data?.detail) || undefined,
       },
-      () =>
-        cerrarPeriodo({
+      async () => {
+        const cierre = await cerrarPeriodo({
           cod_obra: String(obraSocial.nro_obra_social),
           periodo,
           tipo_factura: tipoFactura || undefined,
           nro_factura: nroFactura || undefined,
           archivo,
-        }),
+        });
+        // El cierre ya está hecho: si la publicación falla no se deshace, se avisa.
+        if (publicarAlCerrar) {
+          try {
+            await publicarPeriodo({ cod_obra: String(obraSocial.nro_obra_social), periodo, publicado: true });
+            publicacion = "ok";
+          } catch {
+            publicacion = "fallo";
+          }
+        }
+        return cierre;
+      },
     );
     setCerrando(false);
     if (result) {
@@ -220,6 +242,21 @@ const CierrePeriodo: React.FC = () => {
 
       <Paso numero={3} titulo="Cerrar el período" peligro>
         <Aviso>El cierre no se puede deshacer: genera la factura y habilita la liquidación.</Aviso>
+        {puedePublicar && (
+          <div className={c.campo}>
+            <span className={c.rotulo}>¿Quiere publicar las recepciones?</span>
+            <Segmentos
+              ariaLabel="Publicar las recepciones al cerrar"
+              valor={publicar}
+              onChange={setPublicar}
+              opciones={[
+                { valor: "si", rotulo: "Sí" },
+                { valor: "no", rotulo: "No" },
+              ]}
+            />
+            <p className={c.ayuda}>Con «Sí», los médicos las ven en Mi recepción apenas se cierra.</p>
+          </div>
+        )}
         {bloqueadaPorAuditoria && (
           <ErrorAccion>
             No se puede cerrar: hay {preview?.sin_auditar} prestaci{preview?.sin_auditar === 1 ? "ón" : "ones"} sin auditar.
@@ -236,6 +273,8 @@ const CierrePeriodo: React.FC = () => {
         </div>
       </Paso>
 
+      {puedePublicar && can("facturacion:leer") && <PublicarRecepciones obraSocial={obraSocial} bloqueado={cerrando} />}
+
       {preview && obraSocial && (
         <ConfirmarCierreModal
           isOpen={confirmOpen}
@@ -244,6 +283,7 @@ const CierrePeriodo: React.FC = () => {
           tipoFactura={tipoFactura}
           nroFactura={nroFactura}
           archivoNombre={archivo?.name ?? null}
+          publicar={puedePublicar ? publicar === "si" : undefined}
           onClose={() => setConfirmOpen(false)}
           onConfirm={handleCerrar}
           loading={cerrando}

@@ -25,6 +25,8 @@ type Props = {
   error: string | null;
   /** Lo que paga el afiliado, si la obra social cobra copago. */
   copago: number | null;
+  /** Si el total que se muestra ya trae el copago descontado, con su leyenda. */
+  descontarCopago?: boolean;
   /** Vista del Colegio: la cuenta de cada concepto, el origen y la vigencia. */
   conDetalle?: boolean;
   /** Si la práctica la puede facturar la especialidad elegida (`valida === null`: verificando). */
@@ -32,6 +34,7 @@ type Props = {
 };
 
 const CONCEPTOS = ["Honorarios", "Gastos", "Ayudante"] as const;
+const NOTA_COPAGO = "(PRECIO FINAL CON COPAGO APLICADO)";
 
 /** Un concepto del ticket: nombre, puntos y subtotal. */
 function Renglon({ concepto, comp, conDetalle }: {
@@ -62,9 +65,12 @@ function Renglon({ concepto, comp, conDetalle }: {
 }
 
 /** El resultado de la consulta: título, conceptos, total y copago. */
-function Resultado({ r, copago, conDetalle, habilitada }: Pick<Props, "copago" | "conDetalle" | "habilitada"> & { r: TablaValorItem }) {
+function Resultado({ r, copago, descontarCopago, conDetalle, habilitada }: Pick<Props, "copago" | "descontarCopago" | "conDetalle" | "habilitada"> & { r: TablaValorItem }) {
   const porPresupuesto = Boolean(r.por_presupuesto);
-  const total = parseFloat(r.precio_total);
+  const precio = parseFloat(r.precio_total);
+  // Si el copago igualara o superara el precio, está mal cargado: no se descuenta.
+  const conCopago = Boolean(descontarCopago) && !porPresupuesto && copago !== null && copago > 0 && precio - copago > 0;
+  const total = conCopago ? precio - (copago ?? 0) : precio;
 
   return (
     <>
@@ -105,6 +111,7 @@ function Resultado({ r, copago, conDetalle, habilitada }: Pick<Props, "copago" |
         <span className={s.totalValor}>
           {porPresupuesto ? "Por presupuesto" : formatoPesos.format(isNaN(total) ? 0 : total)}
         </span>
+        {conCopago && <span className={s.totalNota}>{NOTA_COPAGO}</span>}
       </div>
 
       <div className={s.pie}>
@@ -143,6 +150,7 @@ function TicketConsulta({
   resultado,
   error,
   copago,
+  descontarCopago = false,
   conDetalle = false,
   habilitada = null,
 }: Props) {
@@ -183,7 +191,7 @@ function TicketConsulta({
           </div>
         ) : resultado ? (
           <>
-            <Resultado r={resultado} copago={copago} conDetalle={conDetalle} habilitada={habilitada} />
+            <Resultado r={resultado} copago={copago} descontarCopago={descontarCopago} conDetalle={conDetalle} habilitada={habilitada} />
             {via === "L" && resultado.via_aplicada === "T" && (
               <div className={s.aparte}>
                 <Aviso>Este código no admite vía laparoscópica; se muestra el precio tradicional.</Aviso>

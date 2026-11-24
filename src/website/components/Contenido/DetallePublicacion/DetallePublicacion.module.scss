@@ -116,6 +116,11 @@
   width: min(100%, 980px);
 }
 
+// Los adjuntos (PDF e imágenes) también son más anchos que el texto, para que se lean bien.
+.pagina > .adjuntos {
+  width: min(100%, 900px);
+}
+
 .portada img {
   display: block;
   width: 100%;

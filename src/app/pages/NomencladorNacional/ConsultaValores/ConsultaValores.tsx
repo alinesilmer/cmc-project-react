@@ -9,7 +9,7 @@ import { listNomenclador, getTablaValores } from "../nomenclador.api";
 import { getEspecialidades } from "../../Especialidades/especialidades.api";
 import type { NomencladorOut, TablaValorItem, ViaPractica } from "../nomenclador.types";
 import type { ObraSocialListItem } from "../../ObrasSociales/obrasSociales.types";
-import { useObrasSociales } from "../../ObrasSociales/useObrasSociales";
+import { useObrasSocialesCabecera } from "../ConsultaShared/useObrasSocialesCabecera";
 import type { Especialidad } from "../../Especialidades/especialidades.types";
 
 export default function ConsultaValores() {
@@ -37,7 +37,8 @@ export default function ConsultaValores() {
   const [result, setResult] = useState<TablaValorItem | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const { data: osList = [] } = useObrasSociales();
+  // Sólo las cabecera: las asociadas no se listan.
+  const osList = useObrasSocialesCabecera();
 
   const { data: especialidades = [] } = useQuery({
     queryKey: ["especialidades"],

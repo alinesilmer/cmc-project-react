@@ -5,8 +5,14 @@ import Copiable from "./Copiable";
 import { fmt, fmtDate, getFechaIngreso, soloDigitos } from "./legajo.helpers";
 import type { SeccionProps } from "./SeccionProps";
 
+/** `estado_cuenta_at` viene en UTC sin zona: se le agrega para mostrar el día local. */
+const fechaDeBaja = (s?: string | null) =>
+  s && !/(Z|[+-]\d\d:?\d\d)$/i.test(s) ? `${s}Z` : s;
+
 export default function SeccionPersonales({ data, readOnly, isEditing, campos, reportar, tituloSeccion, seccionAbierta }: SeccionProps) {
-  const { RText, RSexo, RDate } = campos;
+  const { RText, RSexo, RDate, RCheck, RMotivoBaja } = campos;
+  // Fallecido y baja son datos del Colegio: el médico en «Mi perfil» no los ve.
+  const verBaja = !readOnly || isEditing;
   return (
     <>
             {tituloSeccion("personales", User, "Datos personales")}
@@ -87,6 +93,34 @@ export default function SeccionPersonales({ data, readOnly, isEditing, campos, r
                     : "—"}
                 </span>
               </div>
+              {verBaja && (
+              <>
+              <div>
+                <span className={styles.label}>Fallecido</span>
+                {isEditing ? (
+                  RCheck("fallecido", "Sí")
+                ) : (
+                  <span>{data.fallecido ? "Sí" : "No"}</span>
+                )}
+              </div>
+              {data.estado_cuenta === "baja" && (
+                <>
+                  <div>
+                    <span className={styles.label}>Fecha de baja</span>
+                    <span>{fmtDate(fechaDeBaja(data.estado_cuenta_at))}</span>
+                  </div>
+                  <div>
+                    <span className={styles.label}>Motivo de Baja</span>
+                    {isEditing ? (
+                      RMotivoBaja()
+                    ) : (
+                      <span>{fmt(data.motivo_baja)}</span>
+                    )}
+                  </div>
+                </>
+              )}
+              </>
+              )}
 
               <div>
                 <span className={styles.label}>Provincia</span>

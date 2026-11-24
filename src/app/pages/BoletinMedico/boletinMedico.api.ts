@@ -8,9 +8,11 @@ import {
 } from "@/app/features/nomenclador/galenos";
 import { listObrasSociales } from "../ObrasSociales/obrasSociales.api";
 import {
-  CODIGO_CONSULTA_COMUN,
+  codigoViejo,
   CODIGOS_CON_PRECIO_PEDIATRICO,
+  CODIGOS_DE_PEDIATRIA,
   CODIGOS_PEDIATRIA,
+  codigosPediatria,
   ESPECIALIDAD_PEDIATRIA,
   NOMBRE_CODIGO,
 } from "./boletinPediatria";
@@ -19,16 +21,21 @@ import { aNumero } from "@/app/shared/lib/utiles";
 ;
 
 /** Un valor del boletín de pediatría: un código con su precio. */
-interface ValorPediatria {
+export interface ValorPediatria {
   codigo: string;
   nombre: string;
+  /** El precio a mostrar: si el código lleva copago, ya viene descontado. */
   valor: number;
+  /** `true` si `valor` es el precio final con el copago aplicado. */
+  conCopago: boolean;
 }
 
-/** El código de consulta del boletín. Swiss Medical usa el suyo. */
+/** El código de consulta del boletín. Swiss Medical y UNNE usan el suyo. */
 const CODIGO_CONSULTA = "420351";
 const CODIGO_CONSULTA_SWISS = "42010100";
 const SWISS_MEDICAL_NRO = 256;
+const CODIGO_CONSULTA_UNNE = "420101";
+const UNNE_NRO = 81;
 
 /** Una obra social del boletín. */
 export interface ItemBoletin {
@@ -58,6 +65,8 @@ interface ApiBoletinItem {
   precio_total: number | string;
   vigencia_desde: string | null;
   por_presupuesto?: boolean;
+  /** Lo que paga el afiliado; se descuenta del precio. */
+  coseguro?: number | string;
   /** De qué especialidad es el precio; `null` = general. */
   especialidad_id_colegio?: number | null;
 }
@@ -138,21 +147,38 @@ async function preciosPediatria(fecha: string): Promise<Map<string, Map<number, 
   return new Map(porCodigo);
 }
 
+/** Los códigos de una obra social: los de la lista del Colegio, o, si no está en la lista, todos los de pediatría cuando tiene algún precio propio de la especialidad. */
+function codigosAMostrar(nro: number, precios: Map<string, Map<number, ApiBoletinItem>>): string[] {
+  if (CODIGOS_PEDIATRIA[nro]) return codigosPediatria(nro);
+  const conPrecioPropio = CODIGOS_CON_PRECIO_PEDIATRICO.some(
+    (codigo) => precios.get(codigo)?.get(nro)?.especialidad_id_colegio === ESPECIALIDAD_PEDIATRIA
+  );
+  return conPrecioPropio ? CODIGOS_DE_PEDIATRIA : [];
+}
+
 /** Los valores de pediatría de una obra social, en el orden de la lista del Colegio. */
 function valoresPediatria(
   nro: number,
-  precios: Map<string, Map<number, ApiBoletinItem>>,
-  consulta: number | null
+  precios: Map<string, Map<number, ApiBoletinItem>>
 ): ValorPediatria[] {
   const valores: ValorPediatria[] = [];
-  for (const codigo of CODIGOS_PEDIATRIA[nro] ?? []) {
-    const valor =
-      codigo === CODIGO_CONSULTA_COMUN
-        ? consulta
-        : aNumero(precios.get(codigo)?.get(nro)?.precio_total);
-    if (valor && valor > 0) {
-      valores.push({ codigo, nombre: NOMBRE_CODIGO[codigo] ?? codigo, valor });
-    }
+  for (const codigo of codigosAMostrar(nro, precios)) {
+    const propio = precios.get(codigo)?.get(nro);
+    const viejo = codigoViejo(codigo);
+    // Si el código nuevo no tiene precio cargado, se muestra con el precio del número viejo (y su copago).
+    const fuente =
+      aNumero(propio?.precio_total) > 0 ? propio : viejo ? precios.get(viejo)?.get(nro) : undefined;
+    const precio = aNumero(fuente?.precio_total);
+    if (!(precio > 0)) continue;
+    // El copago se resta del precio; si lo igualara o superara, algo está mal cargado y no se aplica.
+    const copago = aNumero(fuente?.coseguro);
+    const conCopago = copago > 0 && precio - copago > 0;
+    valores.push({
+      codigo,
+      nombre: NOMBRE_CODIGO[codigo] ?? codigo,
+      valor: conCopago ? precio - copago : precio,
+      conCopago,
+    });
   }
   return valores;
 }
@@ -162,12 +188,13 @@ export async function fetchBoletinMedico(
 ): Promise<ItemBoletin[]> {
   const fecha = hoyISO();
 
-  const [obras, consultas, consultasSwiss, galenos, observaciones, precios] =
+  const [obras, consultas, consultasSwiss, consultasUnne, galenos, observaciones, precios] =
     await Promise.all([
       // Sin filtro: el catálogo entero, ya ordenado alfabéticamente por el backend.
       listObrasSociales(),
       consultaPorOS(CODIGO_CONSULTA, fecha),
       consultaPorOS(CODIGO_CONSULTA_SWISS, fecha),
+      consultaPorOS(CODIGO_CONSULTA_UNNE, fecha),
       // Sin los galenos ocultados para el médico desde "Actualizar Unidades".
       fetchGalenosPorOS(fecha, { soloVisibles: true }),
       observacionesPorOS(),
@@ -181,8 +208,9 @@ export async function fetchBoletinMedico(
     const nro = os.nro_obra_social;
     if (!nro) continue;
 
-    // Swiss Medical factura la consulta con su propio código.
-    const fuente = nro === SWISS_MEDICAL_NRO ? consultasSwiss : consultas;
+    // Swiss Medical y UNNE facturan la consulta con su propio código.
+    const fuente =
+      nro === SWISS_MEDICAL_NRO ? consultasSwiss : nro === UNNE_NRO ? consultasUnne : consultas;
     const item = fuente.get(nro);
     const galenosDeOS = galenos.get(nro) ?? [];
     const obsDeOS = observaciones.get(nro) ?? [];
@@ -190,7 +218,9 @@ export async function fetchBoletinMedico(
     // Sin precio, sin galenos y sin condiciones no hay nada que mostrar.
     const crudo = item ? aNumero(item.precio_total) : null;
     const consulta = crudo && crudo > 0 ? crudo : null;
-    const pediatriaDeOS = precios ? valoresPediatria(nro, precios, consulta) : [];
+    // El boletín de pediatría lista sólo las cabecera: las asociadas (planes de otra obra social) no.
+    const esCabecera = !os.obra_social_principal_id;
+    const pediatriaDeOS = precios && esCabecera ? valoresPediatria(nro, precios) : [];
     if (
       consulta === null &&
       galenosDeOS.length === 0 &&

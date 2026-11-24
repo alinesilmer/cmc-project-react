@@ -1,7 +1,7 @@
 import { useState, type KeyboardEvent } from "react";
 import { Plus, X } from "lucide-react";
 
-import type { Plantilla } from "../useObservaciones";
+import { MAX_PLANTILLA, type Plantilla } from "../useObservaciones";
 import s from "./PanelPlantillas.module.scss";
 import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
@@ -45,7 +45,7 @@ export default function PanelPlantillas({ plantillas, ocupado, onAgregar, onQuit
           value={nueva}
           onChange={(e) => setNueva(e.target.value)}
           onKeyDown={alTeclear}
-          maxLength={1000}
+          maxLength={MAX_PLANTILLA}
           rows={2}
           placeholder="Nueva plantilla…"
           disabled={ocupado}

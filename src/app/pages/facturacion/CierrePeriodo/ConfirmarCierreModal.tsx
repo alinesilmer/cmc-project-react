@@ -13,13 +13,15 @@ interface Props {
   tipoFactura?: string;
   nroFactura?: string;
   archivoNombre?: string | null;
+  /** Si se publican las recepciones al cerrar; sin valor, la pregunta no aplica. */
+  publicar?: boolean;
   onClose: () => void;
   onConfirm: () => void;
   loading?: boolean;
 }
 
 const ConfirmarCierreModal: React.FC<Props> = ({
-  isOpen, preview, osNombre, tipoFactura, nroFactura, archivoNombre, onClose, onConfirm, loading,
+  isOpen, preview, osNombre, tipoFactura, nroFactura, archivoNombre, publicar, onClose, onConfirm, loading,
 }) => {
   if (!isOpen) return null;
 
@@ -49,6 +51,7 @@ const ConfirmarCierreModal: React.FC<Props> = ({
           ...(tipoFactura ? [{ rotulo: "Tipo de factura", valor: tipoFactura }] : []),
           ...(nroFactura ? [{ rotulo: "Nº de factura", valor: nroFactura }] : []),
           { rotulo: "Documento", valor: archivoNombre ?? "Sin adjuntar" },
+          ...(publicar === undefined ? [] : [{ rotulo: "Recepciones", valor: publicar ? "Se publican" : "Quedan ocultas" }]),
         ]}
       />
       {sinValorizar > 0 && <DialogoAviso>{sinValorizar} sin valorizar: quedan en $0 por falta de precio.</DialogoAviso>}

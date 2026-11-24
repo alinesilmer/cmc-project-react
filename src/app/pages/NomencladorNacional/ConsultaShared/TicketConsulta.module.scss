@@ -182,6 +182,15 @@
   color: $franja-azul;
 }
 
+// Aclaración bajo el total cuando ya trae el copago descontado.
+.totalNota {
+  flex-basis: 100%;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  text-align: right;
+  color: $tono-amarillo-350;
+}
+
 .pie {
   display: flex;
   flex-direction: column;
@@ -275,6 +284,31 @@
   padding: $spacing-6 $spacing-12;
 }
 
+// Tablet: la columna de búsqueda se angosta y los rellenos bajan, para que el precio no quede apretado.
+@media (max-width: $breakpoint-lg) {
+  .ticket {
+    grid-template-columns: minmax(0, 22rem) minmax(0, 1fr);
+  }
+
+  .cabeza {
+    padding: $spacing-12 $spacing-6;
+  }
+
+  .cuerpo,
+  .total,
+  .pie,
+  .aparte {
+    padding-right: $spacing-6;
+    padding-left: $spacing-6;
+  }
+
+  .corte {
+    margin-right: $spacing-6;
+    margin-left: $spacing-6;
+  }
+}
+
+// Una sola columna: la búsqueda arriba y el precio abajo.
 @media (max-width: $breakpoint-md) {
   .ticket {
     grid-template-columns: 1fr;
@@ -282,7 +316,21 @@
   }
 
   .cabeza {
+    padding: $spacing-8;
     border-radius: $radio-lg $radio-lg 0 0;
+  }
+
+  .cuerpo,
+  .total,
+  .pie,
+  .aparte {
+    padding-right: $spacing-8;
+    padding-left: $spacing-8;
+  }
+
+  .corte {
+    margin-right: $spacing-8;
+    margin-left: $spacing-8;
   }
 }
 
@@ -297,6 +345,18 @@
   .aparte {
     padding-right: $spacing-4;
     padding-left: $spacing-4;
+  }
+
+  // El corte punteado tiene que alinearse con el resto del relleno.
+  .corte {
+    margin-right: $spacing-4;
+    margin-left: $spacing-4;
+  }
+
+  // El total (rótulo + importe) y el copago bajan en columna en vez de pisarse.
+  .total {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .totalValor {

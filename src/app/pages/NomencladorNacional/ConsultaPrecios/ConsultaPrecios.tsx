@@ -6,7 +6,7 @@ import { useCopago } from "../ConsultaShared/useCopago";
 import { listNomenclador, getTablaValores } from "../nomenclador.api";
 import type { NomencladorOut, TablaValorItem, ViaPractica } from "../nomenclador.types";
 import type { ObraSocialListItem } from "../../ObrasSociales/obrasSociales.types";
-import { useObrasSociales } from "../../ObrasSociales/useObrasSociales";
+import { useObrasSocialesCabecera } from "../ConsultaShared/useObrasSocialesCabecera";
 import { useAuth } from "@/app/auth/useAuth";
 
 export default function ConsultaPrecios() {
@@ -34,7 +34,8 @@ export default function ConsultaPrecios() {
   const [result, setResult] = useState<TablaValorItem | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const { data: osList = [] } = useObrasSociales();
+  // Sólo las cabecera: las asociadas no se listan.
+  const osList = useObrasSocialesCabecera();
 
   const osNro = selectedOSItem?.nro_obra_social ?? null;
   const copago = useCopago(osNro, result);
@@ -182,6 +183,7 @@ export default function ConsultaPrecios() {
         resultado={result}
         error={searched ? error : null}
         copago={copago}
+        descontarCopago
       />
     </PaginaConsulta>
   );
