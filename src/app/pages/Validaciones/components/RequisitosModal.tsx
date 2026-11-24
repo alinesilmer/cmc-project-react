@@ -1,4 +1,4 @@
-import { AlertTriangle, ClipboardList, ExternalLink, Ticket, X, type LucideIcon } from "lucide-react";
+import { AlertTriangle, ClipboardList, ExternalLink, Info, Ticket, X, type LucideIcon } from "lucide-react";
 
 import { useAuth } from "@/app/auth/useAuth";
 import { isMedico } from "@/app/auth/roles";
@@ -27,7 +27,10 @@ const ICONOS: Record<string, LucideIcon> = {
 export default function RequisitosModal({ os, onClose }: Props) {
   const { user } = useAuth();
   const requisitos = os.requisitos;
-  const { href, tipo } = destinoObraSocial(os, isMedico(user));
+  const esMedico = isMedico(user);
+  const { href, tipo } = destinoObraSocial(os, esMedico);
+  // El médico no carga acá: sólo ve el aviso y cierra.
+  const aviso = esMedico ? os.avisoMedico : undefined;
 
   // El día límite sale del catálogo; las del portal pueden no tener código propio y sólo «otrosCodigos».
   const catalogo = useObrasSociales();
@@ -48,9 +51,16 @@ export default function RequisitosModal({ os, onClose }: Props) {
       </div>
 
       <div className={g.body}>
-        {dia != null && <DiaLimite dia={dia} />}
+        {aviso && (
+          <p className={s.info} role="note">
+            <Info size={22} aria-hidden="true" />
+            {aviso}
+          </p>
+        )}
 
-        {requisitos && (
+        {!aviso && dia != null && <DiaLimite dia={dia} />}
+
+        {!aviso && requisitos && (
           <>
             <h3 className={s.subtitulo}>{requisitos.titulo}</h3>
             <ul className={s.items}>
@@ -75,15 +85,21 @@ export default function RequisitosModal({ os, onClose }: Props) {
           </>
         )}
 
-        <a
-          className={g.enlace}
-          href={href}
-          {...(tipo === "portal" ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-          onClick={onClose}
-        >
-          <ExternalLink size={18} />
-          Entendido, ir a {os.nombre}
-        </a>
+        {aviso ? (
+          <BotonPlano type="button" className={g.enlace} onClick={onClose}>
+            Entendido
+          </BotonPlano>
+        ) : (
+          <a
+            className={g.enlace}
+            href={href}
+            {...(tipo === "portal" ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+            onClick={onClose}
+          >
+            <ExternalLink size={18} />
+            Entendido, ir a {os.nombre}
+          </a>
+        )}
       </div>
     </MarcoModal>
   );

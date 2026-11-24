@@ -182,6 +182,7 @@ export const OBRAS_SOCIALES: ObraSocialConfig[] = [
     color: "#0b7285",
     logo: logoOspm,
     cargaImplementada: true,
+    avisoMedico: "El paciente debe llevar bono de consulta para ser atendido",
     descripcion:
       "Validación por DNI del afiliado. El sistema resuelve el padrón y devuelve la autorización.",
     campos: [

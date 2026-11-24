@@ -112,6 +112,7 @@ const ReportesMedico: React.FC<Props> = ({ nroSocio }) => {
     columnas,
     filas,
     nombre: nombreArchivo(`${base}-socio-${nroSocio}`, periodo),
+    sinPortada: true,
   });
 
   const colsCodigos: ColumnaExport<CodigoStat>[] = [

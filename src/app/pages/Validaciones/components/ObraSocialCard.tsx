@@ -17,7 +17,9 @@ interface Props {
 
 export default function ObraSocialCard({ os, onAbrirGuia, onRequisitos }: Props) {
   const { user } = useAuth();
-  const { href, tipo } = destinoObraSocial(os, isMedico(user));
+  const esMedico = isMedico(user);
+  const { href, tipo } = destinoObraSocial(os, esMedico);
+  const soloAviso = esMedico && Boolean(os.avisoMedico);
 
   return (
     <Carpeta
@@ -27,7 +29,7 @@ export default function ObraSocialCard({ os, onAbrirGuia, onRequisitos }: Props)
       externo={tipo === "portal"}
       deshabilitada={os.estado === "mantenimiento"}
       aviso="En mantenimiento"
-      onAbrir={(tipo === "portal" || os.requisitos) && onRequisitos ? () => onRequisitos(os) : undefined}
+      onAbrir={(tipo === "portal" || os.requisitos || soloAviso) && onRequisitos ? () => onRequisitos(os) : undefined}
     >
       {os.guia && onAbrirGuia && (
         <BotonPlano

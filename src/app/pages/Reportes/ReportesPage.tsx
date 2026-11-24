@@ -383,6 +383,7 @@ const ReportesPage: React.FC = () => {
     columnas,
     filas,
     nombre: nombreArchivo(base, periodo),
+    sinPortada: true,
   });
 
   /** Baja el detalle COMPLETO del filtro actual, no sólo la página visible: un archivo con 25 filas de 1.771 no le sirve a nadie. */
