@@ -15,6 +15,8 @@ export type ErrorApi = {
 
 /** El `detail` cuando el backend manda un objeto (un 409 con el pago o la prestación en conflicto). */
 export type DetalleObjeto = {
+  /** Identifica el caso cuando la pantalla tiene que hacer algo más que mostrar el mensaje. */
+  codigo?: string;
   message?: string;
   mensaje?: string;
   reason?: string;

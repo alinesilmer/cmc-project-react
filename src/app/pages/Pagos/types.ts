@@ -127,6 +127,9 @@ export type AtencionSearchRow = {
   importe_total: string | null;
   periodo: string;
   cod_obr: string;
+  // Con qué se precarga el débito: suman importe_total (honorarios y gastos de arriba son los de una unidad).
+  precarga_honorarios: string;
+  precarga_gastos: string;
 };
 
 // Fila de GET /api/periodos/disponibles_lotes_ajustes: una factura cerrada (original o complementaria).

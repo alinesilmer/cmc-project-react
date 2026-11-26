@@ -35,9 +35,14 @@ export const listarPagos = (params: Parametros) => getJSON<Pago[]>(PAGOS_URL, pa
 export const crearPago = (body: PagoNuevo) => postJSON<Pago>(PAGOS_URL, body);
 export const borrarPago = (id: Id) => delJSON(`${PAGOS_URL}${id}`);
 export const getPago = (id: Id) => getJSON<Pago>(PAGO_URL(id));
-export const cerrarPago = (id: Id) => postJSON<Pago>(`/api/pagos/${id}/cerrar`);
-export const reabrirPago = (id: Id) => postJSON<Pago>(`/api/pagos/${id}/reabrir`);
-export const marcarPagado = (id: Id) => postJSON<Pago>(`/api/pagos/${id}/marcar_pagado`);
+// Cerrar, reabrir, marcar pagado y generar recibos recalculan el resumen de todos los socios en un solo pedido: con
+// ~600 socios tardan más de los 15 s que tienen las demás llamadas (el servidor termina bien, pero la pantalla ya
+// había cortado y no mostraba el resultado).
+const ACCION_LARGA = { timeout: 180_000 };
+
+export const cerrarPago = (id: Id) => postJSON<Pago>(`/api/pagos/${id}/cerrar`, undefined, ACCION_LARGA);
+export const reabrirPago = (id: Id) => postJSON<Pago>(`/api/pagos/${id}/reabrir`, undefined, ACCION_LARGA);
+export const marcarPagado = (id: Id) => postJSON<Pago>(`/api/pagos/${id}/marcar_pagado`, undefined, ACCION_LARGA);
 export const editarPago = (id: Id, body: { descripcion: string | null }) => putJSON<Pago>(PAGO_URL(id), body);
 
 // ── Obras sociales y períodos ─────────────────────────────────────
@@ -101,6 +106,8 @@ export type ItemLote = {
   observacion: string | null;
   /** Sólo en lotes sin factura: % de este ítem que se paga (100 = todo). */
   porcentaje_pago?: number;
+  /** Cargar igual un débito que supera el importe de la prestación (sin esto la API contesta 409 con el aviso). */
+  confirmar_exceso?: boolean;
 } & ({ id_atencion: number } | { medico_id: number });
 export type ItemLoteEditado = {
   tipo: string;
@@ -108,6 +115,7 @@ export type ItemLoteEditado = {
   gastos: number;
   observacion: string | null;
   porcentaje_pago?: number;
+  confirmar_exceso?: boolean;
 };
 
 export const listarLotes = (params: Record<string, string>) =>
@@ -175,6 +183,7 @@ export const listarRecibos = <T>(pagoId: number, estado: string) => {
   if (estado) p.set("estado", estado);
   return getJSON<T[]>(`/api/pagos/${pagoId}/recibos?${p}`);
 };
-export const generarRecibos = <T>(pagoId: number) => postJSON<T>(`/api/pagos/${pagoId}/recibos/generar`);
+export const generarRecibos = <T>(pagoId: number) =>
+  postJSON<T>(`/api/pagos/${pagoId}/recibos/generar`, undefined, ACCION_LARGA);
 export const borrarRecibos = (pagoId: number, body: { recibo_ids: number[] }) =>
   delJSONBody(`/api/pagos/${pagoId}/recibos`, body);

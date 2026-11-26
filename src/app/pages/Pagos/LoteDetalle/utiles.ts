@@ -1,5 +1,13 @@
 // Lo que comparten las pantallas de esta carpeta: una sola copia de cada cosa.
+import { detalleObjeto } from "@/app/shared/lib/httpErrors";
 import type { Ajuste, LoteAjuste } from "../types";
+
+/** La leyenda con que la API avisa que el débito supera el importe de la prestación (se puede cargar igual,
+ *  reenviando con `confirmar_exceso`). `null` si el error es otro. */
+export const avisoDeExceso = (e: unknown): string | null => {
+  const d = detalleObjeto(e);
+  return d?.codigo === "debito_supera_importe" ? (d.mensaje ?? null) : null;
+};
 
 export const LOTE_URL = (id: string | number) => `/api/lotes/snaps/${id}`;
 

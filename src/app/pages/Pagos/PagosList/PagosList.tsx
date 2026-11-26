@@ -193,6 +193,7 @@ const PagosList: React.FC = () => {
           <Tabla>
             <thead>
               <tr>
+                <th>Nro</th>
                 <th>Período</th>
                 <th>Descripción</th>
                 <th>Estado</th>
@@ -208,13 +209,14 @@ const PagosList: React.FC = () => {
             <tbody>
               {rows.length === 0 && (
                 <tr>
-                  <td colSpan={10} className={l.vacio}>
+                  <td colSpan={11} className={l.vacio}>
                     No hay pagos. Creá el primero.
                   </td>
                 </tr>
               )}
               {rows.map((p) => (
                 <tr key={p.id} className={l.fila} onClick={() => navigate(`/panel/liquidation/${p.id}`)}>
+                  <td>{p.id}</td>
                   <td>{mesLabel(p.mes)} {p.anio}</td>
                   <td>{p.descripcion ?? <span className={l.tenue}>—</span>}</td>
                   <td>

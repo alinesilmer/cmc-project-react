@@ -22,6 +22,8 @@ export type DeduccionHistorialItem = {
   descuento_nombre: string;
   monto: number;
   saldo_pendiente: number;
+  /** Lo ya cobrado (en pagos y en caja): monto = monto_aplicado + saldo_pendiente. */
+  monto_aplicado: number;
   mes_periodo: number | null;
   anio_periodo: number | null;
   cuota_nro: number;
@@ -30,6 +32,16 @@ export type DeduccionHistorialItem = {
   created_at: string;
   /** Cuándo se aplicó (la última vez que se descontó o se cobró en caja); null si todavía no. */
   fecha_aplicacion: string | null;
+};
+
+/** Un cobro de una deducción: lo descontado en un pago, lo cobrado en caja o lo que viene del historial del sistema anterior. */
+export type DeduccionCobro = {
+  id: number;
+  pago_id: number | null;
+  tipo: "pago" | "caja" | "historial";
+  descripcion: string;
+  aplicado: number;
+  fecha: string | null;
 };
 
 export type DeduccionHistorialResponse = {

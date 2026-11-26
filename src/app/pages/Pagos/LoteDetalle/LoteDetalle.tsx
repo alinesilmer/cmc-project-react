@@ -1,6 +1,15 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
-import { agregarItem, borrarItem, buscarAtenciones, cambiarEstadoLote, editarItem, getLote } from "@/app/pages/Pagos/pagos.api";
+import {
+  agregarItem,
+  borrarItem,
+  buscarAtenciones,
+  cambiarEstadoLote,
+  editarItem,
+  getLote,
+  type ItemLote,
+  type ItemLoteEditado,
+} from "@/app/pages/Pagos/pagos.api";
 import { useAppSnackbar } from "@/app/hooks/useAppSnackbar";
 import BackButton from "@/app/components/ui/BackButton/BackButton";
 import Button from "@/app/components/ui/Button/Button";
@@ -25,12 +34,13 @@ import Tabla from "@/app/components/ui/Tabla/Tabla";
 import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
 import {
   ESTADO_TONO,
+  avisoDeExceso,
   conAjusteAgregado,
   conAjusteReemplazado,
   estadoLabel,
   sinAjustes,
 } from "@/app/pages/Pagos/LoteDetalle/utiles";
-import Dialogo from "@/app/components/ui/Dialogo/Dialogo";
+import Dialogo, { DialogoAviso } from "@/app/components/ui/Dialogo/Dialogo";
 import paleta from "@/app/styles/paleta.module.scss";
 import { comoErrorApi, detalleDeError } from "@/app/shared/lib/httpErrors";
 import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
@@ -106,6 +116,9 @@ const LoteDetalle: React.FC = () => {
 
   const [agrupar, setAgrupar] = useState(true);
 
+  // Débito que supera el importe de la prestación: la leyenda y cómo reenviarlo si se confirma.
+  const [exceso, setExceso] = useState<{ mensaje: string; cargarIgual: () => void } | null>(null);
+
   const [deleteTarget, setDeleteTarget] = useState<Ajuste | null>(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -140,8 +153,8 @@ const LoteDetalle: React.FC = () => {
   const handleSelectAtencion = (row: AtencionSearchRow) => {
     setSelectedAtencion(row);
     setSearchResults([]);
-    setNewHonorarios(String(row.honorarios ?? 0));
-    setNewGastos(String(row.gastos ?? 0));
+    setNewHonorarios(String(row.precarga_honorarios ?? 0));
+    setNewGastos(String(row.precarga_gastos ?? 0));
   };
 
   // Búsqueda con espera; un número que da una sola prestación la elige sola.
@@ -211,16 +224,21 @@ const LoteDetalle: React.FC = () => {
       notify("El % de pago tiene que estar entre 0,01 y 200.", "error");
       return;
     }
+    await agregar({
+      tipo: newTipo,
+      id_atencion: selectedAtencion.id,
+      honorarios: Number(newHonorarios),
+      gastos: Number(newGastos),
+      observacion: newObservacion.trim() || null,
+      porcentaje_pago: aNumeroPorcentaje(newPorcentaje),
+    });
+  };
+
+  const agregar = async (item: ItemLote) => {
+    if (!loteId) return;
     setConfirming(true);
     try {
-      const nuevo = await agregarItem(loteId, {
-        tipo: newTipo,
-        id_atencion: selectedAtencion.id,
-        honorarios: Number(newHonorarios),
-        gastos: Number(newGastos),
-        observacion: newObservacion.trim() || null,
-        porcentaje_pago: aNumeroPorcentaje(newPorcentaje),
-      });
+      const nuevo = await agregarItem(loteId, item);
       // Sólo se suma la fila nueva (y se recalculan los totales): no se vuelve a pedir el lote.
       setLote((prev) => (prev ? conAjusteAgregado(prev, nuevo) : prev));
       // Se conservan el tipo y el motivo: se suelen cargar varios seguidos.
@@ -229,7 +247,9 @@ const LoteDetalle: React.FC = () => {
       notify("Ajuste agregado correctamente.");
       searchInputRef.current?.focus();
     } catch (e) {
-      notify(detalleDeError(e, "Error al agregar ajuste."), "error");
+      const mensaje = avisoDeExceso(e);
+      if (mensaje) setExceso({ mensaje, cargarIgual: () => agregar({ ...item, confirmar_exceso: true }) });
+      else notify(detalleDeError(e, "Error al agregar ajuste."), "error");
     } finally {
       setConfirming(false);
     }
@@ -247,18 +267,25 @@ const LoteDetalle: React.FC = () => {
       notify("Honorarios y gastos no pueden ser ambos 0.", "error");
       return;
     }
-    setSavingId(a.id);
+    await guardarEdicion(a.id, {
+      tipo: cambio.tipo ?? a.tipo,
+      honorarios,
+      gastos,
+      observacion: cambio.observacion ?? a.observacion ?? null,
+      porcentaje_pago: cambio.porcentaje_pago ?? Number(a.porcentaje_pago ?? 100),
+    });
+  };
+
+  const guardarEdicion = async (ajusteId: number, item: ItemLoteEditado) => {
+    if (!loteId) return;
+    setSavingId(ajusteId);
     try {
-      const editado = await editarItem(loteId, a.id, {
-        tipo: cambio.tipo ?? a.tipo,
-        honorarios,
-        gastos,
-        observacion: cambio.observacion ?? a.observacion ?? null,
-        porcentaje_pago: cambio.porcentaje_pago ?? Number(a.porcentaje_pago ?? 100),
-      });
+      const editado = await editarItem(loteId, ajusteId, item);
       setLote((prev) => (prev ? conAjusteReemplazado(prev, editado) : prev));
     } catch (e) {
-      notify(detalleDeError(e, "Error al guardar."), "error");
+      const mensaje = avisoDeExceso(e);
+      if (mensaje) setExceso({ mensaje, cargarIgual: () => guardarEdicion(ajusteId, { ...item, confirmar_exceso: true }) });
+      else notify(detalleDeError(e, "Error al guardar."), "error");
     } finally {
       setSavingId(null);
     }
@@ -746,7 +773,7 @@ const LoteDetalle: React.FC = () => {
                 #{selectedAtencion.id} · <b>{selectedAtencion.medico_nombre ?? "Médico sin nombre"}</b>{" "}
                 #{selectedAtencion.cod_med} · Orden {selectedAtencion.nro_orden ?? "—"} · {selectedAtencion.cod_nom ?? "—"}
                 {selectedAtencion.fecha_practica ? ` · ${selectedAtencion.fecha_practica}` : ""} · Afiliado{" "}
-                {selectedAtencion.nom_ape_p ?? "—"} · Facturado ${fmt(selectedAtencion.honorarios)} + ${fmt(selectedAtencion.gastos)}
+                {selectedAtencion.nom_ape_p ?? "—"} · Facturado ${fmt(selectedAtencion.importe_total)}
               </span>
               <BotonPlano type="button" className={lq.enlace} onClick={limpiarSeleccion}>
                 Cambiar
@@ -892,6 +919,31 @@ const LoteDetalle: React.FC = () => {
           </Tabla>
         </div>
       </section>
+
+      {exceso && (
+        <Dialogo
+          titulo="El débito supera el importe"
+          onClose={() => setExceso(null)}
+          acciones={
+            <>
+              <Button variant="secondary" onClick={() => setExceso(null)}>
+                Cancelar
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() => {
+                  setExceso(null);
+                  exceso.cargarIgual();
+                }}
+              >
+                Cargar igual
+              </Button>
+            </>
+          }
+        >
+          <DialogoAviso>{exceso.mensaje}</DialogoAviso>
+        </Dialogo>
+      )}
 
       {deleteTarget && (
         <Dialogo

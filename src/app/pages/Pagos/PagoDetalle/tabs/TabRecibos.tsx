@@ -110,7 +110,13 @@ const TabRecibos: React.FC<Props> = ({ pago, pagoId }) => {
       setGenerarResult(Array.isArray(result) ? result.length : 0);
       await loadData(estadoFiltro);
     } catch (e) {
-      setGenerarError(detalleDeError(e, "Error al generar."));
+      if (comoErrorApi(e).response == null) {
+        // Sin respuesta: el servidor puede haber terminado igual. Se recarga la lista para mostrar lo que quedó.
+        setGenerarError("No se recibió respuesta del servidor. Se actualizó la lista: revisá que estén todos los recibos antes de volver a generar.");
+        await loadData(estadoFiltro);
+      } else {
+        setGenerarError(detalleDeError(e, "Error al generar."));
+      }
     } finally {
       setGenerando(false);
     }

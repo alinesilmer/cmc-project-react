@@ -1,6 +1,7 @@
 import { delJSON, getJSON, patchJSON, postJSON } from "@/app/shared/lib/http";
 import { compararPorNroConcepto } from "@/app/shared/lib/conceptos";
 import type {
+  DeduccionCobro,
   DeduccionCreatePayload,
   DeduccionRead,
   DeduccionHistorialItem,
@@ -35,6 +36,9 @@ type HistorialParams = {
 
 export const fetchDeduccion = (id: number) =>
   getJSON<DeduccionHistorialItem>(`${DEDUCCIONES_URL}/${id}`);
+
+export const fetchCobrosDeduccion = (id: number) =>
+  getJSON<DeduccionCobro[]>(`${DEDUCCIONES_URL}/${id}/cobros`);
 
 export const fetchDeduccionesHistorial = (params: HistorialParams) =>
   getJSON<DeduccionHistorialResponse>(DEDUCCIONES_RAIZ, params);

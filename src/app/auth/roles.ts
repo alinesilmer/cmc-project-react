@@ -16,6 +16,7 @@ const MEDICO_ALLOWED_PATHS = [
   "/panel/planillas",
   "/panel/validaciones",
   "/panel/facturacion/mi-recepcion",
+  "/panel/mis-recibos",
   "/panel/help",
 ];
 

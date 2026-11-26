@@ -37,6 +37,7 @@ import {
   Percent,
   Plus,
   Receipt,
+  ReceiptText,
   RotateCcw,
   Search,
   ShieldCheck,
@@ -285,6 +286,7 @@ export const DOCTOR_TOP_NAV: TopEntry[] = [
   { kind: "link", path: `${base}/boletin-valores`, icon: FileBoxIcon, label: "Valores boletín" },
   { kind: "link", path: `${base}/planillas`, icon: FileText, label: "Planillas" },
   { kind: "link", path: `${base}/facturacion/mi-recepcion`, icon: Receipt, label: "Mi recepción" },
+  { kind: "link", path: `${base}/mis-recibos`, icon: ReceiptText, label: "Mis recibos" },
   { kind: "link", path: MI_PERFIL.path, icon: MI_PERFIL.icon, label: MI_PERFIL.label },
 ];
 

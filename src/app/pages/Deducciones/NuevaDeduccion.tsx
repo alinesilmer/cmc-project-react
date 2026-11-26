@@ -105,10 +105,10 @@ const NuevaDeduccion: React.FC = () => {
 
   const medicoOptions = useMemo<AppSearchSelectOption[]>(
     () =>
+      // «3220 - NOMBRE»: el número de socio va primero (médico y pagador usan las mismas opciones)
       medicos.map((m) => ({
         id: m.id,
-        label: m.nombre,
-        subtitle: m.nro_socio ? `#${m.nro_socio}` : undefined,
+        label: m.nro_socio ? `${m.nro_socio} - ${m.nombre}` : m.nombre,
       })),
     [medicos]
   );

@@ -70,6 +70,7 @@ const ConsultaPrestacion = lazy(() => import("./app/pages/facturacion/ConsultaPr
 const DetallePorMedico = lazy(() => import("./app/pages/facturacion/DetallePorMedico/DetallePorMedico"));
 const RegistroFacturacion = lazy(() => import("./app/pages/facturacion/RegistroFacturacion/RegistroFacturacion"));
 const MiRecepcion = lazy(() => import("./app/pages/facturacion/MiRecepcion/MiRecepcion"));
+const MisRecibos = lazy(() => import("./app/pages/Pagos/MisRecibos/MisRecibos"));
 
 // WEBSITE
 const WebRoutes = lazy(() => import("./website/router"));
@@ -182,6 +183,11 @@ export default function RootRoutes() {
 
               <Route element={<RequireScope anyOf={["medico:leer_propio", "medico:leer"]} />}>
                 <Route path="mi-perfil" element={<MiPerfil />} />
+              </Route>
+
+              {/* Los recibos emitidos del propio socio (el Colegio ve los de todos desde Liquidación > Pagos). */}
+              <Route element={<RequireScope scope="liquidacion:leer_propio" />}>
+                <Route path="mis-recibos" element={<MisRecibos />} />
               </Route>
 
               {/* Reportes del Colegio: además de esta ruta, el backend exige `reporte:leer` — el guard de acá es sólo comodidad de UI. */}

@@ -101,19 +101,37 @@ const PagoDetalle: React.FC = () => {
   const handleAction = async () => {
     if (!pagoId || !confirmAction) return;
     setActionBusy(true);
+    const mensajeOk =
+      confirmAction === "cerrar"
+        ? "Pago cerrado correctamente."
+        : confirmAction === "pagar"
+          ? "Pago marcado como pagado. Los recibos quedaron emitidos."
+          : "Pago reabierto correctamente.";
+    const estadoEsperado = { cerrar: "C", pagar: "P", reabrir: "A" }[confirmAction];
     try {
       const accion = { cerrar: cerrarPago, pagar: marcarPagado, reabrir: reabrirPago }[confirmAction];
       const updated = await accion(pagoId);
       setPago(updated);
-      notify(
-        confirmAction === "cerrar"
-          ? "Pago cerrado correctamente."
-          : confirmAction === "pagar"
-            ? "Pago marcado como pagado. Los recibos quedaron emitidos."
-            : "Pago reabierto correctamente.",
-      );
+      notify(mensajeOk);
       setConfirmAction(null);
     } catch (e) {
+      // Sin respuesta (se cortó la conexión o venció el tiempo): el servidor puede haber terminado igual. Se mira el
+      // estado real del pago antes de avisar un error, para que nadie reintente algo que ya se hizo.
+      if (comoErrorApi(e).response == null) {
+        try {
+          const actual = await getPago(pagoId);
+          setPago(actual);
+          if (actual.estado === estadoEsperado) {
+            notify(mensajeOk);
+            setConfirmAction(null);
+            return;
+          }
+        } catch {
+          // Sin conexión también para consultar: se cae al aviso de error de abajo.
+        }
+        notify("No se recibió respuesta del servidor. Recargá la página para ver en qué estado quedó el pago antes de reintentar.", "error");
+        return;
+      }
       const conflicto = detalleObjeto(e);
       if (conflicto?.pago_id) {
         notify(

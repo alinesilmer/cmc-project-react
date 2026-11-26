@@ -16,6 +16,7 @@ import Tabla from "@/app/components/ui/Tabla/Tabla";
 import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
 import {
   deleteDeduccion,
+  fetchCobrosDeduccion,
   fetchDeduccionesHistorial,
   fetchDeduccionesHistorialExport,
   fetchDescuentos,
@@ -27,6 +28,7 @@ import {
   updateDeduccionMonto,
 } from "./api";
 import type {
+  DeduccionCobro,
   DeduccionHistorialItem,
   DescuentoOption,
   MedicoOption,
@@ -62,11 +64,11 @@ const PAGE_SIZE = 50;
 type Pestana = "pendientes" | "en_pago" | "aplicadas";
 
 // «Adeudadas» (estado pendiente) incluye las vencidas (cuotas manuales de períodos anteriores): son las que más importan.
-// «Pagadas» = estado aplicado.
+// «Pagadas» = todo lo que ya tiene algo cobrado, entero o en parte (una cuota de 10.000 con 8.000 cobrados sigue adeudada por 2.000 y también figura acá).
 const PESTANAS: Array<{ key: Pestana; rotulo: string; estados: string[]; param: string }> = [
   { key: "pendientes", rotulo: "Adeudadas", estados: ["pendiente", "vencida"], param: "pendiente,vencida" },
   { key: "en_pago", rotulo: "En el pago", estados: ["en_pago"], param: "en_pago" },
-  { key: "aplicadas", rotulo: "Pagadas", estados: ["aplicado"], param: "aplicado" },
+  { key: "aplicadas", rotulo: "Pagadas", estados: ["con_cobros"], param: "con_cobros" },
 ];
 
 type AccionLote = "agregar" | "quitar" | "caja" | "eliminar";
@@ -78,6 +80,9 @@ const esPendiente = (r: DeduccionHistorialItem) => r.estado === "pendiente" || r
 const montoVisible = (r: DeduccionHistorialItem) =>
   esPendiente(r) || r.estado === "en_pago" ? Number(r.saldo_pendiente ?? r.monto ?? 0) : Number(r.monto ?? 0);
 const cobradaEnParte = (r: DeduccionHistorialItem) => montoVisible(r) !== Number(r.monto ?? 0);
+/** En «Pagadas» se muestra lo cobrado; si todavía queda algo por cobrar, se aclara cuánto. */
+const montoCobrado = (r: DeduccionHistorialItem) => Number(r.monto_aplicado ?? 0);
+const quedaSaldo = (r: DeduccionHistorialItem) => r.estado !== "aplicado" && Number(r.saldo_pendiente ?? 0) > 0.004;
 
 const plural = (n: number, uno: string, varios: string) => `${n} ${n === 1 ? uno : varios}`;
 
@@ -122,6 +127,9 @@ const DeduccionesList: React.FC = () => {
   const [loteOcupado, setLoteOcupado] = useState(false);
   const [confirmarLote, setConfirmarLote] = useState<AccionLote | null>(null);
   const [menu, setMenu] = useState<{ ancla: HTMLElement; fila: DeduccionHistorialItem } | null>(null);
+  const [cobrosDe, setCobrosDe] = useState<DeduccionHistorialItem | null>(null);
+  const [cobros, setCobros] = useState<DeduccionCobro[] | null>(null);
+  const [cobrosError, setCobrosError] = useState<string | null>(null);
 
   const [editTarget, setEditTarget] = useState<DeduccionHistorialItem | null>(null);
   const [editMonto, setEditMonto] = useState("");
@@ -137,7 +145,8 @@ const DeduccionesList: React.FC = () => {
 
   // ── Opciones de los selectores ──────────────────────────────────────
   const medicoOptions = useMemo<AppSearchSelectOption[]>(
-    () => medicos.map((m) => ({ id: m.id, label: m.nombre, subtitle: m.nro_socio ? `#${m.nro_socio}` : undefined })),
+    // «3220 - NOMBRE»: el número de socio va primero, tanto en la lista como en lo que queda escrito al elegir
+    () => medicos.map((m) => ({ id: m.id, label: m.nro_socio ? `${m.nro_socio} - ${m.nombre}` : m.nombre })),
     [medicos],
   );
   const descuentoOptions = useMemo<AppSearchSelectOption[]>(() => descuentos.map(opcionDeConcepto), [descuentos]);
@@ -268,7 +277,7 @@ const DeduccionesList: React.FC = () => {
     });
 
   const marcadas = [...seleccion.values()];
-  const sumaMarcadas = marcadas.reduce((acc, r) => acc + montoVisible(r), 0);
+  const sumaMarcadas = marcadas.reduce((acc, r) => acc + (pestana === "aplicadas" ? montoCobrado(r) : montoVisible(r)), 0);
   const puedeAgregar = marcadas.length > 0 && hasOpenPago && marcadas.every(esPendiente);
   const puedeQuitar = marcadas.length > 0 && marcadas.every((r) => r.estado === "en_pago");
   const puedeCaja = marcadas.length > 0 && marcadas.every(esPendiente);
@@ -392,7 +401,7 @@ const DeduccionesList: React.FC = () => {
       fecha: partesFecha(row.created_at)?.fecha ?? "",
       periodo: periodoLargo(row.mes_periodo, row.anio_periodo),
       descontadaEl: partesFecha(row.fecha_aplicacion)?.fecha,
-      monto: montoVisible(row),
+      monto: pestana === "aplicadas" ? montoCobrado(row) : montoVisible(row),
     }));
 
   const exportExcel = async () => {
@@ -437,6 +446,18 @@ const DeduccionesList: React.FC = () => {
     }
   };
 
+  // ── Cobros de una deducción ─────────────────────────────────────────
+  const abrirCobros = async (r: DeduccionHistorialItem) => {
+    setCobrosDe(r);
+    setCobros(null);
+    setCobrosError(null);
+    try {
+      setCobros(await fetchCobrosDeduccion(r.id));
+    } catch (e: any) {
+      setCobrosError(getErrorMessage(e, "No se pudieron cargar los cobros."));
+    }
+  };
+
   // ── Menú de una fila ────────────────────────────────────────────────
   const itemsMenu = (r: DeduccionHistorialItem) => {
     const cerrar = () => setMenu(null);
@@ -450,8 +471,10 @@ const DeduccionesList: React.FC = () => {
         {rotulo}
       </MenuItem>
     );
+    const verCobros = Number(r.monto_aplicado ?? 0) > 0 ? [opcion("Ver cobros", () => abrirCobros(r))] : [];
     if (esPendiente(r)) {
       return [
+        ...verCobros,
         opcion("Agregar al pago", () => onChangeEstado(r, "en_pago"), { disabled: !hasOpenPago }),
         opcion("Pagar en caja", () => onPagarEnCaja(r)),
         opcion("Editar monto", () => openEdit(r)),
@@ -460,6 +483,7 @@ const DeduccionesList: React.FC = () => {
     }
     if (r.estado === "en_pago") {
       return [
+        ...verCobros,
         opcion("Quitar del pago", () => onChangeEstado(r, "pendiente")),
         opcion("Editar monto", () => openEdit(r)),
         opcion("Eliminar", () => onDelete(r), { peligro: true }),
@@ -467,6 +491,7 @@ const DeduccionesList: React.FC = () => {
     }
     if (r.estado === "aplicado") {
       return [
+        ...verCobros,
         opcion("Cancelar cobro", () => onChangeEstado(r, "pendiente")),
         opcion("Eliminar", () => onDelete(r), { peligro: true }),
       ];
@@ -591,8 +616,8 @@ const DeduccionesList: React.FC = () => {
                     <th>Médico</th>
                     <th>Concepto</th>
                     <th>Período</th>
-                    <th>{pestana === "aplicadas" ? "Aplicada" : "Creada"}</th>
-                    <th>{pestana === "aplicadas" ? "Monto" : "Saldo"}</th>
+                    <th>{pestana === "aplicadas" ? "Último cobro" : "Creada"}</th>
+                    <th>{pestana === "aplicadas" ? "Cobrado" : "Saldo"}</th>
                     <th aria-label="Acciones" />
                   </tr>
                 </thead>
@@ -642,7 +667,16 @@ const DeduccionesList: React.FC = () => {
                           })()}
                         </td>
                         <td className={s.celdaMonto}>
-                          {cobradaEnParte(r) ? (
+                          {pestana === "aplicadas" ? (
+                            quedaSaldo(r) ? (
+                              <span className={s.celdaDoble}>
+                                {formatMoney(montoCobrado(r))}
+                                <small>de {formatMoney(r.monto)} · debe {formatMoney(r.saldo_pendiente)}</small>
+                              </span>
+                            ) : (
+                              formatMoney(montoCobrado(r))
+                            )
+                          ) : cobradaEnParte(r) ? (
                             <span className={s.celdaDoble}>
                               {formatMoney(montoVisible(r))}
                               <small>de {formatMoney(r.monto)}</small>
@@ -870,6 +904,52 @@ const DeduccionesList: React.FC = () => {
             ]}
           />
           {cancelError && <DialogoAviso tono="peligro">{cancelError}</DialogoAviso>}
+        </Dialogo>
+      )}
+
+      {cobrosDe && (
+        <Dialogo
+          titulo="Cobros de la deducción"
+          icono={Wallet}
+          onClose={() => setCobrosDe(null)}
+          acciones={<Button variant="ghost" onClick={() => setCobrosDe(null)}>Cerrar</Button>}
+        >
+          <DialogoDatos
+            filas={[
+              { rotulo: "Médico", valor: cobrosDe.medico_nombre },
+              { rotulo: "Concepto", valor: conceptoDe(cobrosDe) },
+              { rotulo: "Período", valor: monthLabel(cobrosDe.mes_periodo, cobrosDe.anio_periodo) },
+              { rotulo: "Importe de la cuota", valor: formatMoney(cobrosDe.monto) },
+              { rotulo: "Cobrado", valor: formatMoney(montoCobrado(cobrosDe)) },
+              { rotulo: "Debe", valor: formatMoney(Math.max(Number(cobrosDe.saldo_pendiente ?? 0), 0)) },
+            ]}
+          />
+          {cobrosError && <DialogoAviso tono="peligro">{cobrosError}</DialogoAviso>}
+          {!cobros && !cobrosError && <Cargando />}
+          {cobros && cobros.length === 0 && <p>Todavía no tiene cobros.</p>}
+          {cobros && cobros.length > 0 && (
+            <Tabla className={s.table}>
+              <thead>
+                <tr>
+                  <th>Cobro</th>
+                  <th>Fecha</th>
+                  <th style={{ textAlign: "right" }}>Importe</th>
+                </tr>
+              </thead>
+              <tbody>
+                {cobros.map((c) => {
+                  const f = partesFecha(c.fecha);
+                  return (
+                    <tr key={c.id} style={{ cursor: "default" }}>
+                      <td>{c.descripcion}</td>
+                      <td>{f ? `${f.fecha} ${f.hora}` : <span className={lq.tenue}>—</span>}</td>
+                      <td className={s.celdaMonto}>{formatMoney(c.aplicado)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </Tabla>
+          )}
         </Dialogo>
       )}
     </div>
