@@ -21,6 +21,8 @@ export interface DocumentoReporte<T> {
   vertical?: boolean;
   /** No imprimir el mail del Colegio en el pie. */
   sinMail?: boolean;
+  /** Sin hoja de portada: el listado empieza en la primera. */
+  sinPortada?: boolean;
   /** «Octubre 2026». */
   periodo: string;
   /** Lo que lleva la portada del PDF en lugar de `periodo`. */

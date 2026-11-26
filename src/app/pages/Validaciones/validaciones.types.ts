@@ -125,6 +125,8 @@ export interface ObraSocialConfig {
   /** Guía de usuario/clave y pasos del portal (Swiss Medical, Unión Personal). */
   guia?: GuiaPortal;
   requisitos?: RequisitosPortal;
+  /** Reemplaza la pantalla de carga para el médico: al tocar la carpeta se muestra este aviso. */
+  avisoMedico?: string;
 }
 
 // ─── Prestaciones ─────────────────────────────────────────────────────────────

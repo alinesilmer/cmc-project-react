@@ -82,6 +82,11 @@ export async function construirPdfReporte<T>(reporte: DocumentoReporte<T>): Prom
     ...tableStyles(columnas.length),
   });
 
+  if (reporte.sinPortada) {
+    pintarPies(doc, 1, !reporte.sinMail);
+    return doc.output("blob") as Blob;
+  }
+
   // La portada va adelante; el listado empieza en la hoja 2.
   doc.insertPage(1);
   doc.setPage(1);
