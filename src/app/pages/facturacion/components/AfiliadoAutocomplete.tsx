@@ -12,12 +12,20 @@ interface Props {
   /** Texto a mostrar antes de que el usuario busque (al editar, o tras crear uno). */
   presetLabel?: string;
   blurOnSelect?: boolean;
+  /** Lo que hay escrito sin haber elegido a nadie (vacío al elegir o al borrar). */
+  onTextoChange?: (texto: string) => void;
 }
 
-const AfiliadoAutocomplete: React.FC<Props> = ({ value, onChange, disabled, presetLabel, blurOnSelect }) => {
+/** Pausa desde la última tecla hasta que se consulta. */
+const ESPERA_MS = 250;
+
+const AfiliadoAutocomplete: React.FC<Props> = ({ value, onChange, disabled, presetLabel, blurOnSelect, onTextoChange }) => {
   const [options, setOptions] = useState<AfiliadoRead[]>([]);
   const [loading, setLoading] = useState(false);
-  const abortRef = useRef<AbortController | null>(null);
+  const [fallo, setFallo] = useState(false);
+  const esperaRef = useRef<number | undefined>(undefined);
+  // Número de la última búsqueda: la respuesta de una anterior que llega tarde se descarta.
+  const pedidoRef = useRef(0);
 
   // Lo elegido tiene que estar entre las opciones para que `AppSearchSelect` muestre su texto: al editar, o al crear uno desde "+ Agregar afiliado".
   useEffect(() => {
@@ -28,22 +36,34 @@ const AfiliadoAutocomplete: React.FC<Props> = ({ value, onChange, disabled, pres
     });
   }, [value, presetLabel]);
 
-  const search = useCallback(async (q: string) => {
-    if (q.length < 1) { setOptions([]); return; }
-    abortRef.current?.abort();
-    abortRef.current = new AbortController();
-    setLoading(true);
-    try {
-      const rows = await fetchAfiliados(q);
-      setOptions(rows);
-    } catch {
-      // abort or network error
-    } finally {
-      setLoading(false);
-    }
+  const cancelar = useCallback(() => {
+    window.clearTimeout(esperaRef.current);
+    pedidoRef.current += 1;
   }, []);
 
-  useEffect(() => () => { abortRef.current?.abort(); }, []);
+  const search = useCallback((q: string) => {
+    onTextoChange?.(q);
+    cancelar();
+    // La lista de lo escrito antes se vacía ya: al salir del campo se elige la opción resaltada.
+    setOptions([]);
+    setFallo(false);
+    const texto = q.trim();
+    setLoading(!!texto);
+    if (!texto) return;
+    const pedido = pedidoRef.current;
+    esperaRef.current = window.setTimeout(async () => {
+      try {
+        const rows = await fetchAfiliados(texto);
+        if (pedido === pedidoRef.current) setOptions(rows);
+      } catch {
+        if (pedido === pedidoRef.current) setFallo(true);
+      } finally {
+        if (pedido === pedidoRef.current) setLoading(false);
+      }
+    }, ESPERA_MS);
+  }, [cancelar, onTextoChange]);
+
+  useEffect(() => cancelar, [cancelar]);
 
   const selectOptions: AppSearchSelectOption[] = options.map((a) => ({
     id: a.id,
@@ -56,10 +76,14 @@ const AfiliadoAutocomplete: React.FC<Props> = ({ value, onChange, disabled, pres
       value={value}
       onChange={(id) => {
         const afiliado = id == null ? null : options.find((a) => a.id === Number(id)) ?? null;
+        cancelar();
+        setLoading(false);
+        onTextoChange?.("");
         onChange(afiliado);
       }}
       onQueryChange={search}
       loading={loading}
+      noOptionsText={fallo ? "No se pudo buscar. Volvé a escribir para reintentar." : undefined}
       disabled={disabled}
       blurOnSelect={blurOnSelect}
       // Prestaciones con el paciente fuera del padrón (sólo el nombre, sin afiliado): no hay opción que seleccionar.

@@ -11,6 +11,8 @@ interface Props {
   isOpen: boolean;
   /** Alta: el identificador que ya se hubiera tipeado o elegido en el selector. */
   dni: string;
+  /** Alta: el nombre que ya se hubiera tipeado en el selector. */
+  nombre?: string;
   /** Con un afiliado, el modal lo edita en vez de dar de alta uno nuevo. */
   afiliado?: AfiliadoRead | null;
   onClose: () => void;
@@ -24,14 +26,14 @@ const ID_MAX = 20;
 const limpiarId = (v: string) => v.replace(/[^A-Za-z0-9./-]/g, "").slice(0, ID_MAX);
 
 /** Alta o edición de un afiliado del padrón. */
-const AltaAfiliadoModal: React.FC<Props> = ({ isOpen, dni, afiliado, onClose, onCreated }) => {
+const AltaAfiliadoModal: React.FC<Props> = ({ isOpen, dni, nombre: nombreInicial = "", afiliado, onClose, onCreated }) => {
   const editando = !!afiliado;
   const [dniInput, setDniInput] = useState(dni);
   const [nombre, setNombre] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Cada vez que se abre: en edición, los datos del afiliado; en alta, el identificador que ya se hubiera tipeado.
+  // Cada vez que se abre: en edición, los datos del afiliado; en alta, lo que ya se hubiera tipeado.
   useEffect(() => {
     if (!isOpen) return;
     setError(null);
@@ -40,9 +42,9 @@ const AltaAfiliadoModal: React.FC<Props> = ({ isOpen, dni, afiliado, onClose, on
       setNombre(afiliado.nombre ?? "");
     } else {
       setDniInput(limpiarId(dni));
-      setNombre("");
+      setNombre(nombreInicial);
     }
-  }, [isOpen, dni, afiliado]);
+  }, [isOpen, dni, nombreInicial, afiliado]);
 
   const idIncompleto = dniInput.length > 0 && dniInput.length < ID_MIN;
   const vacio = !dniInput && !nombre.trim();

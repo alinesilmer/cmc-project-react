@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import { Pencil, Trash2, Check } from "lucide-react";
 import AfiliadoAutocomplete from "../../components/AfiliadoAutocomplete";
 import { etiquetaAfiliado } from "../../components/etiquetas";
@@ -10,6 +10,14 @@ import type { AfiliadoRead } from "../../types";
 import comun from "../Comun.module.scss";;
 import paleta from "@/app/styles/paleta.module.scss";
 import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
+
+/** Lo escrito en el buscador, repartido en el campo del alta que le toca. */
+const prefillDeTexto = (texto: string) => {
+  const t = texto.trim();
+  // Número: tiene dígitos y es una sola palabra, o sólo dígitos y separadores.
+  const esNumero = /\d/.test(t) && (!/\s/.test(t) || /^[\d.\-/\s]+$/.test(t));
+  return esNumero ? { dni: t, nombre: "" } : { dni: "", nombre: t.toUpperCase() };
+};
 
 interface Props {
   /** Afiliado elegido del padrón (por id: puede no tener número). */
@@ -31,6 +39,19 @@ const PacienteSection: React.FC<Props> = ({
   const [bajaError, setBajaError] = useState<string | null>(null);
   // El autocomplete conserva el texto tipeado aunque el `value` vuelva a null (ver AppSearchSelect).
   const [autocompleteKey, setAutocompleteKey] = useState(0);
+  // Lo escrito sin elegir a nadie, y la copia tomada al apretar «+ Agregar afiliado» (salir del campo puede elegir una opción y borrarlo).
+  const textoRef = useRef("");
+  const textoAlApretarRef = useRef("");
+  const anotarTexto = useCallback((texto: string) => { textoRef.current = texto; }, []);
+  // Con qué arranca el alta. Se fija al abrir, para que no pise lo que se esté tipeando en el modal.
+  const [prefill, setPrefill] = useState({ dni: "", nombre: "" });
+
+  const abrirAlta = () => {
+    const texto = textoAlApretarRef.current || textoRef.current;
+    textoAlApretarRef.current = "";
+    setPrefill(texto.trim() ? prefillDeTexto(texto) : { dni, nombre: "" });
+    setModal("alta");
+  };
 
   const etiqueta = etiquetaAfiliado(dni, nombrePaciente);
   // Estable mientras el modal está abierto: si cambiara en cada render, el modal volvería a cargar sus campos con cada tecla.
@@ -51,6 +72,7 @@ const PacienteSection: React.FC<Props> = ({
       await eliminarAfiliadoPorId(afiliadoId);
       setShowBaja(false);
       onAfiliadoChange(null);
+      textoRef.current = "";
       setAutocompleteKey((k) => k + 1);
     } catch (e) {
       // Se cierra el modal para que el motivo (típicamente el 409 "tiene N prestaciones cargadas") quede visible bajo el campo y no tapado.
@@ -76,6 +98,7 @@ const PacienteSection: React.FC<Props> = ({
                 key={autocompleteKey}
                 value={afiliadoId}
                 onChange={onAfiliadoChange}
+                onTextoChange={anotarTexto}
                 disabled={disabled}
                 presetLabel={etiqueta || undefined}
                 blurOnSelect={false}
@@ -101,7 +124,13 @@ const PacienteSection: React.FC<Props> = ({
             >
               <Trash2 size={16} />
             </BotonPlano>
-            <BotonPlano type="button" className={comun.btnGhost} onClick={() => setModal("alta")} disabled={disabled}>
+            <BotonPlano
+              type="button"
+              className={comun.btnGhost}
+              onMouseDown={() => { textoAlApretarRef.current = textoRef.current; }}
+              onClick={abrirAlta}
+              disabled={disabled}
+            >
               + Agregar afiliado
             </BotonPlano>
           </div>
@@ -115,12 +144,14 @@ const PacienteSection: React.FC<Props> = ({
 
       <AltaAfiliadoModal
         isOpen={modal !== null}
-        dni={dni}
+        dni={prefill.dni}
+        nombre={prefill.nombre}
         afiliado={aEditar}
         onClose={() => setModal(null)}
         onCreated={(afiliado) => {
           setModal(null);
           onAfiliadoChange(afiliado);
+          textoRef.current = "";
           setAutocompleteKey((k) => k + 1);
         }}
       />

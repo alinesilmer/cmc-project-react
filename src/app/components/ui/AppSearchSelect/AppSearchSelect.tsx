@@ -25,6 +25,8 @@ type Props = {
   blurOnSelect?: boolean;
   /** Texto con el que arranca el campo cuando NO hay opción seleccionada (`value` en null) pero igual se sabe qué había. */
   initialInputValue?: string;
+  /** Qué decir con la lista vacía (por defecto «Sin resultados»). */
+  noOptionsText?: string;
   /**
    * Lista de la A a la Z y, al buscar, primero lo que coincide completo (el código igual, el nombre igual) y después
    * lo que empieza igual y lo que lo contiene. Ver `ordenarOpciones`. Con `onQueryChange` el orden lo trae el servidor.
@@ -43,6 +45,7 @@ const AppSearchSelect: React.FC<Props> = ({
   onQueryChange,
   blurOnSelect = true,
   initialInputValue,
+  noOptionsText = "Sin resultados",
   ordenar = false,
   ordenPorCodigo = false,
 }) => {
@@ -114,7 +117,7 @@ const AppSearchSelect: React.FC<Props> = ({
         // Reabrir sugerencias para lo que ya estaba escrito, en vez de forzar una selección o dejar la lista vacía.
         if (!selected) onQueryChange?.(inputValue);
       }}
-      noOptionsText="Sin resultados"
+      noOptionsText={noOptionsText}
       loadingText="Buscando…"
       slotProps={{ popper: { style: { zIndex: 10000 } } }}
       sx={{ width: "100%" }}
