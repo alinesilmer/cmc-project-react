@@ -35,6 +35,7 @@ import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
 import {
   ESTADO_TONO,
   avisoDeExceso,
+  porcentajeComun,
   conAjusteAgregado,
   conAjusteReemplazado,
   estadoLabel,
@@ -48,6 +49,7 @@ import { CMC_LOGO_SRC, fetchAsDataUrl } from "@/app/shared/lib/documentos/instit
 import { generarLotePdf } from "../pdf/loteAjustesPdf";
 import { generarLoteExcel } from "../pdf/loteAjustesExcel";
 import FacturaRefacturacion from "./FacturaRefacturacion";
+import PorcentajeAlPasar from "./PorcentajeAlPasar";
 
 const OBSERVACION_OPTIONS = [
   "Falta firma y sello prestador",
@@ -126,6 +128,8 @@ const LoteDetalle: React.FC = () => {
     "cerrar" | "reabrir" | "en_liquidaciones" | "quitar" | null
   >(null);
   const [transitioning, setTransitioning] = useState(false);
+  // % con el que el lote pasa al pago; vacío = cada ítem con el suyo (cuando tienen distintos).
+  const [porcentajePaso, setPorcentajePaso] = useState("");
 
   // `silencioso`: recarga después de editar sin tapar la tabla con el cargando.
   const loadLote = useCallback(
@@ -343,6 +347,17 @@ const LoteDetalle: React.FC = () => {
     }
   };
 
+  const abrirPasoAlPago = () => {
+    setPorcentajePaso(String(porcentajeComun(lote?.ajustes ?? []) ?? ""));
+    setTransitionModal("en_liquidaciones");
+  };
+
+  // Con el campo vacío sólo se puede confirmar si los ítems tienen porcentajes distintos (cada uno el suyo).
+  const porcentajePasoInvalido =
+    transitionModal === "en_liquidaciones" &&
+    !porcentajeItemValido(porcentajePaso) &&
+    !(porcentajePaso.trim() === "" && porcentajeComun(lote?.ajustes ?? []) === null);
+
   const handleTransition = async () => {
     if (!loteId || !transitionModal) return;
     setTransitioning(true);
@@ -353,7 +368,13 @@ const LoteDetalle: React.FC = () => {
       quitar: "C",
     };
     try {
-      const res = await cambiarEstadoLote(loteId, estadoMap[transitionModal]);
+      const res = await cambiarEstadoLote(
+        loteId,
+        estadoMap[transitionModal],
+        transitionModal === "en_liquidaciones" && porcentajePaso.trim() !== ""
+          ? aNumeroPorcentaje(porcentajePaso)
+          : undefined,
+      );
       setLote(res);
       setTransitionModal(null);
       notify(
@@ -597,7 +618,7 @@ const LoteDetalle: React.FC = () => {
                 <Button
                   variant="primary"
                   size="md"
-                  onClick={() => setTransitionModal("en_liquidaciones")}
+                  onClick={abrirPasoAlPago}
                   disabled={facturaSinCobertura}
                   title={facturaSinCobertura ? "Su factura todavía no está en el pago ni fue pagada." : undefined}
                 >
@@ -981,7 +1002,7 @@ const LoteDetalle: React.FC = () => {
               <Button
                 variant={transitionModal === "quitar" ? "danger" : "primary"}
                 onClick={handleTransition}
-                disabled={transitioning}
+                disabled={transitioning || porcentajePasoInvalido}
               >
                 {transitioning ? "Procesando…" : "Confirmar"}
               </Button>
@@ -989,6 +1010,9 @@ const LoteDetalle: React.FC = () => {
           }
         >
           {!transitioning && <p>{transitionDescriptions[transitionModal]}</p>}
+          {!transitioning && transitionModal === "en_liquidaciones" && (
+            <PorcentajeAlPasar ajustes={ajustes} valor={porcentajePaso} onChange={setPorcentajePaso} />
+          )}
           {transitioning && <p style={{ color: paleta.gray500 }}>Procesando…</p>}
         </Dialogo>
       )}

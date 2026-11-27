@@ -12,9 +12,11 @@ import styles from "./LoteDetalle.module.scss";
 import {
   type LoteAjuste,
   type Ajuste,
+  aNumeroPorcentaje,
   fechaDMA,
   fmt,
   mesLabel,
+  porcentajeItemValido,
   type MedicoResult,
 } from "../types";
 import { saveAs } from "@/app/shared/lib/fileSaver";
@@ -26,6 +28,7 @@ import {
   conAjusteAgregado,
   conAjusteReemplazado,
   estadoLabel,
+  porcentajeComun,
   sinAjustes,
 } from "@/app/pages/Pagos/LoteDetalle/utiles";
 import Dialogo from "@/app/components/ui/Dialogo/Dialogo";
@@ -35,6 +38,7 @@ import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 import { CMC_LOGO_SRC, fetchAsDataUrl } from "@/app/shared/lib/documentos/institucion";
 import { generarLoteSinFacturaPdf } from "../pdf/loteAjustesPdf";
 import { generarLoteExcel } from "../pdf/loteAjustesExcel";
+import PorcentajeAlPasar from "./PorcentajeAlPasar";
 type EditForm = { tipo: "d" | "c"; honorarios: string; gastos: string; observacion: string; porcentaje: string };
 
 // «98,4» o «98.4» -> 98.4; NaN si no es un número. Vacío = sin porcentaje (null). Mismo rango que el % de una factura.
@@ -90,6 +94,8 @@ const LoteDetalleSinFactura: React.FC = () => {
     "cerrar" | "reabrir" | "en_liquidaciones" | "quitar" | null
   >(null);
   const [transitioning, setTransitioning] = useState(false);
+  // % con el que el lote pasa al pago; vacío = cada ítem con el suyo (cuando tienen distintos).
+  const [porcentajePaso, setPorcentajePaso] = useState("");
 
   const loadLote = useCallback(async () => {
     if (!loteId) return;
@@ -253,6 +259,17 @@ const LoteDetalleSinFactura: React.FC = () => {
     }
   };
 
+  const abrirPasoAlPago = () => {
+    setPorcentajePaso(String(porcentajeComun(lote?.ajustes ?? []) ?? ""));
+    setTransitionModal("en_liquidaciones");
+  };
+
+  // Con el campo vacío sólo se puede confirmar si los ítems tienen porcentajes distintos (cada uno el suyo).
+  const porcentajePasoInvalido =
+    transitionModal === "en_liquidaciones" &&
+    !porcentajeItemValido(porcentajePaso) &&
+    !(porcentajePaso.trim() === "" && porcentajeComun(lote?.ajustes ?? []) === null);
+
   const handleTransition = async () => {
     if (!loteId || !transitionModal) return;
     setTransitioning(true);
@@ -263,7 +280,13 @@ const LoteDetalleSinFactura: React.FC = () => {
       quitar: "C",
     };
     try {
-      const res = await cambiarEstadoLote(loteId, estadoMap[transitionModal]);
+      const res = await cambiarEstadoLote(
+        loteId,
+        estadoMap[transitionModal],
+        transitionModal === "en_liquidaciones" && porcentajePaso.trim() !== ""
+          ? aNumeroPorcentaje(porcentajePaso)
+          : undefined,
+      );
       setLote(res);
       setTransitionModal(null);
       notify(`Lote ${transitionLabels[transitionModal].toLowerCase()} correctamente.`);
@@ -436,7 +459,7 @@ const LoteDetalleSinFactura: React.FC = () => {
                     <Button variant="ghost" size="md" onClick={() => setTransitionModal("reabrir")}>
                       Reabrir
                     </Button>
-                    <Button variant="primary" size="md" onClick={() => setTransitionModal("en_liquidaciones")}>
+                    <Button variant="primary" size="md" onClick={abrirPasoAlPago}>
                       Pasar a liquidaciones
                     </Button>
                   </>
@@ -739,7 +762,7 @@ const LoteDetalleSinFactura: React.FC = () => {
               <Button
                 variant={transitionModal === "quitar" ? "danger" : "primary"}
                 onClick={handleTransition}
-                disabled={transitioning}
+                disabled={transitioning || porcentajePasoInvalido}
               >
                 {transitioning ? "Procesando…" : "Confirmar"}
               </Button>
@@ -747,6 +770,9 @@ const LoteDetalleSinFactura: React.FC = () => {
           }
         >
               {!transitioning && <p>{transitionDescriptions[transitionModal]}</p>}
+              {!transitioning && transitionModal === "en_liquidaciones" && (
+                <PorcentajeAlPasar ajustes={ajustes} valor={porcentajePaso} onChange={setPorcentajePaso} />
+              )}
               {transitioning && <p style={{ color: paleta.gray500 }}>Procesando…</p>}
             </Dialogo>
       )}

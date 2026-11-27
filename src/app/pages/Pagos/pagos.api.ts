@@ -142,7 +142,9 @@ export const agregarItem = (loteId: Id, body: ItemLote) => postJSON<Ajuste>(ITEM
 export const editarItem = (loteId: Id, ajusteId: number, body: ItemLoteEditado) =>
   putJSON<Ajuste>(ITEM_URL(loteId, ajusteId), body);
 export const borrarItem = (loteId: Id, ajusteId: number) => delJSON(ITEM_URL(loteId, ajusteId));
-export const cambiarEstadoLote = (loteId: Id, estado: string) => patchJSON<LoteAjuste>(ESTADO_URL(loteId), { estado });
+// `porcentaje_pago` sólo al pasar al pago ("L"): se aplica a todos los ítems; sin él, cada uno entra con el suyo.
+export const cambiarEstadoLote = (loteId: Id, estado: string, porcentaje_pago?: number) =>
+  patchJSON<LoteAjuste>(ESTADO_URL(loteId), { estado, porcentaje_pago });
 
 // Factura nueva de una refacturación (tipo, número y un archivo). Los tres devuelven el lote completo; el primero
 // agrega `advertencias` (p. ej. el número ya está en otra factura de la obra social: avisa, no bloquea).

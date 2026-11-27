@@ -58,6 +58,29 @@ export const sinAjustes = (lote: LoteAjuste, ids: Iterable<number | string>): Lo
   return conAjustes(lote, lote.ajustes.filter((a) => !quitar.has(a.id)));
 };
 
+// ── % de pago al pasar el lote al pago ────────────────────────────
+
+/** El % que tienen todos los ítems del lote; `null` si tienen distintos. Un ítem sin % cuenta como 100. */
+export const porcentajeComun = (ajustes: Ajuste[]): number | null => {
+  const distintos = new Set(ajustes.map((a) => Number(a.porcentaje_pago ?? 100)));
+  if (distintos.size > 1) return null;
+  return distintos.size === 1 ? [...distintos][0] : 100;
+};
+
+/** Lo que entra al pago: cada importe cargado por `porcentaje` (o por el de su ítem si es `null`),
+ *  redondeado al centavo por separado, como lo hace la API. */
+export const totalesAlPasar = (ajustes: Ajuste[], porcentaje: number | null) => {
+  let debitos = 0;
+  let creditos = 0;
+  for (const a of ajustes) {
+    const p = porcentaje ?? Number(a.porcentaje_pago ?? 100);
+    const total = centavos((Number(a.honorarios) * p) / 100) + centavos((Number(a.gastos) * p) / 100);
+    if (a.tipo === "d") debitos += total;
+    else creditos += total;
+  }
+  return { debitos: centavos(debitos), creditos: centavos(creditos) };
+};
+
 // Clase de Liquidacion.module.scss que pinta cada estado.
 export const ESTADO_TONO: Record<string, "abierto" | "cerrado" | "enLiquidacion" | "aplicado"> = {
   A: "abierto",
