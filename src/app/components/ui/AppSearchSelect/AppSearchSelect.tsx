@@ -28,6 +28,11 @@ type Props = {
   /** Qué decir con la lista vacía (por defecto «Sin resultados»). */
   noOptionsText?: string;
   /**
+   * Con búsqueda remota que deja la lista anterior a la vista mientras llega la nueva: mientras `loading`,
+   * ni Tab/salir del campo ni Enter eligen la opción resaltada, que es de lo escrito antes.
+   */
+  sinElegirMientrasCarga?: boolean;
+  /**
    * Lista de la A a la Z y, al buscar, primero lo que coincide completo (el código igual, el nombre igual) y después
    * lo que empieza igual y lo que lo contiene. Ver `ordenarOpciones`. Con `onQueryChange` el orden lo trae el servidor.
    */
@@ -46,6 +51,7 @@ const AppSearchSelect: React.FC<Props> = ({
   blurOnSelect = true,
   initialInputValue,
   noOptionsText = "Sin resultados",
+  sinElegirMientrasCarga = false,
   ordenar = false,
   ordenPorCodigo = false,
 }) => {
@@ -59,6 +65,7 @@ const AppSearchSelect: React.FC<Props> = ({
   }, [value, options]);
 
   const selected = pinned && String(pinned.id) === String(value) ? pinned : null;
+  const listaVieja = sinElegirMientrasCarga && !!loading;
 
   const [inputValue, setInputValue] = useState(selected?.label ?? initialInputValue ?? "");
 
@@ -80,7 +87,13 @@ const AppSearchSelect: React.FC<Props> = ({
       clearOnBlur={false}
       // `autoSelect` confirma la opción resaltada al perder foco (blur), no solo con Enter — sin condicionarlo, con la lista completa mostrada al hacer click.
       autoHighlight
-      autoSelect={inputValue.length > 0}
+      autoSelect={inputValue.length > 0 && !listaVieja}
+      onKeyDown={(e: React.KeyboardEvent<HTMLDivElement> & { defaultMuiPrevented?: boolean }) => {
+        if (listaVieja && e.key === "Enter") {
+          e.defaultMuiPrevented = true;
+          e.preventDefault();
+        }
+      }}
       options={mergedOptions}
       getOptionLabel={(opt) => opt.label}
       value={selected}

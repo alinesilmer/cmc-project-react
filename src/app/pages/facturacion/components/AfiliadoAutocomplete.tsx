@@ -16,14 +16,10 @@ interface Props {
   onTextoChange?: (texto: string) => void;
 }
 
-/** Pausa desde la última tecla hasta que se consulta. */
-const ESPERA_MS = 250;
-
 const AfiliadoAutocomplete: React.FC<Props> = ({ value, onChange, disabled, presetLabel, blurOnSelect, onTextoChange }) => {
   const [options, setOptions] = useState<AfiliadoRead[]>([]);
   const [loading, setLoading] = useState(false);
   const [fallo, setFallo] = useState(false);
-  const esperaRef = useRef<number | undefined>(undefined);
   // Número de la última búsqueda: la respuesta de una anterior que llega tarde se descarta.
   const pedidoRef = useRef(0);
 
@@ -37,30 +33,34 @@ const AfiliadoAutocomplete: React.FC<Props> = ({ value, onChange, disabled, pres
   }, [value, presetLabel]);
 
   const cancelar = useCallback(() => {
-    window.clearTimeout(esperaRef.current);
     pedidoRef.current += 1;
   }, []);
 
-  const search = useCallback((q: string) => {
+  // Se consulta con cada tecla. La lista anterior queda a la vista hasta que llega la nueva;
+  // mientras tanto `AppSearchSelect` no la elige sola (Tab/Enter), porque es de lo escrito antes.
+  const search = useCallback(async (q: string) => {
     onTextoChange?.(q);
     cancelar();
-    // La lista de lo escrito antes se vacía ya: al salir del campo se elige la opción resaltada.
-    setOptions([]);
     setFallo(false);
     const texto = q.trim();
-    setLoading(!!texto);
-    if (!texto) return;
+    if (!texto) {
+      setOptions([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
     const pedido = pedidoRef.current;
-    esperaRef.current = window.setTimeout(async () => {
-      try {
-        const rows = await fetchAfiliados(texto);
-        if (pedido === pedidoRef.current) setOptions(rows);
-      } catch {
-        if (pedido === pedidoRef.current) setFallo(true);
-      } finally {
-        if (pedido === pedidoRef.current) setLoading(false);
+    try {
+      const rows = await fetchAfiliados(texto);
+      if (pedido === pedidoRef.current) setOptions(rows);
+    } catch {
+      if (pedido === pedidoRef.current) {
+        setOptions([]);
+        setFallo(true);
       }
-    }, ESPERA_MS);
+    } finally {
+      if (pedido === pedidoRef.current) setLoading(false);
+    }
   }, [cancelar, onTextoChange]);
 
   useEffect(() => cancelar, [cancelar]);
@@ -83,6 +83,7 @@ const AfiliadoAutocomplete: React.FC<Props> = ({ value, onChange, disabled, pres
       }}
       onQueryChange={search}
       loading={loading}
+      sinElegirMientrasCarga
       noOptionsText={fallo ? "No se pudo buscar. Volvé a escribir para reintentar." : undefined}
       disabled={disabled}
       blurOnSelect={blurOnSelect}
