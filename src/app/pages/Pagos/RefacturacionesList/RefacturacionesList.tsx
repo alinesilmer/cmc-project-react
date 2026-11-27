@@ -37,6 +37,7 @@ import { Paperclip, Plus, RotateCcw, Search } from "lucide-react";
 import BotonVer from "@/app/components/ui/BotonVer/BotonVer";
 import { ESTADO_URL } from "@/app/pages/Pagos/utiles";
 import { DELETE_LOTE_URL } from "@/app/pages/Pagos/utiles";
+import { usePasoAlPago } from "../LoteDetalle/usePasoAlPago";
 import { comoErrorApi, detalleDeError } from "@/app/shared/lib/httpErrors";
 import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
@@ -51,6 +52,7 @@ const YEARS = Array.from({ length: 6 }, (_, i) => currentYear - i);
 const RefacturacionesList: React.FC = () => {
   const navigate = useNavigate();
   const notify = useAppSnackbar();
+  const pasoAlPago = usePasoAlPago<RefacturacionListItem>();
 
   // Filters
   const [filterOs, setFilterOs] = useState("");
@@ -292,7 +294,8 @@ const RefacturacionesList: React.FC = () => {
       label: "Pasar al pago",
       method: "PATCH",
       endpoint: (l) => ESTADO_URL(l.id),
-      payload: () => ({ estado: "L" }),
+      // Pide el % de pago en la confirmación y lo manda junto con el estado.
+      ...pasoAlPago,
       restrictions: [
         {
           message:

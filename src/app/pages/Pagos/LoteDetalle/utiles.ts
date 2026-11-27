@@ -1,6 +1,6 @@
 // Lo que comparten las pantallas de esta carpeta: una sola copia de cada cosa.
 import { detalleObjeto } from "@/app/shared/lib/httpErrors";
-import type { Ajuste, LoteAjuste } from "../types";
+import { type Ajuste, type LoteAjuste, porcentajeItemValido } from "../types";
 
 /** La leyenda con que la API avisa que el débito supera el importe de la prestación (se puede cargar igual,
  *  reenviando con `confirmar_exceso`). `null` si el error es otro. */
@@ -66,6 +66,10 @@ export const porcentajeComun = (ajustes: Ajuste[]): number | null => {
   if (distintos.size > 1) return null;
   return distintos.size === 1 ? [...distintos][0] : 100;
 };
+
+/** ¿Se puede pasar al pago con lo escrito? Un % válido, o vacío cuando los ítems tienen distintos (cada uno el suyo). */
+export const pasoAlPagoValido = (ajustes: Ajuste[], valor: string) =>
+  porcentajeItemValido(valor) || (valor.trim() === "" && porcentajeComun(ajustes) === null);
 
 /** Lo que entra al pago: cada importe cargado por `porcentaje` (o por el de su ítem si es `null`),
  *  redondeado al centavo por separado, como lo hace la API. */

@@ -35,6 +35,7 @@ import BotonDescarga from "@/app/components/ui/BotonDescarga/BotonDescarga";
 import {
   ESTADO_TONO,
   avisoDeExceso,
+  pasoAlPagoValido,
   porcentajeComun,
   conAjusteAgregado,
   conAjusteReemplazado,
@@ -354,9 +355,7 @@ const LoteDetalle: React.FC = () => {
 
   // Con el campo vacío sólo se puede confirmar si los ítems tienen porcentajes distintos (cada uno el suyo).
   const porcentajePasoInvalido =
-    transitionModal === "en_liquidaciones" &&
-    !porcentajeItemValido(porcentajePaso) &&
-    !(porcentajePaso.trim() === "" && porcentajeComun(lote?.ajustes ?? []) === null);
+    transitionModal === "en_liquidaciones" && !pasoAlPagoValido(lote?.ajustes ?? [], porcentajePaso);
 
   const handleTransition = async () => {
     if (!loteId || !transitionModal) return;

@@ -6,6 +6,7 @@ import Button from "@/app/components/ui/Button/Button";
 import styles from "./SelectableTable.module.scss";
 import type { ActionDef, SelectableTableProps } from "./types";
 import Tabla from "@/app/components/ui/Tabla/Tabla";
+import Dialogo from "@/app/components/ui/Dialogo/Dialogo";
 import paleta from "@/app/styles/paleta.module.scss";
 
 function buildUrl<T>(action: ActionDef<T>, row: T): string {
@@ -258,7 +259,26 @@ function SelectableTable<T extends { id: number | string }>({
       </div>
 
       {/* ── Modal de confirmación ── */}
-      {confirmOpen && currentAction?.confirmMessage && (
+      {confirmOpen && currentAction?.confirmMessage && currentAction.confirmContent && (
+        <Dialogo
+          titulo={currentAction.label}
+          onClose={() => setConfirmOpen(false)}
+          acciones={
+            <>
+              <Button variant="secondary" onClick={() => setConfirmOpen(false)}>
+                Cancelar
+              </Button>
+              <Button variant="primary" onClick={runAction} disabled={currentAction.confirmDisabled}>
+                Confirmar
+              </Button>
+            </>
+          }
+        >
+          <p>{currentAction.confirmMessage(selectedRows.length)}</p>
+          {currentAction.confirmContent(selectedRows)}
+        </Dialogo>
+      )}
+      {confirmOpen && currentAction?.confirmMessage && !currentAction.confirmContent && (
         <div className={styles.modalBackdrop} onClick={() => !executing && setConfirmOpen(false)}>
           <div className={styles.modalCard} onClick={(e) => e.stopPropagation()}>
             <p>{currentAction.confirmMessage(selectedRows.length)}</p>

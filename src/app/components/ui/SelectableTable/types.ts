@@ -32,6 +32,16 @@ export type ActionDef<T> = {
   /** (Opcional) Mensaje de confirmación antes de ejecutar. */
   confirmMessage?: (selectedCount: number) => string;
 
+  /**
+   * (Opcional) Campos que se completan en la confirmación (requiere `confirmMessage`). Con esto la confirmación usa
+   * el diálogo del panel y los muestra debajo del mensaje; lo elegido lo guarda quien define la acción (y lo manda
+   * en `payload`).
+   */
+  confirmContent?: (selectedRows: T[]) => React.ReactNode;
+
+  /** (Opcional) Deja deshabilitado «Confirmar» mientras lo pedido en `confirmContent` no esté completo. */
+  confirmDisabled?: boolean;
+
   /** (Opcional) Callback ejecutado tras completar TODAS las peticiones. */
   onSuccess?: (succeeded: number, failed: number) => void;
 

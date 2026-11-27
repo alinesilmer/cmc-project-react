@@ -28,6 +28,7 @@ import { ArrowLeftRight, Plus, Trash2 } from "lucide-react";
 import BotonVer from "@/app/components/ui/BotonVer/BotonVer";
 import { ESTADO_URL } from "@/app/pages/Pagos/utiles";
 import { DELETE_LOTE_URL } from "@/app/pages/Pagos/utiles";
+import { usePasoAlPago } from "../LoteDetalle/usePasoAlPago";
 import { comoErrorApi } from "@/app/shared/lib/httpErrors";
 import BotonPlano from "@/app/components/ui/BotonPlano/BotonPlano";
 
@@ -48,6 +49,7 @@ const YEARS = Array.from({ length: 6 }, (_, i) => currentYear - i);
 const DebitosCreditos: React.FC = () => {
   const navigate = useNavigate();
   const notify = useAppSnackbar();
+  const pasoAlPago = usePasoAlPago<LoteListItem>();
 
   // Filters
   const [filterOs, setFilterOs] = useState("");
@@ -335,7 +337,8 @@ const DebitosCreditos: React.FC = () => {
       label: "Pasar al pago",
       method: "PATCH",
       endpoint: (l) => ESTADO_URL(l.id),
-      payload: () => ({ estado: "L" }),
+      // Pide el % de pago en la confirmación y lo manda junto con el estado.
+      ...pasoAlPago,
       restrictions: [
         {
           message: "Solo se pueden pasar al pago lotes con estado Cerrado.",

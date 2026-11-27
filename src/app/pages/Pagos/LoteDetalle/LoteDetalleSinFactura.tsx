@@ -16,7 +16,6 @@ import {
   fechaDMA,
   fmt,
   mesLabel,
-  porcentajeItemValido,
   type MedicoResult,
 } from "../types";
 import { saveAs } from "@/app/shared/lib/fileSaver";
@@ -28,6 +27,7 @@ import {
   conAjusteAgregado,
   conAjusteReemplazado,
   estadoLabel,
+  pasoAlPagoValido,
   porcentajeComun,
   sinAjustes,
 } from "@/app/pages/Pagos/LoteDetalle/utiles";
@@ -266,9 +266,7 @@ const LoteDetalleSinFactura: React.FC = () => {
 
   // Con el campo vacío sólo se puede confirmar si los ítems tienen porcentajes distintos (cada uno el suyo).
   const porcentajePasoInvalido =
-    transitionModal === "en_liquidaciones" &&
-    !porcentajeItemValido(porcentajePaso) &&
-    !(porcentajePaso.trim() === "" && porcentajeComun(lote?.ajustes ?? []) === null);
+    transitionModal === "en_liquidaciones" && !pasoAlPagoValido(lote?.ajustes ?? [], porcentajePaso);
 
   const handleTransition = async () => {
     if (!loteId || !transitionModal) return;
